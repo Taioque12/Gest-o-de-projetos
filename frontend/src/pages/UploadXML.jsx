@@ -8,44 +8,119 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 function buildPrompt(projeto, tarefas) {
   const hoje = new Date().toISOString().slice(0, 10)
-  const linhasTarefas = tarefas.slice(0, 40).map(t =>
-    `  - ${t.nome}: ${t.previsto}% completo | ${t.inicio} → ${t.fim}`
-  ).join('\n')
 
-  return `Você é um consultor sênior especializado em gerenciamento de projetos de engenharia elétrica (instalações, subestações, automação, comissionamento).
+  // Calcula dias corridos restantes
+  const diasRestantes = projeto.fim
+    ? Math.round((new Date(projeto.fim) - new Date(hoje)) / 86400000)
+    : null
 
-Analise o cronograma abaixo e responda em português, de forma objetiva e prática.
+  // Calcula avanço esperado proporcional ao tempo decorrido
+  const diasTotais = projeto.inicio && projeto.fim
+    ? Math.round((new Date(projeto.fim) - new Date(projeto.inicio)) / 86400000)
+    : null
+  const diasDecorridos = projeto.inicio
+    ? Math.round((new Date(hoje) - new Date(projeto.inicio)) / 86400000)
+    : null
+  const avancoPrevistoProporcional = diasTotais && diasDecorridos
+    ? Math.min(100, Math.round((diasDecorridos / diasTotais) * 100))
+    : null
+  const desvioTemporal = avancoPrevistoProporcional !== null
+    ? (projeto.prev - avancoPrevistoProporcional).toFixed(1)
+    : null
 
-## Dados do Projeto
-- Nome: ${projeto.nome || '(não informado)'}
-- Data de início: ${projeto.inicio || '(não informada)'}
-- Data de término prevista: ${projeto.fim || '(não informada)'}
-- Avanço físico geral: ${projeto.prev}%
-- Data de referência: ${hoje}
+  // Classifica tarefas por status
+  const naoIniciadas  = tarefas.filter(t => t.previsto === 0)
+  const emAndamento   = tarefas.filter(t => t.previsto > 0 && t.previsto < 100)
+  const concluidas    = tarefas.filter(t => t.previsto === 100)
+  const atrasadas     = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
+
+  const linhasTarefas = tarefas.slice(0, 60).map(t => {
+    const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠ ATRASADA' : t.previsto > 0 ? '▶' : '○'
+    return `  ${status} ${t.nome}: ${t.previsto}% | ${t.inicio} → ${t.fim}`
+  }).join('\n')
+
+  return `Você é um engenheiro sênior de planejamento e controle de projetos (PCP), especialista em projetos de engenharia elétrica industrial — subestações de média e alta tensão, instalações elétricas BT/MT, SPDA, SDAI, automação e comissionamento. Você aplica rigorosamente as metodologias do PMBOK 7ª edição e EVM (Earned Value Management).
+
+Realize uma análise técnica completa e detalhada do cronograma a seguir. Seja específico, técnico e direto. Baseie TODAS as conclusões nos dados fornecidos — não invente informações.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DADOS DO PROJETO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nome: ${projeto.nome || '(não informado)'}
+Data de início: ${projeto.inicio || '(não informada)'}
+Data de término contratual: ${projeto.fim || '(não informada)'}
+Data de referência da análise: ${hoje}
+${diasRestantes !== null ? `Dias restantes até o término: ${diasRestantes} dias` : ''}
+${diasTotais !== null ? `Duração total do projeto: ${diasTotais} dias corridos` : ''}
+${diasDecorridos !== null ? `Dias decorridos desde o início: ${diasDecorridos} dias` : ''}
+
+AVANÇO FÍSICO ATUAL: ${projeto.prev}%
+${avancoPrevistoProporcional !== null ? `Avanço esperado proporcional ao tempo: ${avancoPrevistoProporcional}%` : ''}
+${desvioTemporal !== null ? `Desvio de avanço (real − esperado): ${desvioTemporal} p.p.` : ''}
+
+RESUMO DAS TAREFAS:
 - Total de tarefas: ${tarefas.length}
+- Concluídas (100%): ${concluidas.length}
+- Em andamento: ${emAndamento.length}
+- Não iniciadas (0%): ${naoIniciadas.length}
+- ATRASADAS (fim passado, < 100%): ${atrasadas.length}
 
-## Tarefas do Cronograma
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRONOGRAMA DETALHADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Legenda: ✓ Concluída | ▶ Em andamento | ○ Não iniciada | ⚠ ATRASADA
+
 ${linhasTarefas}
-${tarefas.length > 40 ? `  ... (+ ${tarefas.length - 40} tarefas não exibidas)` : ''}
+${tarefas.length > 60 ? `\n  ... (+ ${tarefas.length - 60} tarefas adicionais não listadas)` : ''}
 
-## Instruções
-Forneça uma análise estruturada com exatamente estas seções (use os títulos abaixo):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INSTRUÇÕES DE ANÁLISE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Produza uma análise técnica estruturada com TODAS as seções abaixo. Seja específico — cite nomes de tarefas reais do cronograma.
 
-### 🔎 Situação geral
-Uma frase resumindo a saúde do projeto (Verde / Atenção / Crítico) e o motivo principal.
+### 🔴🟡🟢 Veredito Executivo
+Status geral do projeto em UMA frase objetiva: (CRÍTICO / ATENÇÃO / CONTROLADO). Inclua o desvio de avanço e o risco ao prazo contratual.
 
-### ⚠️ Pontos de atenção
-Liste de 2 a 4 tarefas ou áreas que representam maior risco ao prazo ou qualidade. Seja específico com base nos dados.
+### 📐 Análise de Valor Agregado (EVM)
+Com base nos dados disponíveis, estime:
+- **SPI (Schedule Performance Index)**: avanço real ÷ avanço esperado. Interprete: SPI < 0,85 = crítico, 0,85–0,95 = atenção, > 0,95 = controlado.
+- **Tendência de término**: se o ritmo atual for mantido, o projeto terminará antes, no prazo ou com quantos dias de atraso estimados?
+- **Tarefas no caminho crítico**: identifique as tarefas em andamento com maior risco de impacto no término contratual.
 
-### 🎯 Plano de ação recomendado
-Liste de 3 a 5 ações concretas, numeradas, que o gestor deve tomar imediatamente. Use linguagem direta.
+### ⚠️ Tarefas e Frentes Críticas
+Para cada tarefa atrasada ou em risco, informe:
+- Nome exato da tarefa
+- Status atual (% concluído vs. % esperado)
+- Impacto potencial no prazo geral
+- Causa provável do atraso (com base no padrão do cronograma)
 
-### 📊 Indicadores-chave
-- Risco de atraso: (Baixo / Médio / Alto)
-- Recomendação de revisão do cronograma: (Sim / Não / Opcional)
-- Prioridade de ação: (Esta semana / Este mês / Monitorar)
+### 🔧 Análise Técnica por Disciplina
+Agrupe as tarefas por disciplina (civil, elétrica BT, elétrica MT, automação, comissionamento, documentação, etc.) e avalie o desempenho de cada frente. Identifique quais disciplinas estão comprometendo o caminho crítico.
 
-Seja direto. Não repita os dados brutos. Foque em insights e ações.`
+### 🎯 Plano de Ação Corretivo
+Liste de 5 a 8 ações corretivas concretas e priorizadas. Para cada ação informe:
+- **Ação**: o que fazer exatamente
+- **Responsável sugerido**: (Gestor / Engenheiro de campo / Equipe técnica / Escritório)
+- **Prazo**: imediato (esta semana) / curto prazo (este mês) / médio prazo
+- **Impacto esperado**: como essa ação melhora o desempenho do projeto
+
+### 📊 Painel de Indicadores
+| Indicador | Valor | Status |
+|---|---|---|
+| Avanço físico atual | ${projeto.prev}% | - |
+| Avanço esperado proporcional | ${avancoPrevistoProporcional ?? 'N/D'}% | - |
+| Desvio de avanço | ${desvioTemporal ?? 'N/D'} p.p. | - |
+| SPI estimado | (calcule) | - |
+| Tarefas atrasadas | ${atrasadas.length} de ${tarefas.length} | - |
+| Risco de não conclusão no prazo | (Baixo/Médio/Alto/Muito Alto) | - |
+
+Complete a coluna Status com: 🟢 / 🟡 / 🔴
+
+### 💡 Recomendações Estratégicas
+2 a 3 recomendações de médio/longo prazo para melhorar a gestão do cronograma nas próximas fases do projeto ou em projetos futuros similares.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANTE: Baseie-se APENAS nos dados fornecidos. Cite tarefas pelo nome exato. Seja técnico, preciso e orientado a resultados.`
 }
 
 export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto }) {
@@ -128,7 +203,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 1200, temperature: 0.3 },
+          generationConfig: { maxOutputTokens: 3000, temperature: 0.2 },
         }),
       })
       if (!resp.ok) {
