@@ -6,21 +6,27 @@ import KPICard from '../components/KPICard'
 import CurvaS from '../components/CurvaS'
 import ProjectCard from '../components/ProjectCard'
 import ProjectModal from '../components/ProjectModal'
+import ProjetoForm from '../components/ProjetoForm'
 import AlocacaoTable from '../components/AlocacaoTable'
 import UploadXML from './UploadXML'
 
 export default function Dashboard({ user, perfil, onSignOut }) {
-  const { projetos, loading, usandoMock, refetch } = useProjetos(perfil, user?.id)
+  const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto } = useProjetos(perfil, user?.id)
   const [filtro, setFiltro] = useState('todos')
   const [modalProjeto, setModalProjeto] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
+  const [formProjeto, setFormProjeto] = useState(null) // null | 'novo' | projeto
+  const [salvando, setSalvando] = useState(false)
+  const [erroForm, setErroForm] = useState('')
+
+  const podeEditar = perfil === 'admin' || perfil === 'equipe'
 
   if (loading) return <div className="loading-screen">Carregando projetos...</div>
 
   if (showUpload) {
     return (
       <>
-        <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} />
+        <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
         <UploadXML onBack={() => setShowUpload(false)} onSuccess={() => { setShowUpload(false); refetch() }} />
       </>
     )
@@ -40,9 +46,39 @@ export default function Dashboard({ user, perfil, onSignOut }) {
 
   const curveOpts = projetos.length ? portfolioCurveOpts(projetos) : null
 
+  async function handleSalvar(dados) {
+    setSalvando(true)
+    setErroForm('')
+    try {
+      if (formProjeto === 'novo') {
+        await criarProjeto(dados)
+      } else {
+        await editarProjeto(formProjeto.id, dados)
+      }
+      setFormProjeto(null)
+    } catch (err) {
+      setErroForm(err.message ?? 'Erro ao salvar.')
+    }
+    setSalvando(false)
+  }
+
+  async function handleExcluir(projeto) {
+    if (!window.confirm(`Excluir a OS "${projeto.os} — ${projeto.nome}"? Esta ação não pode ser desfeita.`)) return
+    try {
+      await excluirProjeto(projeto.id)
+    } catch (err) {
+      alert('Erro ao excluir: ' + err.message)
+    }
+  }
+
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} />
+      <Header
+        perfil={perfil}
+        onSignOut={onSignOut}
+        onUpload={() => setShowUpload(true)}
+        onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}
+      />
 
       <div className="wrap">
         {/* KPIs */}
@@ -87,28 +123,51 @@ export default function Dashboard({ user, perfil, onSignOut }) {
         <div className="panel">
           <div className="panel-head">
             <h2><span className="ico">🗂️</span> Projetos do Portfólio</h2>
-            <div className="filters">
-              {['todos', 'verde', 'amarelo', 'vermelho'].map(f => (
-                <button
-                  key={f}
-                  className={`chip${filtro === f ? ' active' : ''}`}
-                  onClick={() => setFiltro(f)}
-                >
-                  {f !== 'todos' && <span className={`dot ${f}`} />}
-                  {f === 'todos' ? 'Todos' : f === 'verde' ? 'Verde' : f === 'amarelo' ? 'Atenção' : 'Crítico'}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="filters">
+                {['todos', 'verde', 'amarelo', 'vermelho'].map(f => (
+                  <button
+                    key={f}
+                    className={`chip${filtro === f ? ' active' : ''}`}
+                    onClick={() => setFiltro(f)}
+                  >
+                    {f !== 'todos' && <span className={`dot ${f}`} />}
+                    {f === 'todos' ? 'Todos' : f === 'verde' ? 'Verde' : f === 'amarelo' ? 'Atenção' : 'Crítico'}
+                  </button>
+                ))}
+              </div>
+              {podeEditar && (
+                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
+                  onClick={() => setFormProjeto('novo')}>
+                  + Nova OS
                 </button>
-              ))}
+              )}
             </div>
           </div>
           <div className="panel-body">
             {projetosFiltrados.length > 0 ? (
               <div className="grid-proj">
-                {projetosFiltrados.map((p, i) => (
-                  <ProjectCard key={p.id ?? p.os} projeto={p} onClick={() => setModalProjeto(p)} />
+                {projetosFiltrados.map(p => (
+                  <ProjectCard
+                    key={p.id ?? p.os}
+                    projeto={p}
+                    onClick={() => setModalProjeto(p)}
+                    podeEditar={podeEditar}
+                    onEditar={e => { e.stopPropagation(); setFormProjeto(p) }}
+                    onExcluir={e => { e.stopPropagation(); handleExcluir(p) }}
+                  />
                 ))}
               </div>
             ) : (
-              <p style={{ color: 'var(--ink-3)' }}>Nenhum projeto nesta classificação.</p>
+              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)' }}>
+                <p>Nenhum projeto nesta classificação.</p>
+                {podeEditar && filtro === 'todos' && (
+                  <button className="btn btn-ghost" style={{ marginTop: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }}
+                    onClick={() => setFormProjeto('novo')}>
+                    + Cadastrar primeira OS
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -134,6 +193,15 @@ export default function Dashboard({ user, perfil, onSignOut }) {
 
       {modalProjeto && (
         <ProjectModal projeto={modalProjeto} onClose={() => setModalProjeto(null)} />
+      )}
+
+      {formProjeto && (
+        <ProjetoForm
+          projeto={formProjeto === 'novo' ? null : formProjeto}
+          onSalvar={handleSalvar}
+          onFechar={() => { setFormProjeto(null); setErroForm('') }}
+          salvando={salvando}
+        />
       )}
     </>
   )

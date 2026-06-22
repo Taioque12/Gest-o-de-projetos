@@ -1,6 +1,6 @@
 import { classify, valorFmt, fmtFull } from '../utils/helpers'
 
-export default function ProjectCard({ projeto, onClick }) {
+export default function ProjectCard({ projeto, onClick, podeEditar, onEditar, onExcluir }) {
   const p = projeto
   const c = classify(p.prev, p.real)
   const desv = p.real - p.prev
@@ -12,7 +12,15 @@ export default function ProjectCard({ projeto, onClick }) {
       <div className="card-inner">
         <div className="card-top">
           <h3>{p.nome}</h3>
-          <span className={`pill ${c.k}`}>{c.emo} {c.lbl}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className={`pill ${c.k}`}>{c.emo} {c.lbl}</span>
+            {podeEditar && (
+              <div className="card-actions">
+                <button className="card-action-btn" title="Editar" onClick={onEditar}>✏️</button>
+                <button className="card-action-btn card-action-del" title="Excluir" onClick={onExcluir}>🗑️</button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="meta">OS <b>{p.os}</b> · {p.cliente}</div>
         <div className="facts">

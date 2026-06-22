@@ -1,6 +1,6 @@
 import { supabaseConfigurado } from '../supabase'
 
-export default function Header({ perfil, onSignOut, onUpload }) {
+export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto }) {
   const hoje = new Date().toLocaleDateString('pt-BR')
 
   return (
@@ -20,6 +20,11 @@ export default function Header({ perfil, onSignOut, onUpload }) {
           <div className="updated">
             Atualização semanal<br /><b>{hoje}</b>
           </div>
+          {onNovoProjeto && (
+            <button className="btn btn-ghost" onClick={onNovoProjeto}>
+              ➕ Nova OS
+            </button>
+          )}
           {(perfil === 'admin' || perfil === 'equipe') && (
             <button className="btn btn-ghost" onClick={onUpload}>
               📂 Importar XML
