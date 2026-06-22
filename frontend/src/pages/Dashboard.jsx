@@ -9,13 +9,15 @@ import ProjectModal from '../components/ProjectModal'
 import ProjetoForm from '../components/ProjetoForm'
 import AlocacaoTable from '../components/AlocacaoTable'
 import UploadXML from './UploadXML'
+import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
 import Toast from '../components/Toast'
 
 export default function Dashboard({ user, perfil, onSignOut }) {
-  const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto } = useProjetos(perfil, user?.id)
+  const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
   const [filtro, setFiltro] = useState('todos')
   const [modalProjeto, setModalProjeto] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
+  const [showSemanal, setShowSemanal] = useState(false)
   const [formProjeto, setFormProjeto] = useState(null) // null | 'novo' | projeto
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
@@ -24,6 +26,18 @@ export default function Dashboard({ user, perfil, onSignOut }) {
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
 
   if (loading) return <div className="loading-screen">Carregando projetos...</div>
+
+  async function handleSalvarSemanal(data, atualizacoes) {
+    setSalvando(true)
+    try {
+      await atualizarSemanal(data, atualizacoes)
+      setShowSemanal(false)
+      setToast(`Avanço de ${atualizacoes.length} projeto(s) atualizado para ${data}!`)
+    } catch (err) {
+      alert('Erro ao salvar: ' + err.message)
+    }
+    setSalvando(false)
+  }
 
   if (showUpload) {
     return (
@@ -86,6 +100,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
         onSignOut={onSignOut}
         onUpload={() => setShowUpload(true)}
         onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}
+        onAtualizarSemanal={podeEditar ? () => setShowSemanal(true) : null}
       />
 
       <div className="wrap">
@@ -204,6 +219,15 @@ export default function Dashboard({ user, perfil, onSignOut }) {
       )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
+
+      {showSemanal && (
+        <AtualizacaoSemanal
+          projetos={projetos}
+          onSalvar={handleSalvarSemanal}
+          onFechar={() => setShowSemanal(false)}
+          salvando={salvando}
+        />
+      )}
 
       {formProjeto && (
         <ProjetoForm

@@ -1,6 +1,6 @@
 import { supabaseConfigurado } from '../supabase'
 
-export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto }) {
+export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal }) {
   const hoje = new Date().toLocaleDateString('pt-BR')
 
   return (
@@ -23,6 +23,11 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto }) {
           {onNovoProjeto && (
             <button className="btn btn-ghost" onClick={onNovoProjeto}>
               ➕ Nova OS
+            </button>
+          )}
+          {(perfil === 'admin' || perfil === 'equipe') && onAtualizarSemanal && (
+            <button className="btn btn-ghost" onClick={onAtualizarSemanal}>
+              📅 Atualização Semanal
             </button>
           )}
           {(perfil === 'admin' || perfil === 'equipe') && (

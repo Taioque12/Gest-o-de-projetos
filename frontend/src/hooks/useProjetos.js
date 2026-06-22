@@ -129,5 +129,27 @@ export function useProjetos(perfil, userId) {
     await fetchProjetos()
   }
 
-  return { projetos, loading, usandoMock, refetch: fetchProjetos, criarProjeto, editarProjeto, excluirProjeto }
+  // atualizacoes: [{ id, prev, real }] — só os projetos que mudaram
+  async function atualizarSemanal(data, atualizacoes) {
+    await Promise.all(atualizacoes.map(async ({ id, prev, real }) => {
+      const { error: e1 } = await supabase
+        .from('projetos')
+        .update({ atualizado_em: new Date().toISOString() })
+        .eq('id', id)
+      if (e1) throw e1
+
+      const { error: e2 } = await supabase
+        .from('atualizacoes_semana')
+        .upsert({
+          projeto_id:       id,
+          data_atualizacao: data,
+          avanco_previsto:  prev,
+          avanco_realizado: real,
+        }, { onConflict: 'projeto_id,data_atualizacao' })
+      if (e2) throw e2
+    }))
+    await fetchProjetos()
+  }
+
+  return { projetos, loading, usandoMock, refetch: fetchProjetos, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal }
 }
