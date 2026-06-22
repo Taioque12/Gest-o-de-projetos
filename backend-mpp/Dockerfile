@@ -8,6 +8,9 @@ RUN apt-get update \
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV PORT=8000
 
+# Limita o heap da JVM para caber em free tiers de 512MB (Koyeb/Render).
+ENV JAVA_TOOL_OPTIONS="-Xmx320m"
+
 WORKDIR /app
 
 COPY requirements.txt .
