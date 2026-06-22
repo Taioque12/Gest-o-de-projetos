@@ -209,6 +209,8 @@ footer b{color:var(--ink-2)}
 .upload-table td{padding:6px 10px;border-bottom:1px solid var(--line);color:var(--ink)}
 .upload-table tr:last-child td{border-bottom:none}
 .upload-table tr:hover td{background:var(--surface-2)}
+.upload-acoes{margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px;border:1px solid var(--line)}
+.upload-acoes-title{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:12px}
 /* ===== Card actions (editar / excluir) ===== */
 .card-actions{display:flex;gap:4px;opacity:0;transition:.15s}
 .card:hover .card-actions{opacity:1}

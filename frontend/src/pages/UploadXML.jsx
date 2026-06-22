@@ -1,15 +1,32 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../supabase'
+import ProjetoForm from '../components/ProjetoForm'
 
-export default function UploadXML({ onBack }) {
-  const [over, setOver] = useState(false)
+export default function UploadXML({ onBack, projetos = [], criarProjeto, editarProjeto }) {
+  const [over, setOver]         = useState(false)
   const [resultado, setResultado] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [acao, setAcao]         = useState(null)   // null | 'novo' | 'atualizar'
+  const [projetoSel, setProjetoSel] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const [feedbackFinal, setFeedbackFinal] = useState('')
   const inputRef = useRef()
+
+  function extrairProjeto(doc) {
+    const nome    = doc.querySelector('Project > Name')?.textContent ?? ''
+    const inicio  = doc.querySelector('Project > StartDate')?.textContent?.slice(0, 10) ?? ''
+    const fim     = doc.querySelector('Project > FinishDate')?.textContent?.slice(0, 10) ?? ''
+    // Task UID=0 é o resumo do projeto no XML do MS Project
+    const resumo  = [...doc.querySelectorAll('Task')].find(t => t.querySelector('UID')?.textContent === '0')
+    const prev    = parseFloat(resumo?.querySelector('PercentComplete')?.textContent ?? '0')
+    return { nome, inicio, fim, prev }
+  }
 
   async function processarXML(file) {
     setLoading(true)
     setResultado(null)
+    setAcao(null)
+    setFeedbackFinal('')
     try {
       const texto = await file.text()
       const parser = new DOMParser()
@@ -18,32 +35,75 @@ export default function UploadXML({ onBack }) {
       const parseErr = doc.querySelector('parsererror')
       if (parseErr) throw new Error('Arquivo XML inválido ou corrompido.')
 
+      const projeto = extrairProjeto(doc)
+
       const tarefas = [...doc.querySelectorAll('Task')]
         .filter(t => {
           const sumario = t.querySelector('Summary')?.textContent
-          const nome = t.querySelector('Name')?.textContent ?? ''
-          return sumario !== '1' && nome.trim() !== ''
+          const uid     = t.querySelector('UID')?.textContent
+          const nome    = t.querySelector('Name')?.textContent ?? ''
+          return sumario !== '1' && uid !== '0' && nome.trim() !== ''
         })
         .map(t => ({
           nome:     t.querySelector('Name')?.textContent ?? '',
-          uid:      t.querySelector('UID')?.textContent ?? '',
           previsto: parseFloat(t.querySelector('PercentComplete')?.textContent ?? '0'),
           inicio:   t.querySelector('Start')?.textContent?.slice(0, 10) ?? '',
           fim:      t.querySelector('Finish')?.textContent?.slice(0, 10) ?? '',
         }))
 
-      // Log não-bloqueante — falha silenciosa intencional
       supabase.from('uploads_xml').insert({
         nome_arquivo:  file.name,
         status:        'sucesso',
         processado_em: new Date().toISOString(),
       }).then(() => {}).catch(() => {})
 
-      setResultado({ ok: true, tarefas, nome: file.name })
+      setResultado({ ok: true, tarefas, nome: file.name, projeto })
     } catch (err) {
       setResultado({ ok: false, erro: err.message })
     }
     setLoading(false)
+  }
+
+  async function handleCriarProjeto(dados) {
+    setSalvando(true)
+    try {
+      await criarProjeto(dados)
+      setFeedbackFinal('✅ Projeto criado com sucesso! Clique em "← Voltar" para ver no dashboard.')
+      setAcao(null)
+    } catch (err) {
+      alert('Erro ao criar projeto: ' + err.message)
+    }
+    setSalvando(false)
+  }
+
+  async function handleAtualizar() {
+    if (!projetoSel) return
+    const proj = projetos.find(p => p.id === projetoSel)
+    if (!proj) return
+    setSalvando(true)
+    try {
+      const prev = resultado.projeto.prev ?? proj.prev
+      await editarProjeto(proj.id, {
+        os:               proj.os,
+        nome:             proj.nome,
+        cliente:          proj.cliente,
+        escopo:           proj.escopo,
+        responsavel:      proj.responsavel,
+        data_inicio:      proj.inicio,
+        data_fim:         proj.fim,
+        prazo_meses:      proj.prazo ? parseFloat(proj.prazo) : null,
+        valor_os:         proj.valor || null,
+        equipes:          proj.equipes ?? [],
+        acao_recomendada: proj.acao ?? '',
+        prev,
+        real:             prev,
+      })
+      setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%. Clique em "← Voltar" para ver no dashboard.`)
+      setAcao(null)
+    } catch (err) {
+      alert('Erro ao atualizar: ' + err.message)
+    }
+    setSalvando(false)
   }
 
   function onDrop(e) {
@@ -59,13 +119,24 @@ export default function UploadXML({ onBack }) {
     e.target.value = ''
   }
 
+  // Exibe o formulário de novo projeto pré-preenchido com dados do XML
+  if (acao === 'novo' && resultado?.projeto) {
+    const { nome, inicio, fim, prev } = resultado.projeto
+    return (
+      <ProjetoForm
+        projeto={{ nome, inicio, fim, prev, real: prev, os: '', cliente: '', escopo: '', responsavel: '', valor: '', acao: '', equipes: [] }}
+        onSalvar={handleCriarProjeto}
+        onFechar={() => setAcao(null)}
+        salvando={salvando}
+      />
+    )
+  }
+
   return (
     <div className="upload-page">
       <div className="upload-card">
         <h2>📂 Importar XML do MS Project</h2>
-        <p>
-          No MS Project: <b>Arquivo → Salvar Como → XML (*.xml)</b> e importe aqui.
-        </p>
+        <p>No MS Project: <b>Arquivo → Salvar Como → XML (*.xml)</b> e importe aqui.</p>
 
         <div
           className={`drop-zone${over ? ' over' : ''}`}
@@ -76,18 +147,10 @@ export default function UploadXML({ onBack }) {
         >
           <div style={{ fontSize: 36 }}>📄</div>
           <p>Arraste o arquivo <b>.xml</b> aqui ou <b>clique para selecionar</b></p>
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".xml"
-            style={{ display: 'none' }}
-            onChange={onFileChange}
-          />
+          <input ref={inputRef} type="file" accept=".xml" style={{ display: 'none' }} onChange={onFileChange} />
         </div>
 
-        {loading && (
-          <p style={{ marginTop: 16, color: 'var(--ink-3)' }}>⏳ Processando...</p>
-        )}
+        {loading && <p style={{ marginTop: 16, color: 'var(--ink-3)' }}>⏳ Processando...</p>}
 
         {resultado && !resultado.ok && (
           <div className="upload-result" style={{ background: 'var(--vermelho-bg)', color: '#991b1b', border: '1px solid #fca5a5' }}>
@@ -95,22 +158,24 @@ export default function UploadXML({ onBack }) {
           </div>
         )}
 
-        {resultado?.ok && (
+        {feedbackFinal && (
+          <div className="upload-result">{feedbackFinal}</div>
+        )}
+
+        {resultado?.ok && !feedbackFinal && (
           <>
             <div className="upload-result">
-              ✅ <b>"{resultado.nome}"</b> importado — {resultado.tarefas.length} tarefa(s) encontrada(s).
+              ✅ <b>"{resultado.nome}"</b> lido — {resultado.tarefas.length} tarefa(s).
+              {resultado.projeto.prev > 0 && (
+                <span> Avanço geral detectado: <b>{resultado.projeto.prev}%</b></span>
+              )}
             </div>
 
             {resultado.tarefas.length > 0 && (
               <div style={{ overflowX: 'auto', marginTop: 16 }}>
                 <table className="upload-table">
                   <thead>
-                    <tr>
-                      <th>Tarefa</th>
-                      <th>% Previsto</th>
-                      <th>Início</th>
-                      <th>Término</th>
-                    </tr>
+                    <tr><th>Tarefa</th><th>% Prev.</th><th>Início</th><th>Término</th></tr>
                   </thead>
                   <tbody>
                     {resultado.tarefas.slice(0, 15).map((t, i) => (
@@ -132,15 +197,57 @@ export default function UploadXML({ onBack }) {
                 </table>
               </div>
             )}
+
+            {/* Ações */}
+            <div className="upload-acoes">
+              <p className="upload-acoes-title">O que fazer com estes dados?</p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  className="btn-login"
+                  style={{ width: 'auto', padding: '10px 22px', margin: 0 }}
+                  onClick={() => setAcao('novo')}
+                >
+                  ➕ Criar como novo projeto
+                </button>
+                {projetos.length > 0 && (
+                  <button
+                    className="btn btn-ghost"
+                    style={{ color: 'var(--brand)', border: '1px solid var(--brand)' }}
+                    onClick={() => setAcao('atualizar')}
+                  >
+                    🔄 Atualizar projeto existente
+                  </button>
+                )}
+              </div>
+
+              {acao === 'atualizar' && (
+                <div style={{ marginTop: 14, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <select
+                    value={projetoSel}
+                    onChange={e => setProjetoSel(e.target.value)}
+                    style={{ flex: 1, minWidth: 220 }}
+                  >
+                    <option value="">Selecione o projeto...</option>
+                    {projetos.map(p => (
+                      <option key={p.id} value={p.id}>{p.os} — {p.nome}</option>
+                    ))}
+                  </select>
+                  <button
+                    className="btn-login"
+                    style={{ width: 'auto', padding: '10px 20px', margin: 0 }}
+                    disabled={!projetoSel || salvando}
+                    onClick={handleAtualizar}
+                  >
+                    {salvando ? 'Salvando...' : 'Confirmar atualização'}
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
 
         <div style={{ marginTop: 24 }}>
-          <button
-            className="btn btn-ghost"
-            style={{ color: 'var(--ink)', border: '1px solid var(--line)' }}
-            onClick={onBack}
-          >
+          <button className="btn btn-ghost" style={{ color: 'var(--ink)', border: '1px solid var(--line)' }} onClick={onBack}>
             ← Voltar ao Dashboard
           </button>
         </div>
