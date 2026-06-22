@@ -251,9 +251,12 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,122,61,.12)}
 
 /* ===== Navegação abas ===== */
 .nav-tabs{display:flex;gap:3px;background:rgba(0,0,0,.18);border-radius:11px;padding:4px}
-.nav-tab{padding:7px 18px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.65);transition:.15s;white-space:nowrap;letter-spacing:.1px}
+.nav-tab{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.65);transition:.15s;white-space:nowrap;letter-spacing:.1px}
+.nav-tab svg{flex-shrink:0;opacity:.75;transition:.15s}
 .nav-tab:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav-tab:hover svg{opacity:1}
 .nav-tab.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.18);font-weight:700}
+.nav-tab.active svg{opacity:1}
 
 /* ===== Equipes / Funcionários ===== */
 .func-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
