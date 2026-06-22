@@ -266,15 +266,25 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     e.target.value = ''
   }
 
-  // Renderiza o texto markdown simples da IA (headings ### e listas -)
+  function inline(text) {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g)
+    if (parts.length === 1) return text
+    return parts.map((p, i) =>
+      p.startsWith('**') && p.endsWith('**')
+        ? <strong key={i}>{p.slice(2, -2)}</strong>
+        : p
+    )
+  }
+
   function renderAnalise(texto) {
     return texto.split('\n').map((line, i) => {
-      if (line.startsWith('### ')) return <h4 key={i} className="ia-heading">{line.slice(4)}</h4>
-      if (line.startsWith('## '))  return <h3 key={i} className="ia-heading">{line.slice(3)}</h3>
-      if (line.startsWith('- ') || line.match(/^\d+\. /)) return <li key={i} className="ia-item">{line.replace(/^[-\d.] ?/, '')}</li>
-      if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="ia-bold">{line.slice(2, -2)}</p>
-      if (line.trim() === '') return <br key={i} />
-      return <p key={i} className="ia-p">{line}</p>
+      if (line.startsWith('### ')) return <h4 key={i} className="ia-heading">{inline(line.slice(4))}</h4>
+      if (line.startsWith('## '))  return <h3 key={i} className="ia-heading">{inline(line.slice(3))}</h3>
+      if (line.startsWith('- '))   return <li key={i} className="ia-item">{inline(line.slice(2))}</li>
+      if (line.match(/^\d+\. /))   return <li key={i} className="ia-item">{inline(line.replace(/^\d+\. /, ''))}</li>
+      if (line.startsWith('|'))    return null
+      if (line.trim() === '' || line.startsWith('---') || line.startsWith('===')) return <br key={i} />
+      return <p key={i} className="ia-p">{inline(line)}</p>
     })
   }
 
@@ -353,7 +363,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
             {/* Análise IA */}
             <div className="ia-box">
               <div className="ia-box-header">
-                <span>🤖 Análise de IA — Gemini 1.5 Pro</span>
+                <span>🤖 Análise de IA — Gemini 2.5 Flash</span>
                 <button
                   className="btn-login"
                   style={{ width: 'auto', padding: '8px 20px', margin: 0, fontSize: 13 }}
