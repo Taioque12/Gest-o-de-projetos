@@ -195,6 +195,20 @@ footer b{color:var(--ink-2)}
   .grid-proj{grid-template-columns:1fr}
   .facts{grid-template-columns:1fr}
 }
+/* ===== Upload XML ===== */
+.upload-page{min-height:calc(100vh - 72px);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
+.upload-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:36px;width:100%;max-width:760px;box-shadow:var(--shadow)}
+.upload-card h2{font-size:20px;font-weight:700;margin-bottom:8px}
+.upload-card p{color:var(--ink-2);font-size:14px;margin-bottom:20px}
+.drop-zone{border:2px dashed var(--line);border-radius:14px;padding:36px 24px;text-align:center;cursor:pointer;transition:.2s;background:var(--surface-2)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--brand);background:rgba(15,122,61,.04)}
+.drop-zone p{color:var(--ink-2);font-size:14px;margin:8px 0 0}
+.upload-result{margin-top:16px;padding:12px 16px;border-radius:10px;background:rgba(15,122,61,.08);border:1px solid rgba(15,122,61,.25);font-size:14px;color:var(--ink)}
+.upload-table{width:100%;border-collapse:collapse;font-size:13px}
+.upload-table th{text-align:left;padding:7px 10px;border-bottom:2px solid var(--line);color:var(--ink-2);font-weight:600;white-space:nowrap}
+.upload-table td{padding:6px 10px;border-bottom:1px solid var(--line);color:var(--ink)}
+.upload-table tr:last-child td{border-bottom:none}
+.upload-table tr:hover td{background:var(--surface-2)}
 /* ===== Card actions (editar / excluir) ===== */
 .card-actions{display:flex;gap:4px;opacity:0;transition:.15s}
 .card:hover .card-actions{opacity:1}

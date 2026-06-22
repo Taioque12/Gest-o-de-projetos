@@ -27,7 +27,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     return (
       <>
         <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
-        <UploadXML onBack={() => setShowUpload(false)} onSuccess={() => { setShowUpload(false); refetch() }} />
+        <UploadXML onBack={() => { setShowUpload(false); refetch() }} />
       </>
     )
   }
