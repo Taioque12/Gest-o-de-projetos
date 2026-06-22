@@ -22,7 +22,7 @@ export default function Header({ perfil, onSignOut, onUpload }) {
           </div>
           {(perfil === 'admin' || perfil === 'equipe') && (
             <button className="btn btn-ghost" onClick={onUpload}>
-              📂 Importar XML
+              📂 Importar MS Project
             </button>
           )}
           <button className="btn btn-ghost" onClick={() => window.print()}>

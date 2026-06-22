@@ -7,7 +7,7 @@ import CurvaS from '../components/CurvaS'
 import ProjectCard from '../components/ProjectCard'
 import ProjectModal from '../components/ProjectModal'
 import AlocacaoTable from '../components/AlocacaoTable'
-import UploadXML from './UploadXML'
+import UploadMPP from './UploadMPP'
 
 export default function Dashboard({ user, perfil, onSignOut }) {
   const { projetos, loading, usandoMock, refetch } = useProjetos(perfil, user?.id)
@@ -21,7 +21,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     return (
       <>
         <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} />
-        <UploadXML onBack={() => setShowUpload(false)} onSuccess={() => { setShowUpload(false); refetch() }} />
+        <UploadMPP onBack={() => setShowUpload(false)} onSuccess={() => { setShowUpload(false); refetch() }} />
       </>
     )
   }
