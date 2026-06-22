@@ -3,7 +3,7 @@ import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`
 
 function buildPrompt(projeto, tarefas) {
   const hoje = new Date().toISOString().slice(0, 10)
