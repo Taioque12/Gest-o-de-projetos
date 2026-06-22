@@ -209,6 +209,10 @@ footer b{color:var(--ink-2)}
 .upload-table td{padding:6px 10px;border-bottom:1px solid var(--line);color:var(--ink)}
 .upload-table tr:last-child td{border-bottom:none}
 .upload-table tr:hover td{background:var(--surface-2)}
+/* ===== Toast ===== */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--verde);border-radius:14px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.14);font-size:14px;color:var(--ink);cursor:pointer;animation:toast-in .25s ease}
+@keyframes toast-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.toast-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-3);line-height:1;padding:0 0 0 4px}
 .upload-acoes{margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px;border:1px solid var(--line)}
 .upload-acoes-title{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:12px}
 /* ===== Card actions (editar / excluir) ===== */

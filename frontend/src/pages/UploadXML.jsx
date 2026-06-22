@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
 
-export default function UploadXML({ onBack, projetos = [], criarProjeto, editarProjeto }) {
+export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto }) {
   const [over, setOver]         = useState(false)
   const [resultado, setResultado] = useState(null)
   const [loading, setLoading]   = useState(false)
@@ -68,12 +68,11 @@ export default function UploadXML({ onBack, projetos = [], criarProjeto, editarP
     setSalvando(true)
     try {
       await criarProjeto(dados)
-      setFeedbackFinal('✅ Projeto criado com sucesso! Clique em "← Voltar" para ver no dashboard.')
-      setAcao(null)
+      if (onCriado) onCriado(`Projeto "${dados.nome}" importado do XML e adicionado ao dashboard!`)
     } catch (err) {
       alert('Erro ao criar projeto: ' + err.message)
+      setSalvando(false)
     }
-    setSalvando(false)
   }
 
   async function handleAtualizar() {

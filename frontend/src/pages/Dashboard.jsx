@@ -9,6 +9,7 @@ import ProjectModal from '../components/ProjectModal'
 import ProjetoForm from '../components/ProjetoForm'
 import AlocacaoTable from '../components/AlocacaoTable'
 import UploadXML from './UploadXML'
+import Toast from '../components/Toast'
 
 export default function Dashboard({ user, perfil, onSignOut }) {
   const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto } = useProjetos(perfil, user?.id)
@@ -18,6 +19,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
   const [formProjeto, setFormProjeto] = useState(null) // null | 'novo' | projeto
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
+  const [toast, setToast] = useState('')
 
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
 
@@ -29,6 +31,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
         <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
         <UploadXML
           onBack={() => { setShowUpload(false); refetch() }}
+          onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
           projetos={projetos}
           criarProjeto={criarProjeto}
           editarProjeto={editarProjeto}
@@ -199,6 +202,8 @@ export default function Dashboard({ user, perfil, onSignOut }) {
       {modalProjeto && (
         <ProjectModal projeto={modalProjeto} onClose={() => setModalProjeto(null)} />
       )}
+
+      {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
 
       {formProjeto && (
         <ProjetoForm
