@@ -24,16 +24,27 @@ export function useAuth() {
     return () => subscription.unsubscribe()
   }, [])
 
-  async function fetchPerfil(userId) {
+  // Busca perfil usando auth.uid() — usuarios.id deve ser igual ao auth.uid()
+  async function fetchPerfil(authUid) {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('usuarios')
         .select('perfil')
-        .eq('id', userId)
-        .single()
-      setPerfil(data?.perfil ?? 'admin')
+        .eq('id', authUid)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (!data) {
+        // Usuário existe no Auth mas não na tabela usuarios — cria com perfil padrão
+        await supabase.from('usuarios').insert({ id: authUid, perfil: 'equipe' })
+        setPerfil('equipe')
+      } else {
+        setPerfil(data.perfil ?? 'equipe')
+      }
     } catch {
-      setPerfil('admin')
+      // Se RLS bloquear (ex: policy ainda não criada), assume equipe como fallback seguro
+      setPerfil('equipe')
     }
     setLoading(false)
   }
