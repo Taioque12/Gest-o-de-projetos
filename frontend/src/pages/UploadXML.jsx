@@ -124,7 +124,8 @@ export default function UploadXML({ onBack, projetos = [], criarProjeto, editarP
     const { nome, inicio, fim, prev } = resultado.projeto
     return (
       <ProjetoForm
-        projeto={{ nome, inicio, fim, prev, real: prev, os: '', cliente: '', escopo: '', responsavel: '', valor: '', acao: '', equipes: [] }}
+        projeto={null}
+        initialValues={{ nome, data_inicio: inicio, data_fim: fim, prev, real: prev }}
         onSalvar={handleCriarProjeto}
         onFechar={() => setAcao(null)}
         salvando={salvando}

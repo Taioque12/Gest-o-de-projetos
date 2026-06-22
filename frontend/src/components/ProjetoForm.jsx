@@ -17,23 +17,25 @@ function calcPrazo(inicio, fim) {
   return Math.round((ms / (1000 * 60 * 60 * 24 * 30.44)) * 10) / 10
 }
 
-export default function ProjetoForm({ projeto, onSalvar, onFechar, salvando }) {
+export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar, salvando }) {
   const ed = !!projeto
+  // initialValues é usado apenas no modo criação (projeto=null) para pré-preencher campos do XML
+  const iv = initialValues ?? {}
 
   const [form, setForm] = useState({
     os:            projeto?.os            ?? '',
-    nome:          projeto?.nome          ?? '',
-    cliente:       projeto?.cliente       ?? '',
-    escopo:        projeto?.escopo        ?? '',
-    responsavel:   projeto?.responsavel   ?? '',
-    data_inicio:   projeto?.inicio        ?? '',
-    data_fim:      projeto?.fim           ?? '',
-    valor_os:      projeto?.valor         ?? '',
-    acao:          projeto?.acao          ?? '',
-    prev:          projeto?.prev          ?? 0,
-    real:          projeto?.real          ?? 0,
+    nome:          projeto?.nome          ?? iv.nome          ?? '',
+    cliente:       projeto?.cliente       ?? iv.cliente       ?? '',
+    escopo:        projeto?.escopo        ?? iv.escopo        ?? '',
+    responsavel:   projeto?.responsavel   ?? iv.responsavel   ?? '',
+    data_inicio:   projeto?.inicio        ?? iv.data_inicio   ?? '',
+    data_fim:      projeto?.fim           ?? iv.data_fim      ?? '',
+    valor_os:      projeto?.valor         ?? iv.valor_os      ?? '',
+    acao:          projeto?.acao          ?? iv.acao          ?? '',
+    prev:          projeto?.prev          ?? iv.prev          ?? 0,
+    real:          projeto?.real          ?? iv.real          ?? 0,
   })
-  const [equipes, setEquipes] = useState(projeto?.equipes ?? [])
+  const [equipes, setEquipes] = useState(projeto?.equipes ?? iv.equipes ?? [])
   const [equipeInput, setEquipeInput] = useState('')
   const [erro, setErro] = useState('')
 
