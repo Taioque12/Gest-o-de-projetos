@@ -5,4 +5,4 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(url, key)
 
-export const supabaseConfigurado = !url?.includes('SEU-PROJETO')
+export const supabaseConfigurado = !!url && !url.includes('SEU-PROJETO') && !url.includes('undefined')
