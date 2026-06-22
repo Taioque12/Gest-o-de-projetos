@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MA CONEGLIAN · Gestão de Projetos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ===== Identidade MA CONEGLIAN (verde) — ajustável ===== */
+    --brand:#0f7a3d; --brand-2:#0a5e2e; --brand-3:#06371d; --brand-light:#e7f5ec;
+    --surface:#ffffff; --surface-2:#f6f8f6; --line:#e3e9e4;
+    --ink:#102018; --ink-2:#4a5b51; --ink-3:#90a298;
+    /* status (criticidade) */
+    --verde:#16a34a; --verde-bg:#dcfce7;
+    --amarelo:#d97706; --amarelo-bg:#fef3c7;
+    --vermelho:#dc2626; --vermelho-bg:#fee2e2;
+    --shadow:0 1px 3px rgba(16,32,24,.08),0 1px 2px rgba(16,32,24,.06);
+    --shadow-lg:0 10px 25px -5px rgba(16,32,24,.14),0 8px 10px -6px rgba(16,32,24,.08);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--surface-2);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 24px 64px}
+  svg{overflow:visible}
+
+  /* ===== Header ===== */
+  header{background:linear-gradient(135deg,var(--brand-3) 0%,var(--brand-2) 55%,var(--brand) 130%);color:#fff;padding:26px 0 22px;margin-bottom:26px;border-bottom:3px solid var(--brand)}
+  .head-inner{max-width:1320px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:50px;height:50px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--brand-2);letter-spacing:-.5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .brand h1{font-size:19px;font-weight:700;letter-spacing:-.2px}
+  .brand p{font-size:12.5px;color:#cfe6d8;font-weight:500;margin-top:2px}
+  .head-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .badge-fic{background:rgba(217,119,6,.2);border:1px solid rgba(251,191,36,.55);color:#fde68a;font-size:11px;font-weight:700;letter-spacing:.5px;padding:6px 12px;border-radius:999px;text-transform:uppercase}
+  .updated{font-size:12.5px;color:#cfe6d8;text-align:right}
+  .updated b{color:#fff;font-weight:600}
+  .btn{cursor:pointer;border:none;font-family:inherit;font-weight:600;font-size:13px;border-radius:9px;padding:9px 14px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22)}
+  .btn-ghost:hover{background:rgba(255,255,255,.24)}
+
+  /* ===== KPIs ===== */
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
+  .kpi.k-amarelo::before{background:var(--amarelo)} .kpi.k-vermelho::before{background:var(--vermelho)} .kpi.k-verde::before{background:var(--verde)}
+  .kpi .lbl{font-size:11.5px;color:var(--ink-2);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .val{font-size:26px;font-weight:800;letter-spacing:-1px;margin-top:6px;line-height:1}
+  .kpi .sub{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-top:5px}
+  .kpi .val.verde{color:var(--verde)} .kpi .val.amarelo{color:var(--amarelo)} .kpi .val.vermelho{color:var(--vermelho)}
+
+  /* ===== Panels ===== */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:24px}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);gap:14px;flex-wrap:wrap}
+  .panel-head h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px}
+  .panel-head .ico{width:30px;height:30px;border-radius:8px;background:var(--brand-light);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .panel-head .hint{font-size:12.5px;color:var(--ink-3);font-weight:500}
+  .panel-body{padding:22px}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .swatch{width:24px;height:3px;border-radius:2px;display:inline-block}
+  .swatch.dash{background:repeating-linear-gradient(90deg,var(--ink-3) 0 5px,transparent 5px 9px);height:3px}
+  .swatch.solid{background:var(--brand);height:4px}
+
+  /* ===== Filters ===== */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .chip{cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-weight:600;font-size:13px;padding:8px 14px;border-radius:999px;transition:.15s;display:flex;align-items:center;gap:7px}
+  .chip:hover{border-color:var(--brand);color:var(--brand)}
+  .chip.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dot.verde{background:var(--verde)} .dot.amarelo{background:var(--amarelo)} .dot.vermelho{background:var(--vermelho)}
+
+  /* ===== Project cards ===== */
+  .grid-proj{display:grid;grid-template-columns:repeat(auto-fill,minmax(370px,1fr));gap:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:.18s;position:relative}
+  .card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:#cdd8d0}
+  .card .strip{height:5px}
+  .strip.verde{background:var(--verde)} .strip.amarelo{background:var(--amarelo)} .strip.vermelho{background:var(--vermelho)}
+  .card-inner{padding:17px 18px 18px}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:3px}
+  .card-top h3{font-size:15px;font-weight:700;line-height:1.3}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;display:flex;align-items:center;gap:5px}
+  .pill.verde{background:var(--verde-bg);color:#166534}
+  .pill.amarelo{background:var(--amarelo-bg);color:#92400e}
+  .pill.vermelho{background:var(--vermelho-bg);color:#991b1b}
+  .meta{font-size:12px;color:var(--ink-2);font-weight:500;margin-bottom:12px}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:13px}
+  .fact{display:flex;gap:7px;font-size:11.5px;color:var(--ink-2);align-items:baseline}
+  .fact .fl{color:var(--ink-3);font-weight:600;white-space:nowrap}
+  .fact .fv{color:var(--ink);font-weight:600}
+
+  .bars{margin-bottom:12px}
+  .bar-row{margin-bottom:9px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-top{display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;margin-bottom:4px}
+  .bar-top .t1{color:var(--ink-2)} .bar-top .t2{color:var(--ink)}
+  .track{height:8px;background:#eaefea;border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px}
+  .fill.prev{background:#c4cfc8}
+  .fill.real-verde{background:var(--verde)} .fill.real-amarelo{background:var(--amarelo)} .fill.real-vermelho{background:var(--vermelho)}
+
+  .desvio-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;margin-bottom:13px}
+  .desvio-row .dl{font-size:11.5px;color:var(--ink-2);font-weight:600}
+  .desvio-row .dv{font-size:15px;font-weight:800}
+  .dv.verde{color:var(--verde)} .dv.amarelo{color:var(--amarelo)} .dv.vermelho{color:var(--vermelho)}
+
+  .info-line{display:flex;gap:8px;font-size:12px;color:var(--ink-2);margin-top:8px;align-items:flex-start}
+  .info-line .ic{flex:0 0 auto;margin-top:1px}
+  .info-line b{color:var(--ink);font-weight:600}
+  .conflict-tag{display:inline-block;background:var(--vermelho-bg);color:#991b1b;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:4px}
+
+  /* ===== Alocação table ===== */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-2);font-weight:700;padding:10px 12px;border-bottom:2px solid var(--line);background:var(--surface-2)}
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .team-name{font-weight:600;color:var(--ink)}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;background:var(--brand-light);color:var(--brand-2);margin:2px 3px 2px 0}
+  .tag.warn{background:var(--vermelho-bg);color:#991b1b}
+
+  /* ===== Modal ===== */
+  .overlay{position:fixed;inset:0;background:rgba(16,32,24,.55);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:40px 18px;z-index:50;overflow-y:auto}
+  .overlay.open{display:flex}
+  .modal{background:var(--surface);border-radius:18px;max-width:780px;width:100%;box-shadow:var(--shadow-lg);overflow:hidden;animation:pop .2s ease}
+  @keyframes pop{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+  .modal-head{padding:20px 24px;color:#fff;position:relative}
+  .modal-head.verde{background:linear-gradient(135deg,#166534,#16a34a)}
+  .modal-head.amarelo{background:linear-gradient(135deg,#92400e,#d97706)}
+  .modal-head.vermelho{background:linear-gradient(135deg,#991b1b,#dc2626)}
+  .modal-head h2{font-size:19px;font-weight:700}
+  .modal-head p{font-size:13px;opacity:.92;margin-top:3px}
+  .close{position:absolute;top:16px;right:18px;cursor:pointer;background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;line-height:1}
+  .close:hover{background:rgba(255,255,255,.35)}
+  .modal-body{padding:22px 24px 26px}
+  .m-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+  .m-stat{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+  .m-stat .l{font-size:11px;color:var(--ink-2);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .m-stat .v{font-size:20px;font-weight:800;margin-top:3px}
+  .m-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;background:var(--brand-light);border:1px solid #cce8d6;border-radius:10px;padding:13px 15px;margin-bottom:6px}
+  .m-fact .l{font-size:10.5px;color:var(--brand-2);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .m-fact .v{font-size:13.5px;color:var(--ink);font-weight:600;margin-top:2px}
+  .m-sec{margin-top:20px}
+  .m-sec h4{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .acao-box{background:#eefaf2;border:1px solid #bfe6cd;border-left:4px solid var(--brand);border-radius:10px;padding:13px 15px;font-size:13.5px;color:#0c4a2a;line-height:1.5}
+  .frente{margin-bottom:11px}
+  .frente:last-child{margin-bottom:0}
+  .frente-top{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:4px}
+  .frente .track{height:7px}
+
+  footer{text-align:center;color:var(--ink-3);font-size:12px;margin-top:34px;line-height:1.7}
+  footer b{color:var(--ink-2)}
+
+  @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.m-grid,.m-facts{grid-template-columns:1fr 1fr}.grid-proj{grid-template-columns:1fr}.facts{grid-template-columns:1fr}}
+  @media print{header{-webkit-print-color-adjust:exact;print-color-adjust:exact}.btn,.filters{display:none!important}.card:hover{transform:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <div class="brand">
+      <div class="logo">MA</div>
+      <div>
+        <h1>MA CONEGLIAN · Gestão de Projetos</h1>
+        <p>Engenharia Elétrica · instalações, automação e comissionamento</p>
+      </div>
+    </div>
+    <div class="head-right">
+      <span class="badge-fic">Dados fictícios · validação</span>
+      <div class="updated">Atualização semanal<br><b id="hoje">21/06/2026</b></div>
+      <button class="btn btn-ghost" onclick="window.print()">🖨️ Exportar PDF</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
+
+  <!-- Curva S Portfólio -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2><span class="ico">📈</span> Curva S do Portfólio — Avanço Físico</h2>
+      <div class="legend">
+        <span><i class="swatch dash"></i> Previsto (linha de base)</span>
+        <span><i class="swatch solid"></i> Realizado</span>
+      </div>
+    </div>
+    <div class="panel-body">
+      <svg id="scurve" viewBox="0 0 800 340" style="width:100%;height:auto;display:block"></svg>
+      <p class="hint" style="margin-top:10px;color:var(--ink-3);font-size:12px">Médias ponderadas por valor de contrato · linha do tempo em calendário (semanal).</p>
+    </div>
+  </div>
+
+  <!-- Projetos -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2><span class="ico">🗂️</span> Projetos do Portfólio</h2>
+      <div class="filters" id="filters">
+        <button class="chip active" data-f="todos">Todos</button>
+        <button class="chip" data-f="verde"><span class="dot verde"></span> Verde</button>
+        <button class="chip" data-f="amarelo"><span class="dot amarelo"></span> Atenção</button>
+        <button class="chip" data-f="vermelho"><span class="dot vermelho"></span> Crítico</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="grid-proj" id="grid"></div>
+    </div>
+  </div>
+
+  <!-- Alocação -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2><span class="ico">👷</span> Mapa de Alocação & Gargalos de Recurso</h2>
+      <span class="hint">Equipes demandadas por mais de um Projeto/OS sinalizam conflito de recurso (gargalo)</span>
+    </div>
+    <div class="panel-body" style="overflow-x:auto">
+      <table id="aloc"></table>
+    </div>
+  </div>
+
+  <footer>
+    <b>Painel de demonstração — MA CONEGLIAN</b> · projetos, clientes, OS, responsáveis, valores e percentuais fictícios, para aprovação do formato.<br>
+    Estrutura: Projeto · OS · Cliente · Responsável · Prazo · Data-fim · Valor da OS · Avanço Previsto x Realizado · Desvio (criticidade) · Alocação · Ação Recomendada.
+  </footer>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+/* ====== DADOS FICTÍCIOS ====== */
+const TODAY = new Date(2026,5,21);          // 21/06/2026
+const WEEK = 7*864e5;
+const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+
+const PROJETOS = [
+  { nome:"Subestação 13,8kV / 480V — Ampliação", os:"2024-0142",
+    cliente:"Petroquímica Norte S.A. — Un. Camaçari", escopo:"Instalações elétricas / MT",
+    responsavel:"Eng. Carlos Menezes", inicio:"2026-01-26", fim:"2026-09-28", prazo:"8 meses", valor:2850000,
+    prev:65, real:62,
+    equipes:["Equipe A · Montagem Eletromecânica","Equipe D · Comissionamento"],
+    acao:"Manter ritmo. Antecipar a mobilização da Equipe D (comissionamento) para o próximo marco e iniciar ensaios de proteção dos relés.",
+    frentes:[["Montagem de painéis",80,78],["Lançamento de cabos MT",60,55],["Conexões e terminações",50,48],["Ensaios elétricos",30,25]] },
+
+  { nome:"Infraestrutura Elétrica & Eletrocalhas — Galpão 3", os:"2024-0156",
+    cliente:"Logística Sul Ltda — CD Guarulhos", escopo:"Infraestrutura / BT",
+    responsavel:"Eng. Patrícia Lopes", inicio:"2026-03-16", fim:"2026-07-31", prazo:"4,5 meses", valor:1120000,
+    prev:80, real:72,
+    equipes:["Equipe B · Infraestrutura/Eletrocalhas"],
+    acao:"Reforçar a Equipe B com turno adicional e revalidar a sequência de lançamento de cabos para recuperar os 8 p.p. antes do próximo marco.",
+    frentes:[["Suportação / eletrocalhas",90,85],["Lançamento de cabos BT",78,68],["Quadros de distribuição",70,62]] },
+
+  { nome:"SPDA e Aterramento — Tancagem", os:"2024-0163",
+    cliente:"Terminal Portuário Atlântico", escopo:"SPDA / Aterramento",
+    responsavel:"Téc. Rafael Souza", inicio:"2026-05-25", fim:"2026-07-24", prazo:"2 meses", valor:480000,
+    prev:45, real:30,
+    equipes:["Equipe E · SPDA/Aterramento","Equipe A · Montagem (compartilhada)"],
+    acao:"AÇÃO IMEDIATA — escalonar à gerência. Liberar material de aterramento retido no recebimento, realocar a Equipe A após o pico da OS 2024-0142 e replanejar o caminho crítico.",
+    frentes:[["Malha de aterramento",55,40],["Captação SPDA",40,25],["Descidas e medições",30,18]] },
+
+  { nome:"SDAI — Detecção e Alarme de Incêndio", os:"2024-0171",
+    cliente:"Aliment. BomSabor — Planta 2", escopo:"SDAI",
+    responsavel:"Eng. Patrícia Lopes", inicio:"2026-05-04", fim:"2026-08-03", prazo:"3 meses", valor:760000,
+    prev:55, real:54,
+    equipes:["Equipe C · Instrumentação & Automação (parcial)"],
+    acao:"Dentro da tolerância. Concluir os testes de loop do SDAI e iniciar o pré-comissionamento conforme cronograma.",
+    frentes:[["Tubulação / infra SDAI",70,68],["Cabeamento de detecção",55,52],["Programação da central",35,30]] },
+
+  { nome:"Automação & Comissionamento — Linha de Envase", os:"2024-0178",
+    cliente:"Bebidas Premium S.A.", escopo:"Automação / Comissionamento",
+    responsavel:"Eng. Carlos Menezes", inicio:"2026-04-13", fim:"2026-10-12", prazo:"6 meses", valor:1640000,
+    prev:30, real:23,
+    equipes:["Equipe C · Instrumentação & Automação (compartilhada)"],
+    acao:"Plano de recuperação. Definir prioridade entre OS 2024-0171 e 2024-0178 para a Equipe C e adiantar a parametrização off-line para reduzir tempo de campo.",
+    frentes:[["Arquitetura de rede",45,38],["Programação CLP",28,20],["Comissionamento de I/O",15,8]] },
+
+  { nome:"Iluminação Industrial LED — Retrofit", os:"2024-0185",
+    cliente:"Metalúrgica Aço Forte", escopo:"Iluminação",
+    responsavel:"Téc. Rafael Souza", inicio:"2026-05-15", fim:"2026-06-29", prazo:"1,5 mês", valor:320000,
+    prev:90, real:88,
+    equipes:["Equipe B · Infraestrutura (compartilhada)"],
+    acao:"Manter. Programar as medições finais (luminância) e a documentação as built da iluminação para fechamento da OS.",
+    frentes:[["Remoção de luminárias antigas",100,100],["Instalação de LED",88,86],["Comissionamento de iluminação",75,72]] }
+];
+
+/* ====== HELPERS ====== */
+const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt = (n,d=1)=> n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtDate = ms => { const dt=new Date(ms); return String(dt.getDate()).padStart(2,'0')+"/"+String(dt.getMonth()+1).padStart(2,'0'); };
+const fmtFull = ms => { const dt=new Date(ms); return String(dt.getDate()).padStart(2,'0')+"/"+String(dt.getMonth()+1).padStart(2,'0')+"/"+dt.getFullYear(); };
+const valorFmt = n => n>=1e6 ? "R$ "+fmt(n/1e6,2)+" mi" : n>=1e3 ? "R$ "+fmt(n/1e3,0)+" mil" : "R$ "+fmt(n,0);
+const T = t => t<=0?0 : t>=1?1 : 3*t*t-2*t*t*t;     // smoothstep (forma de S)
+function classify(prev,real){
+  const g=real-prev;
+  if(g>=-5) return {k:"verde",lbl:"Dentro da tolerância",emo:"🟢"};
+  if(g>=-10) return {k:"amarelo",lbl:"Atenção",emo:"🟡"};
+  return {k:"vermelho",lbl:"Crítico",emo:"🔴"};
+}
+
+/* precomputa âncoras de tempo por projeto */
+PROJETOS.forEach(p=>{
+  p._s=parse(p.inicio).getTime(); p._e=parse(p.fim).getTime();
+  p._tau=clamp((TODAY-p._s)/(p._e-p._s),0,1); p._Tc=T(p._tau);
+});
+/* % previsto/realizado de um projeto numa data qualquer (curva forçada a passar pelo snapshot de hoje) */
+function plannedPct(p,ms){
+  const tau=clamp((ms-p._s)/(p._e-p._s),0,1), tk=T(tau), Tc=p._Tc;
+  if(Tc<=0) return 0; if(Tc>=1) return tk*100;
+  return tk<=Tc ? p.prev*tk/Tc : p.prev+(100-p.prev)*(tk-Tc)/(1-Tc);
+}
+function realizadoPct(p,ms){
+  const tau=clamp((ms-p._s)/(p._e-p._s),0,1), Tc=p._Tc;
+  if(Tc<=0) return 0;
+  return Math.min(100, p.real*T(tau)/Tc);
+}
+const VTOT = PROJETOS.reduce((s,p)=>s+p.valor,0);
+const wAvgPrev = PROJETOS.reduce((s,p)=>s+p.valor*p.prev,0)/VTOT;
+const wAvgReal = PROJETOS.reduce((s,p)=>s+p.valor*p.real,0)/VTOT;
+
+/* ====== KPIs ====== */
+function renderKPIs(){
+  const desv=wAvgReal-wAvgPrev, cls=classify(wAvgPrev,wAvgReal);
+  const nC=PROJETOS.filter(p=>classify(p.prev,p.real).k==="vermelho").length;
+  const nA=PROJETOS.filter(p=>classify(p.prev,p.real).k==="amarelo").length;
+  const cards=[
+    {lbl:"Projetos Ativos",val:PROJETOS.length,sub:"em execução"},
+    {lbl:"Valor em Carteira",val:valorFmt(VTOT),sub:PROJETOS.length+" ordens de serviço"},
+    {lbl:"Avanço Previsto",val:fmt(wAvgPrev)+"%",sub:"ponderado por valor"},
+    {lbl:"Avanço Realizado",val:fmt(wAvgReal)+"%",sub:"ponderado por valor"},
+    {lbl:"Desvio Médio",val:(desv>=0?"+":"−")+fmt(Math.abs(desv))+" p.p.",sub:cls.lbl,cls:cls.k,valcls:cls.k},
+    {lbl:"Exigem Ação",val:nC+" 🔴 / "+nA+" 🟡",sub:"crítico / atenção",cls:nC?"vermelho":"amarelo"}
+  ];
+  document.getElementById('kpis').innerHTML=cards.map(c=>`
+    <div class="kpi ${c.cls?'k-'+c.cls:''}">
+      <div class="lbl">${c.lbl}</div>
+      <div class="val ${c.valcls||''}">${c.val}</div>
+      <div class="sub">${c.sub}</div>
+    </div>`).join('');
+}
+
+/* ====== Curva S (SVG) — eixo por fração 0..1 ====== */
+function drawSCurve(svg,o){
+  const W=800,H=340,padL=44,padR=24,padT=18,padB=36;
+  const pw=W-padL-padR, ph=H-padT-padB, y0=padT+ph;
+  const PX=x=>padL+x*pw, PY=v=>y0-v*(ph/100);
+  let s='';
+  [0,25,50,75,100].forEach(v=>{
+    s+=`<line x1="${padL}" y1="${PY(v)}" x2="${W-padR}" y2="${PY(v)}" stroke="#eef2f0" stroke-width="1"/>`;
+    s+=`<text x="${padL-8}" y="${PY(v)+4}" text-anchor="end" font-size="11" fill="#90a298" font-family="Inter">${v}%</text>`;
+  });
+  o.ticks.forEach(t=>{ s+=`<text x="${PX(t.x)}" y="${H-14}" text-anchor="middle" font-size="10.5" fill="#90a298" font-family="Inter">${t.label}</text>`; });
+  const hx=PX(o.todayX);
+  s+=`<line x1="${hx}" y1="${padT}" x2="${hx}" y2="${y0}" stroke="#c4cfc8" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+  s+=`<rect x="${hx-22}" y="${padT-3}" width="44" height="17" rx="4" fill="#102018"/>`;
+  s+=`<text x="${hx}" y="${padT+9}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="Inter">HOJE</text>`;
+  const pl=o.plannedPts.map(p=>`${PX(p.x)},${PY(p.y)}`).join(' ');
+  s+=`<polyline points="${pl}" fill="none" stroke="#90a298" stroke-width="2.5" stroke-dasharray="7 5" stroke-linejoin="round"/>`;
+  const ac=o.actualPts.map(p=>`${PX(p.x)},${PY(p.y)}`).join(' ');
+  const lastX=PX(o.actualPts[o.actualPts.length-1].x);
+  s+=`<polygon points="${PX(o.actualPts[0].x)},${y0} ${ac} ${lastX},${y0}" fill="rgba(15,122,61,.10)"/>`;
+  s+=`<polyline points="${ac}" fill="none" stroke="#0f7a3d" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  o.actualPts.forEach((p,i)=>{ s+=`<circle cx="${PX(p.x)}" cy="${PY(p.y)}" r="${i===o.actualPts.length-1?5:3}" fill="#0f7a3d" stroke="#fff" stroke-width="2"/>`; });
+  s+=`<text x="${lastX+8}" y="${PY(o.realToday)+4}" font-size="12" font-weight="800" fill="#0f7a3d" font-family="Inter">${fmt(o.realToday,0)}%</text>`;
+  s+=`<text x="${hx+8}" y="${PY(o.prevToday)-7}" font-size="12" font-weight="700" fill="#64748b" font-family="Inter">${fmt(o.prevToday,0)}%</text>`;
+  svg.innerHTML=s;
+}
+/* curva de um projeto (semanal, duração própria) */
+function projectCurveOpts(p){
+  const span=p._e-p._s, n=Math.ceil(span/WEEK);
+  const planned=[], actual=[];
+  for(let k=0;k<=n;k++){
+    const ms=Math.min(p._s+k*WEEK,p._e), x=(ms-p._s)/span;
+    planned.push({x,y:plannedPct(p,ms)});
+    if(ms<=TODAY) actual.push({x,y:realizadoPct(p,ms)});
+  }
+  if(planned[planned.length-1].x<1) planned.push({x:1,y:100});
+  actual.push({x:p._tau,y:p.real});           // garante fim exatamente em HOJE
+  const stride=Math.max(1,Math.ceil(n/8)), ticks=[];
+  for(let k=0;k<=n;k+=stride) ticks.push({x:Math.min(k*WEEK,span)/span,label:fmtDate(p._s+k*WEEK)});
+  if(ticks[ticks.length-1].x<1) ticks.push({x:1,label:fmtDate(p._e)});
+  return {plannedPts:planned,actualPts:actual,ticks,todayX:p._tau,prevToday:p.prev,realToday:p.real};
+}
+/* curva do portfólio (calendário, ponderada por valor) */
+function portfolioCurveOpts(){
+  const gs=Math.min(...PROJETOS.map(p=>p._s)), ge=Math.max(...PROJETOS.map(p=>p._e)), span=ge-gs;
+  const planned=[], actual=[];
+  for(let ms=gs; ms<=ge; ms+=WEEK){
+    const x=(ms-gs)/span;
+    planned.push({x,y:PROJETOS.reduce((a,p)=>a+p.valor*plannedPct(p,ms),0)/VTOT});
+    if(ms<=TODAY) actual.push({x,y:PROJETOS.reduce((a,p)=>a+p.valor*realizadoPct(p,ms),0)/VTOT});
+  }
+  if(planned[planned.length-1].x<1) planned.push({x:1,y:100});
+  const tX=(TODAY-gs)/span;
+  actual.push({x:tX,y:wAvgReal});
+  const ticks=[]; let d=new Date(gs); d.setDate(1); d.setMonth(d.getMonth()+1);
+  while(d.getTime()<=ge){ const x=(d.getTime()-gs)/span; if(x>=0&&x<=1) ticks.push({x,label:MES[d.getMonth()]}); d.setMonth(d.getMonth()+1); }
+  return {plannedPts:planned,actualPts:actual,ticks,todayX:tX,prevToday:wAvgPrev,realToday:wAvgReal};
+}
+
+/* ====== Cards ====== */
+let filtro="todos";
+function renderCards(){
+  const grid=document.getElementById('grid');
+  const list=PROJETOS.map((p,i)=>({p,i})).filter(({p})=>filtro==="todos"||classify(p.prev,p.real).k===filtro);
+  grid.innerHTML=list.map(({p,i})=>{
+    const c=classify(p.prev,p.real), desv=p.real-p.prev;
+    const conflict=p.equipes.some(e=>e.includes("compartilhada"));
+    return `
+    <div class="card" onclick="openModal(${i})">
+      <div class="strip ${c.k}"></div>
+      <div class="card-inner">
+        <div class="card-top"><h3>${p.nome}</h3><span class="pill ${c.k}">${c.emo} ${c.lbl}</span></div>
+        <div class="meta">OS <b>${p.os}</b> · ${p.cliente}</div>
+        <div class="facts">
+          <div class="fact"><span class="fl">👤 Resp.:</span><span class="fv">${p.responsavel}</span></div>
+          <div class="fact"><span class="fl">💰 Valor:</span><span class="fv">${valorFmt(p.valor)}</span></div>
+          <div class="fact"><span class="fl">📅 Fim:</span><span class="fv">${fmtFull(p._e)}</span></div>
+          <div class="fact"><span class="fl">⏱️ Prazo:</span><span class="fv">${p.prazo}</span></div>
+        </div>
+        <div class="bars">
+          <div class="bar-row"><div class="bar-top"><span class="t1">Previsto</span><span class="t1">${p.prev}%</span></div><div class="track"><div class="fill prev" style="width:${p.prev}%"></div></div></div>
+          <div class="bar-row"><div class="bar-top"><span class="t2">Realizado</span><span class="t2">${p.real}%</span></div><div class="track"><div class="fill real-${c.k}" style="width:${p.real}%"></div></div></div>
+        </div>
+        <div class="desvio-row"><span class="dl">Desvio (Realizado − Previsto)</span><span class="dv ${c.k}">${desv>=0?"+":"−"}${Math.abs(desv)} p.p.</span></div>
+        <div class="info-line"><span class="ic">👷</span><span><b>Equipes:</b> ${p.equipes.join(" · ")} ${conflict?'<span class="conflict-tag">conflito de recurso</span>':''}</span></div>
+        <div class="info-line"><span class="ic">🎯</span><span><b>Ação:</b> ${p.acao}</span></div>
+      </div>
+    </div>`;
+  }).join('')||`<p style="color:var(--ink-3)">Nenhum projeto nesta classificação.</p>`;
+}
+
+/* ====== Alocação ====== */
+function renderAloc(){
+  const map={};
+  PROJETOS.forEach(p=>p.equipes.forEach(e=>{
+    const parts=e.split(" · "); const name=parts[0]+" · "+parts[1].replace(/\s*\((compartilhada|parcial)\)/,"");
+    (map[name]=map[name]||[]).push({os:p.os}); }));
+  const rows=Object.entries(map).map(([team,projs])=>{
+    const conflito=projs.length>1;
+    return `<tr><td class="team-name">${team}</td>
+      <td>${projs.map(pr=>`<span class="tag ${conflito?'warn':''}">OS ${pr.os}</span>`).join('')}</td>
+      <td>${projs.length}</td>
+      <td>${conflito?'<span class="pill vermelho" style="display:inline-flex">⚠️ Gargalo</span>':'<span class="pill verde" style="display:inline-flex">✓ Dedicada</span>'}</td></tr>`;
+  }).join('');
+  document.getElementById('aloc').innerHTML=`<thead><tr><th>Equipe</th><th>Projetos / OS atendidos</th><th>Nº OS</th><th>Status do recurso</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+/* ====== Modal ====== */
+function openModal(i){
+  const p=PROJETOS[i], c=classify(p.prev,p.real), desv=p.real-p.prev;
+  document.getElementById('modal').innerHTML=`
+    <div class="modal-head ${c.k}">
+      <button class="close" onclick="closeModal()">×</button>
+      <h2>${p.nome}</h2>
+      <p>OS ${p.os} · ${p.cliente} · ${p.escopo}</p>
+    </div>
+    <div class="modal-body">
+      <div class="m-grid">
+        <div class="m-stat"><div class="l">Previsto</div><div class="v">${p.prev}%</div></div>
+        <div class="m-stat"><div class="l">Realizado</div><div class="v">${p.real}%</div></div>
+        <div class="m-stat"><div class="l">Desvio</div><div class="v" style="color:var(--${c.k})">${desv>=0?"+":"−"}${Math.abs(desv)} p.p.</div></div>
+      </div>
+      <div class="m-facts">
+        <div class="m-fact"><div class="l">Responsável</div><div class="v">${p.responsavel}</div></div>
+        <div class="m-fact"><div class="l">Início</div><div class="v">${fmtFull(p._s)}</div></div>
+        <div class="m-fact"><div class="l">Data-fim</div><div class="v">${fmtFull(p._e)}</div></div>
+        <div class="m-fact"><div class="l">Prazo</div><div class="v">${p.prazo}</div></div>
+        <div class="m-fact"><div class="l">Valor da OS</div><div class="v">${valorFmt(p.valor)}</div></div>
+        <div class="m-fact"><div class="l">Criticidade</div><div class="v">${c.emo} ${c.lbl}</div></div>
+      </div>
+      <div class="m-sec"><h4>📈 Curva S do projeto (semanal)</h4>
+        <svg id="modalCurve" viewBox="0 0 800 340" style="width:100%;height:auto"></svg></div>
+      <div class="m-sec"><h4>🔧 Frentes de serviço (Previsto x Realizado)</h4>
+        ${p.frentes.map(f=>{const fc=classify(f[1],f[2]);return `<div class="frente"><div class="frente-top"><span>${f[0]}</span><span>${f[2]}% <span style="color:var(--ink-3);font-weight:500">/ ${f[1]}% prev</span></span></div><div class="track"><div class="fill real-${fc.k}" style="width:${f[2]}%"></div></div></div>`;}).join('')}</div>
+      <div class="m-sec"><h4>🎯 Ação Recomendada</h4><div class="acao-box">${p.acao}</div></div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  drawSCurve(document.getElementById('modalCurve'), projectCurveOpts(p));
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+document.addEventListener('keydown',e=>{ if(e.key==="Escape")closeModal(); });
+
+document.getElementById('filters').addEventListener('click',e=>{
+  const b=e.target.closest('.chip'); if(!b)return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  b.classList.add('active'); filtro=b.dataset.f; renderCards();
+});
+
+/* ====== Init ====== */
+renderKPIs(); drawSCurve(document.getElementById('scurve'),portfolioCurveOpts()); renderCards(); renderAloc();
+</script>
+</body>
+</html>
