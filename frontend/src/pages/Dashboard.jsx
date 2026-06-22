@@ -10,6 +10,7 @@ import ProjetoForm from '../components/ProjetoForm'
 import AlocacaoTable from '../components/AlocacaoTable'
 import UploadXML from './UploadXML'
 import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
+import Relatorio from '../components/Relatorio'
 import Toast from '../components/Toast'
 
 export default function Dashboard({ user, perfil, onSignOut }) {
@@ -18,6 +19,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
   const [modalProjeto, setModalProjeto] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
   const [showSemanal, setShowSemanal] = useState(false)
+  const [showRelatorio, setShowRelatorio] = useState(false)
   const [formProjeto, setFormProjeto] = useState(null) // null | 'novo' | projeto
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
@@ -37,6 +39,10 @@ export default function Dashboard({ user, perfil, onSignOut }) {
       alert('Erro ao salvar: ' + err.message)
     }
     setSalvando(false)
+  }
+
+  if (showRelatorio) {
+    return <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
   }
 
   if (showUpload) {
@@ -101,6 +107,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
         onUpload={() => setShowUpload(true)}
         onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}
         onAtualizarSemanal={podeEditar ? () => setShowSemanal(true) : null}
+        onRelatorio={() => setShowRelatorio(true)}
       />
 
       <div className="wrap">

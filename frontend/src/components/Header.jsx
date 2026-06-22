@@ -1,6 +1,6 @@
 import { supabaseConfigurado } from '../supabase'
 
-export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal }) {
+export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal, onRelatorio }) {
   const hoje = new Date().toLocaleDateString('pt-BR')
 
   return (
@@ -35,8 +35,8 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onA
               📂 Importar XML
             </button>
           )}
-          <button className="btn btn-ghost" onClick={() => window.print()}>
-            🖨️ Exportar PDF
+          <button className="btn btn-ghost" onClick={onRelatorio}>
+            🖨️ Relatório PDF
           </button>
           {supabaseConfigurado && (
             <button className="btn btn-danger" onClick={onSignOut}>
