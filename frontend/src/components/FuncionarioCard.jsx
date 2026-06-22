@@ -18,12 +18,12 @@ function mediaGeral(f) {
   return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)
 }
 
-export default function FuncionarioCard({ funcionario: f, onEditar, onExcluir }) {
-  const media = mediaGeral(f)
+export default function FuncionarioCard({ funcionario: f, onEditar, onExcluir, selecionado, onToggleSeleção }) {
+  const media    = mediaGeral(f)
   const corMedia = corNota(parseFloat(media))
 
   return (
-    <div className="func-card">
+    <div className={`func-card${selecionado ? ' func-card-sel' : ''}`}>
       <div className="func-card-top">
         <div className="func-avatar">{f.nome.charAt(0).toUpperCase()}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -54,8 +54,15 @@ export default function FuncionarioCard({ funcionario: f, onEditar, onExcluir })
       </div>
 
       <div className="func-actions">
-        <button className="btn btn-ghost func-btn" onClick={onEditar}>✏️ Editar</button>
-        <button className="btn btn-ghost func-btn func-btn-del" onClick={onExcluir}>🗑️ Excluir</button>
+        <button
+          className={`btn func-btn func-btn-sel${selecionado ? ' ativo' : ''}`}
+          onClick={onToggleSeleção}
+          title={selecionado ? 'Remover da equipe' : 'Adicionar à equipe'}
+        >
+          {selecionado ? '✅ Na equipe' : '➕ Adicionar à equipe'}
+        </button>
+        <button className="btn btn-ghost func-btn" onClick={onEditar}>✏️</button>
+        <button className="btn btn-ghost func-btn func-btn-del" onClick={onExcluir}>🗑️</button>
       </div>
     </div>
   )
