@@ -2,9 +2,10 @@ import { useState, useRef } from 'react'
 import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-pro-latest'
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
+const GEMINI_KEY   = import.meta.env.VITE_GEMINI_API_KEY ?? ''
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL  ?? 'gemini-1.5-pro-latest'
+const GEMINI_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models'
+const GEMINI_URL   = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 function buildPrompt(projeto, tarefas) {
   const hoje = new Date().toISOString().slice(0, 10)
