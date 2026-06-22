@@ -2,23 +2,70 @@ import { useState, useRef } from 'react'
 import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
 
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`
+
+function buildPrompt(projeto, tarefas) {
+  const hoje = new Date().toISOString().slice(0, 10)
+  const linhasTarefas = tarefas.slice(0, 40).map(t =>
+    `  - ${t.nome}: ${t.previsto}% completo | ${t.inicio} → ${t.fim}`
+  ).join('\n')
+
+  return `Você é um consultor sênior especializado em gerenciamento de projetos de engenharia elétrica (instalações, subestações, automação, comissionamento).
+
+Analise o cronograma abaixo e responda em português, de forma objetiva e prática.
+
+## Dados do Projeto
+- Nome: ${projeto.nome || '(não informado)'}
+- Data de início: ${projeto.inicio || '(não informada)'}
+- Data de término prevista: ${projeto.fim || '(não informada)'}
+- Avanço físico geral: ${projeto.prev}%
+- Data de referência: ${hoje}
+- Total de tarefas: ${tarefas.length}
+
+## Tarefas do Cronograma
+${linhasTarefas}
+${tarefas.length > 40 ? `  ... (+ ${tarefas.length - 40} tarefas não exibidas)` : ''}
+
+## Instruções
+Forneça uma análise estruturada com exatamente estas seções (use os títulos abaixo):
+
+### 🔎 Situação geral
+Uma frase resumindo a saúde do projeto (Verde / Atenção / Crítico) e o motivo principal.
+
+### ⚠️ Pontos de atenção
+Liste de 2 a 4 tarefas ou áreas que representam maior risco ao prazo ou qualidade. Seja específico com base nos dados.
+
+### 🎯 Plano de ação recomendado
+Liste de 3 a 5 ações concretas, numeradas, que o gestor deve tomar imediatamente. Use linguagem direta.
+
+### 📊 Indicadores-chave
+- Risco de atraso: (Baixo / Médio / Alto)
+- Recomendação de revisão do cronograma: (Sim / Não / Opcional)
+- Prioridade de ação: (Esta semana / Este mês / Monitorar)
+
+Seja direto. Não repita os dados brutos. Foque em insights e ações.`
+}
+
 export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto }) {
-  const [over, setOver]         = useState(false)
+  const [over, setOver]           = useState(false)
   const [resultado, setResultado] = useState(null)
-  const [loading, setLoading]   = useState(false)
-  const [acao, setAcao]         = useState(null)   // null | 'novo' | 'atualizar'
+  const [loading, setLoading]     = useState(false)
+  const [acao, setAcao]           = useState(null)
   const [projetoSel, setProjetoSel] = useState('')
-  const [salvando, setSalvando] = useState(false)
+  const [salvando, setSalvando]   = useState(false)
   const [feedbackFinal, setFeedbackFinal] = useState('')
+  const [analise, setAnalise]     = useState('')
+  const [analisando, setAnalisando] = useState(false)
+  const [erroIA, setErroIA]       = useState('')
   const inputRef = useRef()
 
   function extrairProjeto(doc) {
-    const nome    = doc.querySelector('Project > Name')?.textContent ?? ''
-    const inicio  = doc.querySelector('Project > StartDate')?.textContent?.slice(0, 10) ?? ''
-    const fim     = doc.querySelector('Project > FinishDate')?.textContent?.slice(0, 10) ?? ''
-    // Task UID=0 é o resumo do projeto no XML do MS Project
-    const resumo  = [...doc.querySelectorAll('Task')].find(t => t.querySelector('UID')?.textContent === '0')
-    const prev    = parseFloat(resumo?.querySelector('PercentComplete')?.textContent ?? '0')
+    const nome   = doc.querySelector('Project > Name')?.textContent ?? ''
+    const inicio = doc.querySelector('Project > StartDate')?.textContent?.slice(0, 10) ?? ''
+    const fim    = doc.querySelector('Project > FinishDate')?.textContent?.slice(0, 10) ?? ''
+    const resumo = [...doc.querySelectorAll('Task')].find(t => t.querySelector('UID')?.textContent === '0')
+    const prev   = parseFloat(resumo?.querySelector('PercentComplete')?.textContent ?? '0')
     return { nome, inicio, fim, prev }
   }
 
@@ -26,17 +73,17 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setLoading(true)
     setResultado(null)
     setAcao(null)
+    setAnalise('')
+    setErroIA('')
     setFeedbackFinal('')
     try {
       const texto = await file.text()
       const parser = new DOMParser()
       const doc = parser.parseFromString(texto, 'application/xml')
-
       const parseErr = doc.querySelector('parsererror')
       if (parseErr) throw new Error('Arquivo XML inválido ou corrompido.')
 
       const projeto = extrairProjeto(doc)
-
       const tarefas = [...doc.querySelectorAll('Task')]
         .filter(t => {
           const sumario = t.querySelector('Summary')?.textContent
@@ -64,6 +111,38 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setLoading(false)
   }
 
+  async function analisarComIA() {
+    if (!resultado?.ok) return
+    if (!GEMINI_KEY) {
+      setErroIA('Chave da API do Gemini não configurada. Adicione VITE_GEMINI_API_KEY nas variáveis de ambiente do Vercel.')
+      return
+    }
+    setAnalisando(true)
+    setAnalise('')
+    setErroIA('')
+    try {
+      const prompt = buildPrompt(resultado.projeto, resultado.tarefas)
+      const resp = await fetch(GEMINI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 1200, temperature: 0.3 },
+        }),
+      })
+      if (!resp.ok) {
+        const err = await resp.json()
+        throw new Error(err.error?.message ?? `Erro ${resp.status}`)
+      }
+      const data = await resp.json()
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta da IA.'
+      setAnalise(texto)
+    } catch (err) {
+      setErroIA('Erro ao consultar Gemini: ' + err.message)
+    }
+    setAnalisando(false)
+  }
+
   async function handleCriarProjeto(dados) {
     setSalvando(true)
     try {
@@ -83,21 +162,14 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     try {
       const prev = resultado.projeto.prev ?? proj.prev
       await editarProjeto(proj.id, {
-        os:               proj.os,
-        nome:             proj.nome,
-        cliente:          proj.cliente,
-        escopo:           proj.escopo,
-        responsavel:      proj.responsavel,
-        data_inicio:      proj.inicio,
-        data_fim:         proj.fim,
-        prazo_meses:      proj.prazo ? parseFloat(proj.prazo) : null,
-        valor_os:         proj.valor || null,
-        equipes:          proj.equipes ?? [],
-        acao_recomendada: proj.acao ?? '',
-        prev,
-        real:             prev,
+        os: proj.os, nome: proj.nome, cliente: proj.cliente,
+        escopo: proj.escopo, responsavel: proj.responsavel,
+        data_inicio: proj.inicio, data_fim: proj.fim,
+        prazo_meses: proj.prazo ? parseFloat(proj.prazo) : null,
+        valor_os: proj.valor || null, equipes: proj.equipes ?? [],
+        acao_recomendada: proj.acao ?? '', prev, real: prev,
       })
-      setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%. Clique em "← Voltar" para ver no dashboard.`)
+      setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%.`)
       setAcao(null)
     } catch (err) {
       alert('Erro ao atualizar: ' + err.message)
@@ -106,8 +178,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   }
 
   function onDrop(e) {
-    e.preventDefault()
-    setOver(false)
+    e.preventDefault(); setOver(false)
     const file = e.dataTransfer.files[0]
     if (file) processarXML(file)
   }
@@ -118,7 +189,18 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     e.target.value = ''
   }
 
-  // Exibe o formulário de novo projeto pré-preenchido com dados do XML
+  // Renderiza o texto markdown simples da IA (headings ### e listas -)
+  function renderAnalise(texto) {
+    return texto.split('\n').map((line, i) => {
+      if (line.startsWith('### ')) return <h4 key={i} className="ia-heading">{line.slice(4)}</h4>
+      if (line.startsWith('## '))  return <h3 key={i} className="ia-heading">{line.slice(3)}</h3>
+      if (line.startsWith('- ') || line.match(/^\d+\. /)) return <li key={i} className="ia-item">{line.replace(/^[-\d.] ?/, '')}</li>
+      if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="ia-bold">{line.slice(2, -2)}</p>
+      if (line.trim() === '') return <br key={i} />
+      return <p key={i} className="ia-p">{line}</p>
+    })
+  }
+
   if (acao === 'novo' && resultado?.projeto) {
     const { nome, inicio, fim, prev } = resultado.projeto
     return (
@@ -158,17 +240,13 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
           </div>
         )}
 
-        {feedbackFinal && (
-          <div className="upload-result">{feedbackFinal}</div>
-        )}
+        {feedbackFinal && <div className="upload-result">{feedbackFinal}</div>}
 
         {resultado?.ok && !feedbackFinal && (
           <>
             <div className="upload-result">
               ✅ <b>"{resultado.nome}"</b> lido — {resultado.tarefas.length} tarefa(s).
-              {resultado.projeto.prev > 0 && (
-                <span> Avanço geral detectado: <b>{resultado.projeto.prev}%</b></span>
-              )}
+              {resultado.projeto.prev > 0 && <span> Avanço geral: <b>{resultado.projeto.prev}%</b></span>}
             </div>
 
             {resultado.tarefas.length > 0 && (
@@ -180,10 +258,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
                   <tbody>
                     {resultado.tarefas.slice(0, 15).map((t, i) => (
                       <tr key={i}>
-                        <td>{t.nome}</td>
-                        <td>{t.previsto}%</td>
-                        <td>{t.inicio}</td>
-                        <td>{t.fim}</td>
+                        <td>{t.nome}</td><td>{t.previsto}%</td><td>{t.inicio}</td><td>{t.fim}</td>
                       </tr>
                     ))}
                     {resultado.tarefas.length > 15 && (
@@ -197,6 +272,44 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
                 </table>
               </div>
             )}
+
+            {/* Análise IA */}
+            <div className="ia-box">
+              <div className="ia-box-header">
+                <span>🤖 Análise de IA — Gemini 1.5 Pro</span>
+                <button
+                  className="btn-login"
+                  style={{ width: 'auto', padding: '8px 20px', margin: 0, fontSize: 13 }}
+                  onClick={analisarComIA}
+                  disabled={analisando}
+                >
+                  {analisando ? '⏳ Analisando...' : analise ? '🔄 Reanalisar' : '✨ Analisar cronograma'}
+                </button>
+              </div>
+
+              {erroIA && (
+                <div style={{ marginTop: 10, color: '#991b1b', fontSize: 13 }}>{erroIA}</div>
+              )}
+
+              {analisando && (
+                <div className="ia-loading">
+                  <div className="ia-spinner" />
+                  <span>Gemini está analisando o cronograma...</span>
+                </div>
+              )}
+
+              {analise && !analisando && (
+                <div className="ia-resultado">
+                  {renderAnalise(analise)}
+                </div>
+              )}
+
+              {!analise && !analisando && !erroIA && (
+                <p className="ia-hint">
+                  Clique em "Analisar cronograma" para o Gemini identificar riscos e sugerir ações com base nas tarefas importadas.
+                </p>
+              )}
+            </div>
 
             {/* Ações */}
             <div className="upload-acoes">
@@ -222,15 +335,9 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
 
               {acao === 'atualizar' && (
                 <div style={{ marginTop: 14, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <select
-                    value={projetoSel}
-                    onChange={e => setProjetoSel(e.target.value)}
-                    style={{ flex: 1, minWidth: 220 }}
-                  >
+                  <select value={projetoSel} onChange={e => setProjetoSel(e.target.value)} style={{ flex: 1, minWidth: 220 }}>
                     <option value="">Selecione o projeto...</option>
-                    {projetos.map(p => (
-                      <option key={p.id} value={p.id}>{p.os} — {p.nome}</option>
-                    ))}
+                    {projetos.map(p => <option key={p.id} value={p.id}>{p.os} — {p.nome}</option>)}
                   </select>
                   <button
                     className="btn-login"
