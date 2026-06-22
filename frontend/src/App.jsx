@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import { supabaseConfigurado } from './supabase'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Equipes from './pages/Equipes'
 
 export default function App() {
   const { user, perfil, loading, signIn, signOut } = useAuth()
@@ -14,6 +15,17 @@ export default function App() {
     return <Login onSignIn={signIn} />
   }
 
+  if (view === 'equipes') {
+    return (
+      <Equipes
+        user={user}
+        perfil={perfil}
+        onSignOut={signOut}
+        onChangeView={setView}
+      />
+    )
+  }
+
   return (
     <Dashboard
       user={user}
@@ -21,6 +33,7 @@ export default function App() {
       onSignOut={signOut}
       view={view}
       setView={setView}
+      onChangeView={setView}
     />
   )
 }

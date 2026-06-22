@@ -13,7 +13,7 @@ import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
 import Relatorio from '../components/Relatorio'
 import Toast from '../components/Toast'
 
-export default function Dashboard({ user, perfil, onSignOut }) {
+export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
   const [filtro, setFiltro] = useState('todos')
   const [modalProjeto, setModalProjeto] = useState(null)
@@ -108,6 +108,8 @@ export default function Dashboard({ user, perfil, onSignOut }) {
         onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}
         onAtualizarSemanal={podeEditar ? () => setShowSemanal(true) : null}
         onRelatorio={() => setShowRelatorio(true)}
+        view="dashboard"
+        onChangeView={onChangeView}
       />
 
       <div className="wrap">

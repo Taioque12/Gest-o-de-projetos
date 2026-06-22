@@ -1,6 +1,6 @@
 import { supabaseConfigurado } from '../supabase'
 
-export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal, onRelatorio }) {
+export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal, onRelatorio, view, onChangeView }) {
   const hoje = new Date().toLocaleDateString('pt-BR')
 
   return (
@@ -17,6 +17,25 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onA
           {!supabaseConfigurado && (
             <span className="badge-fic">Dados fictícios · validação</span>
           )}
+
+          {/* Navegação entre abas */}
+          {onChangeView && (
+            <div className="nav-tabs">
+              <button
+                className={`nav-tab${view === 'dashboard' ? ' active' : ''}`}
+                onClick={() => onChangeView('dashboard')}
+              >
+                📊 Dashboard
+              </button>
+              <button
+                className={`nav-tab${view === 'equipes' ? ' active' : ''}`}
+                onClick={() => onChangeView('equipes')}
+              >
+                👷 Equipes
+              </button>
+            </div>
+          )}
+
           <div className="updated">
             Atualização semanal<br /><b>{hoje}</b>
           </div>
@@ -30,14 +49,16 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onA
               📅 Atualização Semanal
             </button>
           )}
-          {(perfil === 'admin' || perfil === 'equipe') && (
+          {(perfil === 'admin' || perfil === 'equipe') && onUpload && (
             <button className="btn btn-ghost" onClick={onUpload}>
               📂 Importar XML
             </button>
           )}
-          <button className="btn btn-ghost" onClick={onRelatorio}>
-            🖨️ Relatório PDF
-          </button>
+          {onRelatorio && (
+            <button className="btn btn-ghost" onClick={onRelatorio}>
+              🖨️ Relatório PDF
+            </button>
+          )}
           {supabaseConfigurado && (
             <button className="btn btn-danger" onClick={onSignOut}>
               Sair
