@@ -25,7 +25,10 @@ export default function FuncionarioCard({ funcionario: f, onEditar, onExcluir, s
   return (
     <div className={`func-card${selecionado ? ' func-card-sel' : ''}`}>
       <div className="func-card-top">
-        <div className="func-avatar">{f.nome.charAt(0).toUpperCase()}</div>
+        {f.foto_url
+          ? <img src={f.foto_url} alt={f.nome} className="func-avatar" style={{ objectFit: 'cover' }} />
+          : <div className="func-avatar">{f.nome.charAt(0).toUpperCase()}</div>
+        }
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="func-nome">{f.nome}</div>
           {f.cargo  && <div className="func-sub">{f.cargo}</div>}

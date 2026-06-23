@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../supabase'
 
 const ITENS = [
   { key: 'sdai',                label: 'Alarme de Incêndio (SDAI)' },
@@ -28,7 +29,10 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
     media_tensao:       funcionario?.media_tensao       ?? 0,
     alta_tensao:        funcionario?.alta_tensao        ?? 0,
   })
-  const [erro, setErro] = useState('')
+  const [fotoPreview, setFotoPreview] = useState(funcionario?.foto_url ?? null)
+  const [fotoFile, setFotoFile]       = useState(null)
+  const [erro, setErro]               = useState('')
+  const inputFotoRef = useRef()
 
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onFechar() }
@@ -38,10 +42,31 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
-  function handleSubmit(e) {
+  function handleFotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFotoFile(file)
+    setFotoPreview(URL.createObjectURL(file))
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.nome.trim()) { setErro('Informe o nome.'); return }
     setErro('')
+
+    let foto_url = funcionario?.foto_url ?? null
+
+    if (fotoFile) {
+      const ext  = fotoFile.name.split('.').pop()
+      const path = `${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('funcionarios')
+        .upload(path, fotoFile, { upsert: true })
+      if (upErr) { setErro('Erro ao enviar foto: ' + upErr.message); return }
+      const { data: { publicUrl } } = supabase.storage.from('funcionarios').getPublicUrl(path)
+      foto_url = publicUrl
+    }
+
     onSalvar({
       nome:                form.nome.trim(),
       cargo:               form.cargo.trim(),
@@ -52,6 +77,7 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
       instrumentacao:      Number(form.instrumentacao),
       media_tensao:        Number(form.media_tensao),
       alta_tensao:         Number(form.alta_tensao),
+      foto_url,
     })
   }
 
@@ -68,6 +94,41 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
           {erro && <div className="form-erro">{erro}</div>}
 
           <div className="form-section-title">Dados Pessoais</div>
+
+          {/* Upload de foto */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+            <div
+              onClick={() => inputFotoRef.current.click()}
+              style={{
+                width: 72, height: 72, borderRadius: 16, overflow: 'hidden', flexShrink: 0,
+                background: fotoPreview ? 'transparent' : 'var(--brand)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '2px dashed var(--brand)', position: 'relative'
+              }}
+            >
+              {fotoPreview
+                ? <img src={fotoPreview} alt="foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              }
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>Foto do funcionário</div>
+              <button type="button" className="btn btn-ghost"
+                style={{ fontSize: 12, padding: '5px 12px', color: 'var(--brand)', border: '1px solid var(--brand)' }}
+                onClick={() => inputFotoRef.current.click()}>
+                {fotoPreview ? 'Trocar foto' : 'Escolher foto'}
+              </button>
+              <input ref={inputFotoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFotoChange} />
+              {fotoPreview && (
+                <button type="button" className="btn btn-ghost"
+                  style={{ fontSize: 12, padding: '5px 12px', marginLeft: 6, color: '#dc2626', border: '1px solid #dc2626' }}
+                  onClick={() => { setFotoPreview(null); setFotoFile(null) }}>
+                  Remover
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
             <div className="field" style={{ gridColumn: 'span 2' }}>
               <label>Nome *</label>
