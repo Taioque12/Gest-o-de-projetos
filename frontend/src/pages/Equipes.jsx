@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useFuncionarios } from '../hooks/useFuncionarios'
+import { useProgramacaoGlobal } from '../hooks/useProgramacaoGlobal'
 import FuncionarioCard from '../components/FuncionarioCard'
 import FuncionarioForm from '../components/FuncionarioForm'
 import PainelEquipe from '../components/PainelEquipe'
+import ProgramacaoGlobal from '../components/ProgramacaoGlobal'
 import Header from '../components/Header'
 import Toast from '../components/Toast'
 
@@ -17,11 +19,13 @@ const COMPETENCIAS_LABEL = {
 
 export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
   const { funcionarios, loading, usandoMock, criarFuncionario, editarFuncionario, excluirFuncionario } = useFuncionarios()
+  const { alocacoes, projetos, loading: loadingProg } = useProgramacaoGlobal()
+  const [abaEquipe, setAbaEquipe] = useState('equipe') // 'equipe' | 'programacao'
   const [form, setForm]           = useState(null)
   const [salvando, setSalvando]   = useState(false)
   const [filtroEquipe, setFiltroEquipe] = useState('todas')
   const [toast, setToast]         = useState('')
-  const [selecionados, setSelecionados] = useState([]) // ids selecionados para equipe
+  const [selecionados, setSelecionados] = useState([])
 
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
 
@@ -85,8 +89,48 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
         onChangeView={onChangeView}
       />
 
-      <div className="wrap" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
+      {/* Sub-tabs: Equipe | Programação */}
+      <div style={{ borderBottom: '1px solid var(--line)', background: 'var(--surface-2)', marginBottom: 0 }}>
+        <div className="wrap" style={{ display: 'flex', gap: 0, paddingTop: 0, paddingBottom: 0 }}>
+          {[['equipe', '👷 Equipe'], ['programacao', '🗓️ Programação']].map(([key, label]) => (
+            <button key={key} onClick={() => setAbaEquipe(key)}
+              style={{ padding: '10px 20px', fontSize: 13, fontWeight: abaEquipe === key ? 700 : 500, cursor: 'pointer', background: 'none', border: 'none', borderBottom: abaEquipe === key ? '2px solid var(--brand)' : '2px solid transparent', color: abaEquipe === key ? 'var(--brand)' : 'var(--ink-2)', transition: '.15s', whiteSpace: 'nowrap' }}>
+              {label}
+              {key === 'programacao' && alocacoes.length > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 11, background: '#0f7a3d', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{alocacoes.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="wrap" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
         <div>
+
+          {/* ── ABA PROGRAMAÇÃO ── */}
+          {abaEquipe === 'programacao' && (
+            <div className="panel">
+              <div className="panel-head">
+                <h2><span className="ico">🗓️</span> Programação Semanal — Visão Geral</h2>
+                <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Próximas 14 semanas · todos os projetos</span>
+              </div>
+              <div className="panel-body">
+                {loadingProg ? (
+                  <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>Carregando...</p>
+                ) : (
+                  <ProgramacaoGlobal
+                    funcionarios={funcionarios}
+                    alocacoes={alocacoes}
+                    projetos={projetos}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── ABA EQUIPE ── */}
+          {abaEquipe === 'equipe' && (
+          <>
           {/* Painel de resumo */}
           <div className="panel">
             <div className="panel-head">
@@ -175,10 +219,12 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
             <b>Painel MA CONEGLIAN</b>
             {usandoMock && ' · dados fictícios para validação do formato'}
           </footer>
+          </>)}
+
         </div>
 
-        {/* Painel lateral de equipe */}
-        {funcSelecionados.length > 0 && (
+        {/* Painel lateral de equipe — só na aba Equipe */}
+        {abaEquipe === 'equipe' && funcSelecionados.length > 0 && (
           <div style={{ position: 'sticky', top: 88 }}>
             <PainelEquipe
               selecionados={funcSelecionados}
