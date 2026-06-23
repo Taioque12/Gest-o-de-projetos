@@ -154,22 +154,17 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
           </div>
           <div className="panel-body">
             {/* Filtro por projeto */}
-            <div className="filters" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-              <button
-                className={`chip${curvaFiltro === 'portfolio' ? ' active' : ''}`}
-                onClick={() => setCurvaFiltro('portfolio')}
+            <div style={{ marginBottom: 16 }}>
+              <select
+                value={curvaFiltro}
+                onChange={e => setCurvaFiltro(e.target.value)}
+                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', minWidth: 260 }}
               >
-                Portfólio completo
-              </button>
-              {projetos.map(p => (
-                <button
-                  key={p.id}
-                  className={`chip${curvaFiltro === p.id ? ' active' : ''}`}
-                  onClick={() => setCurvaFiltro(p.id)}
-                >
-                  OS {p.os} · {p.nome}
-                </button>
-              ))}
+                <option value="portfolio">Portfólio completo</option>
+                {projetos.map(p => (
+                  <option key={p.id} value={p.id}>OS {p.os} · {p.nome}</option>
+                ))}
+              </select>
             </div>
             {curveOpts && <CurvaS opts={curveOpts} />}
             <p style={{ marginTop: 10, color: 'var(--ink-3)', fontSize: 12 }}>
