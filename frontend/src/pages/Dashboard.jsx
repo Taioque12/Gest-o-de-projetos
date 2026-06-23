@@ -18,6 +18,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
   const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
+  const [curvaResp, setCurvaResp] = useState('todos')
   const [modalProjeto, setModalProjeto] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
   const [showSemanal, setShowSemanal] = useState(false)
@@ -77,8 +78,9 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
     .filter(p => filtroResp === 'todos' || p.responsavel === filtroResp)
 
   const projetoSelecionado = projetos.find(p => p.id === curvaFiltro)
-  const curveOpts = projetos.length
-    ? (projetoSelecionado ? projectCurveOpts(projetoSelecionado) : portfolioCurveOpts(projetos))
+  const projetosCurva = curvaResp === 'todos' ? projetos : projetos.filter(p => p.responsavel === curvaResp)
+  const curveOpts = projetosCurva.length
+    ? (projetoSelecionado ? projectCurveOpts(projetoSelecionado) : portfolioCurveOpts(projetosCurva))
     : null
 
   async function handleSalvar(dados) {
@@ -156,16 +158,26 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
             </div>
           </div>
           <div className="panel-body">
-            {/* Filtro por projeto */}
-            <div style={{ marginBottom: 16 }}>
+            {/* Filtros da Curva S */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
               <select
                 value={curvaFiltro}
                 onChange={e => setCurvaFiltro(e.target.value)}
-                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', minWidth: 260 }}
+                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', minWidth: 220 }}
               >
                 <option value="portfolio">Portfólio completo</option>
-                {projetos.map(p => (
+                {projetosCurva.map(p => (
                   <option key={p.id} value={p.id}>OS {p.os} · {p.nome}</option>
+                ))}
+              </select>
+              <select
+                value={curvaResp}
+                onChange={e => { setCurvaResp(e.target.value); setCurvaFiltro('portfolio') }}
+                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', minWidth: 200 }}
+              >
+                <option value="todos">Todos os responsáveis</option>
+                {responsaveis.filter(r => r !== 'todos').map(r => (
+                  <option key={r} value={r}>{r}</option>
                 ))}
               </select>
             </div>
@@ -182,14 +194,10 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
         <div className="panel">
           <div className="panel-head">
             <h2><span className="ico">🗂️</span> Projetos do Portfólio</h2>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="filters">
                 {['todos', 'verde', 'amarelo', 'vermelho'].map(f => (
-                  <button
-                    key={f}
-                    className={`chip${filtro === f ? ' active' : ''}`}
-                    onClick={() => setFiltro(f)}
-                  >
+                  <button key={f} className={`chip${filtro === f ? ' active' : ''}`} onClick={() => setFiltro(f)}>
                     {f !== 'todos' && <span className={`dot ${f}`} />}
                     {f === 'todos' ? 'Todos' : f === 'verde' ? 'Verde' : f === 'amarelo' ? 'Atenção' : 'Crítico'}
                   </button>
