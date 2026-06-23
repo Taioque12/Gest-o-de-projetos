@@ -103,20 +103,25 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos })
                           <span style={{ color: 'var(--ink-3)', fontSize: 11 }}>—</span>
                         ) : (
                           <div
-                            title={itens.map(i => `${i.os}: ${i.dias}d`).join('\n')}
+                            title={itens.map(i => `OS ${i.os} · ${i.nome}\n${i.dias} dia${i.dias !== 1 ? 's' : ''}`).join('\n\n')}
                             style={{
                               display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                               background: conflito ? 'rgba(220,38,38,.10)' : 'rgba(15,122,61,.10)',
                               border: `1.5px solid ${conflito ? '#dc2626' : '#0f7a3d'}`,
-                              borderRadius: 6, padding: '3px 5px', minWidth: 62,
+                              borderRadius: 6, padding: '3px 6px', minWidth: 68,
                             }}
                           >
                             <span style={{ fontWeight: 700, fontSize: 12, color: conflito ? '#dc2626' : '#0f7a3d' }}>
                               {totalDias}d {conflito ? '⚠' : ''}
                             </span>
                             {itens.map((it, idx) => (
-                              <span key={idx} style={{ fontSize: 9, color: conflito ? '#991b1b' : '#166534', lineHeight: 1.2, maxWidth: 68, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <span key={idx} style={{ fontSize: 9, color: conflito ? '#991b1b' : '#166534', lineHeight: 1.3, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
                                 {it.os}
+                              </span>
+                            ))}
+                            {itens.map((it, idx) => (
+                              <span key={`n${idx}`} style={{ fontSize: 8, color: conflito ? '#991b1b' : '#166534', opacity: 0.75, lineHeight: 1.2, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {it.nome.length > 18 ? it.nome.slice(0, 17) + '…' : it.nome}
                               </span>
                             ))}
                           </div>
