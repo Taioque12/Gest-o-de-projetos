@@ -192,10 +192,10 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
 
         {/* Projetos */}
         <div className="panel">
-          <div className="panel-head" style={{ flexWrap: 'wrap', gap: 10 }}>
+          <div className="panel-head">
             <h2><span className="ico">🗂️</span> Projetos do Portfólio</h2>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginLeft: 'auto' }}>
-              <div className="filters">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'nowrap' }}>
+              <div className="filters" style={{ flexShrink: 0 }}>
                 {['todos', 'verde', 'amarelo', 'vermelho'].map(f => (
                   <button key={f} className={`chip${filtro === f ? ' active' : ''}`} onClick={() => setFiltro(f)}>
                     {f !== 'todos' && <span className={`dot ${f}`} />}
@@ -206,7 +206,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
               <select
                 value={filtroResp}
                 onChange={e => setFiltroResp(e.target.value)}
-                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer' }}
+                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', width: 190, flexShrink: 0 }}
               >
                 <option value="todos">Todos os responsáveis</option>
                 {responsaveis.filter(r => r !== 'todos').map(r => (
@@ -214,7 +214,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
                 ))}
               </select>
               {podeEditar && (
-                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none', whiteSpace: 'nowrap' }}
+                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
                   onClick={() => setFormProjeto('novo')}>
                   + Nova OS
                 </button>
