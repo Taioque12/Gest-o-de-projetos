@@ -87,7 +87,7 @@ function ModalHabilidades({ habilidades, onCriar, onExcluir, onFechar }) {
                 }}>
                   {i + 1}
                 </span>
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{h.nome}</span>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 500, minWidth: 0, wordBreak: 'break-word' }}>{h.nome}</span>
                 <button
                   onClick={() => handleExcluir(h)}
                   style={{
