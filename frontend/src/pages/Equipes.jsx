@@ -200,7 +200,7 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
         </div>
       </div>
 
-      <div className="wrap" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
+      <div className="wrap equipe-layout" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
         <div>
 
           {/* ── ABA PROGRAMAÇÃO ── */}

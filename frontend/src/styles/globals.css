@@ -202,11 +202,94 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;margin-top:34px;line-
 footer b{color:var(--ink-2)}
 
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVIDADE MOBILE (≤ 640px)
+   ═══════════════════════════════════════════════ */
 @media (max-width:640px){
-  .kpis{grid-template-columns:repeat(2,1fr)}
-  .m-grid,.m-facts{grid-template-columns:1fr 1fr}
-  .grid-proj{grid-template-columns:1fr}
-  .facts{grid-template-columns:1fr}
+
+  /* ── Header ── */
+  .head-inner{
+    flex-wrap:wrap;
+    height:auto;
+    padding:10px 14px 0;
+    gap:6px;
+  }
+  .brand{ flex:1; min-width:0; }
+  .brand h1{ font-size:13px; }
+  .brand p{ display:none; }
+  .logo{ width:36px; height:36px; font-size:13px; }
+  .head-divider{ display:none; }
+  .head-spacer{ display:none; }
+  .updated{ display:none; }
+  .head-right{ gap:5px; flex-wrap:nowrap; }
+  .btn{ padding:7px 10px; font-size:12px; }
+
+  /* Nav tabs vão para linha 2 */
+  .nav-tabs{
+    order:10;
+    width:calc(100% + 28px);
+    margin:6px -14px 0;
+    border-radius:0;
+    padding:4px 6px 0;
+    gap:2px;
+    overflow-x:auto;
+  }
+  .nav-tab{
+    flex:1;
+    justify-content:center;
+    border-radius:8px 8px 0 0;
+    padding:8px 10px 10px;
+    font-size:12px;
+    min-width:72px;
+  }
+
+  /* ── Layout geral ── */
+  .wrap{ padding:0 14px 48px; }
+  .panel-head{ padding:13px 15px; gap:10px; }
+  .panel-body{ padding:14px 15px; }
+
+  /* ── KPIs ── */
+  .kpis{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .kpi{ padding:12px 12px 10px; }
+  .kpi .val{ font-size:22px; }
+
+  /* ── Cards de projeto ── */
+  .grid-proj{ grid-template-columns:1fr; }
+  .facts{ grid-template-columns:1fr; }
+
+  /* ── Equipes / Funcionários ── */
+  .func-grid{ grid-template-columns:1fr; }
+  .equipe-layout{ grid-template-columns:1fr !important; }
+  .equipe-layout > div:last-child{ position:static !important; top:auto !important; }
+  .comp-resumo-label{ font-size:9px; white-space:normal; line-height:1.2; }
+
+  /* ── Filtros ── */
+  .filters{ gap:6px; }
+  .chip{ padding:6px 10px; font-size:12px; }
+
+  /* ── Modal ── */
+  .overlay{ padding:8px; }
+  .modal{ border-radius:14px; max-height:95vh; overflow-y:auto; }
+  .modal-body{ padding:16px 16px 20px; }
+  .m-grid{ grid-template-columns:1fr 1fr; }
+  .m-facts{ grid-template-columns:1fr 1fr; }
+
+  /* ── Upload XML ── */
+  .upload-page{ padding:16px 12px; }
+  .upload-card{ padding:20px 16px; border-radius:14px; }
+  .drop-zone{ padding:24px 16px; }
+  .ia-resultado{ max-height:380px; }
+
+  /* ── Formulários ── */
+  .form-grid{ grid-template-columns:1fr; }
+
+  /* ── Toast ── */
+  .toast{ right:12px; left:12px; bottom:12px; width:auto; }
+
+  /* ── Tabelas ── */
+  table{ font-size:12px; }
+  th,td{ padding:8px 8px; }
 }
 /* ===== Upload XML ===== */
 .upload-page{min-height:calc(100vh - 72px);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
