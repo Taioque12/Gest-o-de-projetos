@@ -107,12 +107,12 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
         </div>
 
         {/* Abas */}
-        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--line)', background: 'var(--surface-2)' }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--line)', background: 'var(--surface-2)', overflowX: 'auto' }}>
           {TABS.map(t => (
             <button
               key={t}
               onClick={() => setAba(t)}
-              style={{ padding: '10px 20px', fontSize: 13, fontWeight: aba === t ? 700 : 500, cursor: 'pointer', background: 'none', border: 'none', borderBottom: aba === t ? '2px solid var(--brand)' : '2px solid transparent', color: aba === t ? 'var(--brand)' : 'var(--ink-2)', transition: '.15s' }}
+              style={{ padding: '10px 12px', fontSize: 12, fontWeight: aba === t ? 700 : 500, cursor: 'pointer', background: 'none', border: 'none', borderBottom: aba === t ? '2px solid var(--brand)' : '2px solid transparent', color: aba === t ? 'var(--brand)' : 'var(--ink-2)', transition: '.15s', whiteSpace: 'nowrap' }}
             >
               {t}
               {t === 'Histograma' && efetivo.length > 0 && (
