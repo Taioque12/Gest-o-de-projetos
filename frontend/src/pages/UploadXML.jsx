@@ -86,24 +86,44 @@ Status geral do projeto em UMA frase objetiva: (CRÍTICO / ATENÇÃO / CONTROLAD
 Com base nos dados disponíveis, estime:
 - **SPI (Schedule Performance Index)**: avanço real ÷ avanço esperado. Interprete: SPI < 0,85 = crítico, 0,85–0,95 = atenção, > 0,95 = controlado.
 - **Tendência de término**: se o ritmo atual for mantido, o projeto terminará antes, no prazo ou com quantos dias de atraso estimados?
+- **Data de término estimada**: calcule a data prevista de conclusão com base no SPI.
 - **Tarefas no caminho crítico**: identifique as tarefas em andamento com maior risco de impacto no término contratual.
 
 ### ⚠️ Tarefas e Frentes Críticas
 Para cada tarefa atrasada ou em risco, informe:
 - Nome exato da tarefa
 - Status atual (% concluído vs. % esperado)
-- Impacto potencial no prazo geral
+- Impacto potencial no prazo geral (em dias estimados)
 - Causa provável do atraso (com base no padrão do cronograma)
+- Ação imediata recomendada para esta tarefa específica
 
 ### 🔧 Análise Técnica por Disciplina
 Agrupe as tarefas por disciplina (civil, elétrica BT, elétrica MT, automação, comissionamento, documentação, etc.) e avalie o desempenho de cada frente. Identifique quais disciplinas estão comprometendo o caminho crítico.
 
-### 🎯 Plano de Ação Corretivo
-Liste de 5 a 8 ações corretivas concretas e priorizadas. Para cada ação informe:
-- **Ação**: o que fazer exatamente
-- **Responsável sugerido**: (Gestor / Engenheiro de campo / Equipe técnica / Escritório)
-- **Prazo**: imediato (esta semana) / curto prazo (este mês) / médio prazo
-- **Impacto esperado**: como essa ação melhora o desempenho do projeto
+### 🚀 Ações Imediatas — Top 3 (Esta Semana)
+As 3 ações mais urgentes que devem ser tomadas AGORA, com maior impacto na recuperação do projeto. Para cada uma:
+- **O quê**: descrição objetiva da ação (1–2 linhas)
+- **Quem**: responsável direto (Gestor / Engenheiro de campo / Equipe técnica / Escritório)
+- **Como**: passo a passo resumido (3–5 passos concretos)
+- **Meta**: resultado mensurável esperado ao final da semana
+
+### 🎯 Plano de Ação Corretivo Completo
+Liste de 6 a 10 ações corretivas priorizadas por impacto. Para cada ação informe:
+- **Prioridade**: 🔴 Alta / 🟡 Média / 🟢 Baixa
+- **Ação**: o que fazer exatamente (seja específico, cite tarefas e frentes reais)
+- **Responsável**: Gestor / Engenheiro / Equipe / Escritório
+- **Prazo**: Imediato (esta semana) / Curto prazo (este mês) / Médio prazo (próximo mês)
+- **Esforço estimado**: Baixo / Médio / Alto
+- **Impacto esperado**: ganho de avanço ou dias recuperados estimados
+- **Indicador de sucesso**: como saber que a ação funcionou (métrica mensurável)
+
+### 📅 Cronograma de Recuperação
+Caso o projeto esteja atrasado, proponha um plano semana a semana para as próximas 4 semanas:
+- **Semana 1**: foco e meta de avanço
+- **Semana 2**: foco e meta de avanço
+- **Semana 3**: foco e meta de avanço
+- **Semana 4**: foco e meta de avanço
+- **Meta ao fim das 4 semanas**: % de avanço esperado para voltar ao trilho
 
 ### 📊 Painel de Indicadores
 | Indicador | Valor | Status |
@@ -112,16 +132,17 @@ Liste de 5 a 8 ações corretivas concretas e priorizadas. Para cada ação info
 | Avanço esperado proporcional | ${avancoPrevistoProporcional ?? 'N/D'}% | - |
 | Desvio de avanço | ${desvioTemporal ?? 'N/D'} p.p. | - |
 | SPI estimado | (calcule) | - |
+| Data de término estimada | (calcule) | - |
 | Tarefas atrasadas | ${atrasadas.length} de ${tarefas.length} | - |
 | Risco de não conclusão no prazo | (Baixo/Médio/Alto/Muito Alto) | - |
 
 Complete a coluna Status com: 🟢 / 🟡 / 🔴
 
 ### 💡 Recomendações Estratégicas
-2 a 3 recomendações de médio/longo prazo para melhorar a gestão do cronograma nas próximas fases do projeto ou em projetos futuros similares.
+2 a 3 recomendações de médio/longo prazo para melhorar a gestão do cronograma nas próximas fases do projeto ou em projetos futuros similares. Inclua boas práticas de engenharia elétrica industrial.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IMPORTANTE: Baseie-se APENAS nos dados fornecidos. Cite tarefas pelo nome exato. Seja técnico, preciso e orientado a resultados.`
+IMPORTANTE: Baseie-se APENAS nos dados fornecidos. Cite tarefas pelo nome exato. Seja técnico, preciso e orientado a resultados. O foco principal é o PLANO DE AÇÃO — cada sugestão deve ser concreta, executável e com responsável definido.`
 }
 
 export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto }) {
