@@ -151,11 +151,11 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
         <div className="kpis">
           <KPICard lbl="Projetos Ativos" val={kpiBase.length} sub={kpiLabel} />
           <KPICard lbl="Valor em Carteira" val={mask(valorFmt(VTOT))} sub={`${kpiBase.length} ${kpiBase.length === 1 ? 'ordem de serviço' : 'ordens de serviço'}`} />
-          <KPICard lbl="Avanço Previsto" val={mask(`${fmt(wAvgPrev)}%`)} sub="ponderado por valor" />
-          <KPICard lbl="Avanço Realizado" val={mask(`${fmt(wAvgReal)}%`)} sub="ponderado por valor" />
+          <KPICard lbl="Avanço Previsto" val={`${fmt(wAvgPrev)}%`} sub="ponderado por valor" />
+          <KPICard lbl="Avanço Realizado" val={`${fmt(wAvgReal)}%`} sub="ponderado por valor" />
           <KPICard
             lbl="Desvio Médio"
-            val={mask(`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))} p.p.`)}
+            val={`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))} p.p.`}
             sub={clsDesv.lbl}
             cls={clsDesv.k}
             valCls={clsDesv.k}
