@@ -63,14 +63,6 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
     )
   }
 
-  const VTOT = projetos.reduce((s, p) => s + p.valor, 0)
-  const wAvgPrev = projetos.length ? projetos.reduce((s, p) => s + p.valor * p.prev, 0) / VTOT : 0
-  const wAvgReal = projetos.length ? projetos.reduce((s, p) => s + p.valor * p.real, 0) / VTOT : 0
-  const desv = wAvgReal - wAvgPrev
-  const clsDesv = classify(wAvgPrev, wAvgReal)
-  const nC = projetos.filter(p => classify(p.prev, p.real).k === 'vermelho').length
-  const nA = projetos.filter(p => classify(p.prev, p.real).k === 'amarelo').length
-
   const responsaveis = ['todos', ...Array.from(new Set(projetos.map(p => p.responsavel).filter(Boolean))).sort()]
 
   const projetosFiltrados = projetos
@@ -82,6 +74,19 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const curveOpts = projetosCurva.length
     ? (projetoSelecionado ? projectCurveOpts(projetoSelecionado) : portfolioCurveOpts(projetosCurva))
     : null
+
+  // KPIs reagem ao filtro da Curva S
+  const kpiBase = projetoSelecionado ? [projetoSelecionado] : projetosCurva
+  const VTOT     = kpiBase.reduce((s, p) => s + p.valor, 0)
+  const wAvgPrev = kpiBase.length && VTOT ? kpiBase.reduce((s, p) => s + p.valor * p.prev, 0) / VTOT : 0
+  const wAvgReal = kpiBase.length && VTOT ? kpiBase.reduce((s, p) => s + p.valor * p.real, 0) / VTOT : 0
+  const desv     = wAvgReal - wAvgPrev
+  const clsDesv  = classify(wAvgPrev, wAvgReal)
+  const nC = kpiBase.filter(p => classify(p.prev, p.real).k === 'vermelho').length
+  const nA = kpiBase.filter(p => classify(p.prev, p.real).k === 'amarelo').length
+  const kpiLabel = projetoSelecionado
+    ? `OS ${projetoSelecionado.os}`
+    : curvaResp !== 'todos' ? curvaResp : 'portfólio completo'
 
   async function handleSalvar(dados) {
     setSalvando(true)
@@ -124,8 +129,8 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
       <div className="wrap">
         {/* KPIs */}
         <div className="kpis">
-          <KPICard lbl="Projetos Ativos" val={projetos.length} sub="em execução" />
-          <KPICard lbl="Valor em Carteira" val={valorFmt(VTOT)} sub={`${projetos.length} ordens de serviço`} />
+          <KPICard lbl="Projetos Ativos" val={kpiBase.length} sub={kpiLabel} />
+          <KPICard lbl="Valor em Carteira" val={valorFmt(VTOT)} sub={`${kpiBase.length} ${kpiBase.length === 1 ? 'ordem de serviço' : 'ordens de serviço'}`} />
           <KPICard lbl="Avanço Previsto" val={`${fmt(wAvgPrev)}%`} sub="ponderado por valor" />
           <KPICard lbl="Avanço Realizado" val={`${fmt(wAvgReal)}%`} sub="ponderado por valor" />
           <KPICard
