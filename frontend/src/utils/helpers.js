@@ -56,6 +56,28 @@ export const projectCurveOpts = p => {
   return {plannedPts:planned, actualPts:actual, ticks, todayX:p._tau, prevToday:p.prev, realToday:p.real}
 }
 
+// Histograma de mão de obra + Curva S.
+// Reaproveita a Curva S de projectCurveOpts e adiciona as barras de efetivo
+// (previstos x mobilizados) posicionadas na mesma linha do tempo.
+export const histogramaOpts = (p, efetivo = []) => {
+  const curve = projectCurveOpts(p)
+  const span = p._e - p._s
+  const bars = efetivo
+    .map(e => {
+      const ms = parse(e.data_semana).getTime()
+      return {
+        x:     clamp((ms - p._s) / span, 0, 1),
+        prev:  Number(e.previstos ?? 0),
+        mob:   e.mobilizados == null ? null : Number(e.mobilizados),
+        label: fmtDate(ms),
+      }
+    })
+    .sort((a, b) => a.x - b.x)
+  const rawMax = Math.max(1, ...bars.map(b => Math.max(b.prev, b.mob ?? 0)))
+  const maxEf  = rawMax <= 5 ? 5 : Math.ceil(rawMax / 5) * 5
+  return { ...curve, bars, maxEf }
+}
+
 export const portfolioCurveOpts = projetos => {
   const VTOT = projetos.reduce((s,p)=>s+p.valor,0)
   const wAvgPrev = projetos.reduce((s,p)=>s+p.valor*p.prev,0)/VTOT

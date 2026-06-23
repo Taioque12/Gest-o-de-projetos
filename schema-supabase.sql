@@ -56,6 +56,18 @@ create table if not exists frentes_servico (
   criado_em timestamp default now()
 );
 
+-- ========== TABELA: Efetivo Semanal (Histograma de Mão de Obra) ==========
+create table if not exists efetivo_semana (
+  id uuid primary key default gen_random_uuid(),
+  projeto_id uuid not null references projetos(id) on delete cascade,
+  data_semana date not null,
+  previstos integer default 0,    -- profissionais previstos para a semana
+  mobilizados integer,            -- profissionais mobilizados (real); null = não lançado
+  semana_numero integer,          -- nº da semana do projeto (1, 2, 3, ...)
+  criado_em timestamp default now(),
+  unique(projeto_id, data_semana)
+);
+
 -- ========== TABELA: Acessos do Cliente (Contratos) ==========
 create table if not exists acessos_cliente (
   id uuid primary key default gen_random_uuid(),
@@ -84,6 +96,7 @@ create index idx_projetos_cliente on projetos(cliente);
 create index idx_atualizacoes_projeto on atualizacoes_semana(projeto_id);
 create index idx_atualizacoes_data on atualizacoes_semana(data_atualizacao);
 create index idx_frentes_projeto on frentes_servico(projeto_id);
+create index idx_efetivo_projeto on efetivo_semana(projeto_id);
 create index idx_acessos_usuario on acessos_cliente(usuario_id);
 create index idx_uploads_projeto on uploads_xml(projeto_id);
 

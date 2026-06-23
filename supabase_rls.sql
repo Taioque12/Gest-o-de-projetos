@@ -110,6 +110,29 @@ CREATE POLICY "frentes_write_staff" ON public.frentes_servico
   FOR ALL USING (get_my_perfil() IN ('admin', 'equipe'));
 
 -- ================================================================
+-- EFETIVO_SEMANA (histograma de mão de obra)
+-- ================================================================
+DROP POLICY IF EXISTS "efetivo_select_staff"   ON public.efetivo_semana;
+DROP POLICY IF EXISTS "efetivo_select_cliente" ON public.efetivo_semana;
+DROP POLICY IF EXISTS "efetivo_write_staff"    ON public.efetivo_semana;
+
+ALTER TABLE public.efetivo_semana ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "efetivo_select_staff" ON public.efetivo_semana
+  FOR SELECT USING (get_my_perfil() IN ('admin', 'equipe'));
+
+CREATE POLICY "efetivo_select_cliente" ON public.efetivo_semana
+  FOR SELECT USING (
+    get_my_perfil() = 'cliente'
+    AND projeto_id IN (
+      SELECT projeto_id FROM public.acessos_cliente WHERE usuario_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "efetivo_write_staff" ON public.efetivo_semana
+  FOR ALL USING (get_my_perfil() IN ('admin', 'equipe'));
+
+-- ================================================================
 -- ACESSOS_CLIENTE
 -- ================================================================
 DROP POLICY IF EXISTS "acessos_select" ON public.acessos_cliente;
