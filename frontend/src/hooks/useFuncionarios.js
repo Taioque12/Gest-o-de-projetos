@@ -68,7 +68,7 @@ export function useFuncionarios() {
     const { avaliacoes, ...dadosPrincipais } = dados
     const { error } = await supabase
       .from('funcionarios')
-      .update({ ...dadosPrincipais, atualizado_em: new Date().toISOString() })
+      .update(dadosPrincipais)
       .eq('id', id)
     if (error) throw error
     await salvarAvaliacoes(id, avaliacoes)
