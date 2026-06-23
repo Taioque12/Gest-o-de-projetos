@@ -259,7 +259,10 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
       {showForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'var(--surface)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 440, boxShadow: 'var(--shadow-lg)' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Novo Usuário</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Novo Usuário</h3>
+              <button onClick={() => { setShowForm(false); setErroForm('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 20, lineHeight: 1, padding: '2px 4px' }}>✕</button>
+            </div>
             {erroForm && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '8px 12px', borderRadius: 8, fontSize: 13, marginBottom: 14 }}>{erroForm}</div>}
             <form onSubmit={handleCriarUsuario}>
               <CAMPO label="Nome completo *">
