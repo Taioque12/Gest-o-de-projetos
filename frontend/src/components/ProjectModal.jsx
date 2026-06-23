@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { classify, valorFmt, fmtFull, fmt, projectCurveOpts, histogramaOpts } from '../utils/helpers'
 import { useAnexos } from '../hooks/useAnexos'
 import { useEfetivo } from '../hooks/useEfetivo'
+import { useProgramacao } from '../hooks/useProgramacao'
+import { useFuncionarios } from '../hooks/useFuncionarios'
 import CurvaS from './CurvaS'
 import Histograma from './Histograma'
+import ProgramacaoSemanal from './ProgramacaoSemanal'
 
-const TABS = ['Visão Geral', 'Histograma', 'Histórico', 'Anexos']
+const TABS = ['Visão Geral', 'Histograma', 'Programação', 'Histórico', 'Anexos']
 
 const inp = { padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, marginTop: 2 }
 
@@ -31,6 +34,10 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
   const [efForm, setEfForm] = useState({ data_semana: '', previstos: '', mobilizados: '' })
   const [savingEf, setSavingEf] = useState(false)
   const [erroEf, setErroEf] = useState('')
+
+  const { alocacoes, alocar } = useProgramacao(p.id)
+  const { funcionarios } = useFuncionarios()
+  const [sincronizando, setSincronizando] = useState(false)
 
   const hist = [...atualizacoes]
     .filter(a => a.projeto_id === p.id)
@@ -70,6 +77,26 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
     setSavingEf(false)
   }
 
+  async function handleSincronizar(semanas, totals) {
+    setSincronizando(true)
+    try {
+      for (const semana of semanas) {
+        const mob = totals[semana] ?? 0
+        const existente = efetivo.find(e => e.data_semana === semana)
+        if (mob > 0 || existente) {
+          await salvarEfetivo({
+            data_semana: semana,
+            previstos: existente?.previstos ?? 0,
+            mobilizados: mob,
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao sincronizar:', err)
+    }
+    setSincronizando(false)
+  }
+
   return (
     <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="modal" style={{ maxWidth: 700 }}>
@@ -90,6 +117,9 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
               {t}
               {t === 'Histograma' && efetivo.length > 0 && (
                 <span style={{ marginLeft: 6, fontSize: 11, background: 'var(--ink-3)', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{efetivo.length}</span>
+              )}
+              {t === 'Programação' && alocacoes.length > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 11, background: '#0f7a3d', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{alocacoes.length}</span>
               )}
               {t === 'Histórico' && hist.length > 0 && (
                 <span style={{ marginLeft: 6, fontSize: 11, background: 'var(--brand)', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{hist.length}</span>
@@ -220,6 +250,21 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
                 </div>
               )}
             </>
+          )}
+
+          {aba === 'Programação' && (
+            <div className="m-sec">
+              <h4>🗓️ Programação semanal de efetivo</h4>
+              <ProgramacaoSemanal
+                projeto={p}
+                funcionarios={funcionarios}
+                alocacoes={alocacoes}
+                onAlocar={alocar}
+                podeEditar={podeEditar}
+                onSincronizar={handleSincronizar}
+                sincronizando={sincronizando}
+              />
+            </div>
           )}
 
           {aba === 'Histórico' && (
