@@ -23,7 +23,7 @@ const CAMPO = ({ label, children }) => (
 const INPUT_STYLE = { fontSize: 13, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', fontFamily: 'inherit', background: 'var(--surface)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' }
 
 export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
-  const { usuarios, acessos, loading, atualizarPerfil, atualizarNome, concederAcesso, revogarAcesso } = useUsuarios()
+  const { usuarios, acessos, loading, atualizarPerfil, atualizarNome, concederAcesso, revogarAcesso, refetch } = useUsuarios()
   const { projetos } = useProjetos(perfil, user?.id)
 
   const [editando, setEditando]     = useState(null)
@@ -33,6 +33,8 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
   const [expandido, setExpandido]   = useState(null)
   const [showForm, setShowForm]     = useState(false)
   const [erroForm, setErroForm]     = useState('')
+  const [editUser, setEditUser]     = useState(null) // usuário em edição completa
+  const [editData, setEditData]     = useState({})
 
   const formVazio = { email: '', senha: '', nome: '', perfil: 'equipe', funcao: '', data_nascimento: '' }
   const [form, setForm] = useState(formVazio)
@@ -76,6 +78,23 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     try {
       if (conceder) await concederAcesso(uid, pid)
       else          await revogarAcesso(uid, pid)
+    } catch (err) { alert('Erro: ' + err.message) }
+    setSalvando(false)
+  }
+
+  async function handleEditarUsuario(e) {
+    e.preventDefault()
+    setSalvando(true)
+    try {
+      const { error } = await supabase.from('usuarios').update({
+        nome:            editData.nome || null,
+        funcao:          editData.funcao || null,
+        data_nascimento: editData.data_nascimento || null,
+      }).eq('id', editUser.id)
+      if (error) throw error
+      await refetch()
+      setEditUser(null)
+      setToast('Usuário atualizado!')
     } catch (err) { alert('Erro: ' + err.message) }
     setSalvando(false)
   }
@@ -175,10 +194,14 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                     <td style={{ padding: '10px 12px', color: 'var(--ink-2)' }}>{u.email || '—'}</td>
                     <td style={{ padding: '10px 12px', color: 'var(--ink-2)', fontSize: 13 }}>{u.funcao || '—'}</td>
                     <td style={{ padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <select value={u.perfil} onChange={e => handlePerfil(u.id, e.target.value)} disabled={salvando}
                         style={{ fontSize: 12, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--line)', fontFamily: 'inherit', fontWeight: 700, cursor: 'pointer', background: PERFIL_COR[u.perfil]?.bg, color: PERFIL_COR[u.perfil]?.txt }}>
                         {PERFIS.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
+                      <button onClick={() => { setEditUser(u); setEditData({ nome: u.nome || '', funcao: u.funcao || '', data_nascimento: u.data_nascimento || '' }) }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 13, padding: 4 }} title="Editar usuário">✏️</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -291,6 +314,35 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                 <button type="button" className="btn btn-ghost" onClick={() => { setShowForm(false); setErroForm('') }} disabled={salvando}>Cancelar</button>
                 <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
                   {salvando ? 'Criando...' : 'Criar usuário'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal editar usuário */}
+      {editUser && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--surface)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 420, boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Editar Usuário</h3>
+              <button onClick={() => setEditUser(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 20 }}>✕</button>
+            </div>
+            <form onSubmit={handleEditarUsuario}>
+              <CAMPO label="Nome completo">
+                <input style={INPUT_STYLE} value={editData.nome} onChange={e => setEditData(d => ({ ...d, nome: e.target.value }))} placeholder="Nome" />
+              </CAMPO>
+              <CAMPO label="Função / Cargo">
+                <input style={INPUT_STYLE} value={editData.funcao} onChange={e => setEditData(d => ({ ...d, funcao: e.target.value }))} placeholder="Ex: Engenheiro" />
+              </CAMPO>
+              <CAMPO label="Data de nascimento">
+                <input style={INPUT_STYLE} type="date" value={editData.data_nascimento} onChange={e => setEditData(d => ({ ...d, data_nascimento: e.target.value }))} />
+              </CAMPO>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setEditUser(null)} disabled={salvando}>Cancelar</button>
+                <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
+                  {salvando ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             </form>

@@ -12,9 +12,10 @@ import UploadXML from './UploadXML'
 import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
 import Relatorio from '../components/Relatorio'
 import Toast from '../components/Toast'
+import NotificacoesPrazo from '../components/NotificacoesPrazo'
 
 export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
-  const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
+  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
   const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
@@ -35,6 +36,20 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
 
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
   const mask = v => ocultarValores ? '••••••' : v
+
+  function exportarCSV() {
+    const cols = ['OS', 'Projeto', 'Cliente', 'Escopo', 'Responsável', 'Início', 'Término', 'Prazo', 'Valor (R$)', 'Previsto (%)', 'Realizado (%)', 'Desvio (p.p.)', 'Status']
+    const rows = projetos.map(p => {
+      const c = classify(p.prev, p.real)
+      return [p.os, p.nome, p.cliente, p.escopo, p.responsavel, p.inicio, p.fim, p.prazo, p.valor, p.prev, p.real, (p.real - p.prev).toFixed(1), c.lbl]
+    })
+    const csv = [cols, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `projetos_${new Date().toISOString().slice(0,10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
 
   if (loading) return <div className="loading-screen">Carregando projetos...</div>
 
@@ -133,6 +148,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
       />
 
       <div className="wrap">
+        <NotificacoesPrazo projetos={projetos} />
         {/* KPIs */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div />
@@ -238,6 +254,10 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
+              <button className="btn btn-ghost" style={{ whiteSpace: 'nowrap', flexShrink: 0 }} onClick={exportarCSV} title="Exportar CSV">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+              </button>
               {podeEditar && (
                 <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
                   onClick={() => setFormProjeto('novo')}>
@@ -294,7 +314,12 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
       </div>
 
       {modalProjeto && (
-        <ProjectModal projeto={modalProjeto} onClose={() => setModalProjeto(null)} />
+        <ProjectModal
+          projeto={modalProjeto}
+          atualizacoes={atualizacoes}
+          podeEditar={podeEditar}
+          onClose={() => setModalProjeto(null)}
+        />
       )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}

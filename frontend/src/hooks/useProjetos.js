@@ -7,6 +7,8 @@ export function useProjetos(perfil, userId) {
   const [loading, setLoading] = useState(true)
   const [usandoMock, setUsandoMock] = useState(false)
 
+  const [atualizacoes, setAtualizacoes] = useState([])
+
   const fetchProjetos = useCallback(async () => {
     if (!supabaseConfigurado) {
       setProjetos(MOCK_PROJETOS.map(prepararProjeto))
@@ -30,16 +32,19 @@ export function useProjetos(perfil, userId) {
       const { data: projDb, error } = await query
       if (error) throw error
 
-      const { data: atualizacoes } = await supabase
+      const { data: ats } = await supabase
         .from('atualizacoes_semana')
         .select('*')
+        .order('data_atualizacao', { ascending: true })
 
       const { data: frentes } = await supabase
         .from('frentes_servico')
         .select('*')
 
+      const atsData = ats ?? []
+      setAtualizacoes(atsData)
       const normalizados = projDb.map(p =>
-        prepararProjeto(normalizarProjeto(p, atualizacoes ?? [], frentes ?? []))
+        prepararProjeto(normalizarProjeto(p, atsData, frentes ?? []))
       )
       setProjetos(normalizados)
       setUsandoMock(false)
@@ -151,5 +156,5 @@ export function useProjetos(perfil, userId) {
     await fetchProjetos()
   }
 
-  return { projetos, loading, usandoMock, refetch: fetchProjetos, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal }
+  return { projetos, atualizacoes, loading, usandoMock, refetch: fetchProjetos, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal }
 }
