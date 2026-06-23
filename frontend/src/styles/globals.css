@@ -289,7 +289,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,122,61,.12)}
 .func-btn-del:hover{color:#991b1b;border-color:#fca5a5;background:var(--vermelho-bg)}
 
 /* Gráfico de barras resumo competências */
-.comp-resumo-grid{display:flex;gap:16px;align-items:flex-end;height:120px;padding-bottom:4px}
+.comp-resumo-grid{display:flex;gap:16px;align-items:stretch;height:120px;padding-bottom:4px}
 .comp-resumo-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
 .comp-resumo-bar-wrap{width:100%;flex:1;display:flex;align-items:flex-end;background:var(--surface-2);border-radius:6px 6px 0 0;overflow:hidden;min-height:10px}
 .comp-resumo-bar{width:100%;border-radius:6px 6px 0 0;transition:.4s}
