@@ -184,13 +184,13 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setLoading(false)
   }
 
-  async function chamarGemini(prompt) {
+  async function chamarGemini(prompt, maxTokens = 6000) {
     const resp = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
       }),
     })
     if (!resp.ok) {
@@ -213,12 +213,12 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     try {
       // Parte 1: diagnóstico rápido (renderiza logo)
       const prompt1 = buildPromptParte1(resultado.projeto, resultado.tarefas)
-      const texto1 = await chamarGemini(prompt1)
+      const texto1 = await chamarGemini(prompt1, 5000)
       setAnalise(texto1)
 
       // Parte 2: plano de ação detalhado (concatena depois)
       const prompt2 = buildPromptParte2(resultado.projeto, resultado.tarefas)
-      const texto2 = await chamarGemini(prompt2)
+      const texto2 = await chamarGemini(prompt2, 7000)
       setAnalise(texto1 + '\n\n' + texto2)
     } catch (err) {
       setErroIA('Erro ao consultar Gemini: ' + err.message)
