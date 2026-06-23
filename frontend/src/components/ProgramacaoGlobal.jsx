@@ -12,14 +12,13 @@ function fmtWeek(iso) {
   return `${d}/${m}`
 }
 
-// Gera as próximas N semanas a partir da semana atual (retroage 1 semana)
-function gerarSemanas(n = 14) {
-  const base = Math.floor((Date.now() - MS_WEEK) / MS_WEEK) * MS_WEEK
-  return Array.from({ length: n }, (_, i) => toISO(base + i * MS_WEEK))
-}
-
 export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos }) {
-  const semanas = useMemo(() => gerarSemanas(14), [])
+  // Usa as datas reais do banco como colunas — evita desalinhamento com as
+  // semanas geradas pelos projetos (que partem da data_inicio de cada OS)
+  const semanas = useMemo(() => {
+    const seen = new Set(alocacoes.map(a => a.data_semana))
+    return [...seen].sort()
+  }, [alocacoes])
   const hojeISO = toISO(Date.now())
 
   // Mapa projeto_id → { os, nome }
@@ -44,6 +43,15 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos })
     return (
       <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-3)', fontSize: 13 }}>
         <p>Nenhum funcionário cadastrado ainda.</p>
+      </div>
+    )
+  }
+
+  if (!semanas.length) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-3)', fontSize: 13 }}>
+        <p>Nenhuma alocação lançada ainda.</p>
+        <p style={{ fontSize: 11, marginTop: 4 }}>Abra um projeto, vá na aba <b>Programação</b> e preencha os dias por semana.</p>
       </div>
     )
   }
