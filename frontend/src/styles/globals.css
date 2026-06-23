@@ -206,6 +206,11 @@ footer b{color:var(--ink-2)}
 /* ═══════════════════════════════════════════════
    RESPONSIVIDADE MOBILE (≤ 640px)
    ═══════════════════════════════════════════════ */
+
+/* Previne overflow horizontal global */
+html, body { overflow-x: hidden; max-width: 100%; }
+*, *::before, *::after { max-width: 100%; }
+
 @media (max-width:640px){
 
   /* ── Header ── */
@@ -214,26 +219,27 @@ footer b{color:var(--ink-2)}
     height:auto;
     padding:10px 14px 0;
     gap:6px;
+    overflow:hidden;
   }
-  .brand{ flex:1; min-width:0; }
-  .brand h1{ font-size:13px; }
+  .brand{ flex:1; min-width:0; overflow:hidden; }
+  .brand h1{ font-size:13px; overflow:hidden; text-overflow:ellipsis; }
   .brand p{ display:none; }
-  .logo{ width:36px; height:36px; font-size:13px; }
+  .logo{ width:36px; height:36px; font-size:13px; flex-shrink:0; }
   .head-divider{ display:none; }
   .head-spacer{ display:none; }
   .updated{ display:none; }
-  .head-right{ gap:5px; flex-wrap:nowrap; }
-  .btn{ padding:7px 10px; font-size:12px; }
+  .head-right{ gap:5px; flex-wrap:nowrap; flex-shrink:0; overflow-x:auto; max-width:60vw; }
+  .btn{ padding:7px 9px; font-size:11px; }
 
-  /* Nav tabs vão para linha 2 */
+  /* Nav tabs — linha 2, scroll horizontal se necessário */
   .nav-tabs{
     order:10;
-    width:calc(100% + 28px);
-    margin:6px -14px 0;
+    width:100%;
     border-radius:0;
-    padding:4px 6px 0;
+    padding:4px 0 0;
     gap:2px;
     overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .nav-tab{
     flex:1;
@@ -245,51 +251,62 @@ footer b{color:var(--ink-2)}
   }
 
   /* ── Layout geral ── */
-  .wrap{ padding:0 14px 48px; }
-  .panel-head{ padding:13px 15px; gap:10px; }
-  .panel-body{ padding:14px 15px; }
+  .wrap{ padding:0 12px 48px; }
+  .panel-head{ padding:12px 14px; gap:10px; }
+  .panel-body{ padding:12px 14px; overflow-x:hidden; }
 
   /* ── KPIs ── */
   .kpis{ grid-template-columns:repeat(2,1fr); gap:10px; }
   .kpi{ padding:12px 12px 10px; }
   .kpi .val{ font-size:22px; }
+  .kpi .lbl{ font-size:10.5px; }
 
   /* ── Cards de projeto ── */
   .grid-proj{ grid-template-columns:1fr; }
   .facts{ grid-template-columns:1fr; }
+  .card-inner{ padding:14px 14px 15px; }
 
   /* ── Equipes / Funcionários ── */
   .func-grid{ grid-template-columns:1fr; }
   .equipe-layout{ grid-template-columns:1fr !important; }
   .equipe-layout > div:last-child{ position:static !important; top:auto !important; }
+  .comp-resumo-grid{ overflow-x:auto; }
   .comp-resumo-label{ font-size:9px; white-space:normal; line-height:1.2; }
+  .func-comp-label{ width:90px; font-size:11px; }
 
   /* ── Filtros ── */
-  .filters{ gap:6px; }
-  .chip{ padding:6px 10px; font-size:12px; }
+  .filters{ gap:6px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
+  .chip{ padding:6px 10px; font-size:12px; flex-shrink:0; }
 
-  /* ── Modal ── */
+  /* ── Modais ── */
   .overlay{ padding:8px; }
-  .modal{ border-radius:14px; max-height:95vh; overflow-y:auto; }
-  .modal-body{ padding:16px 16px 20px; }
+  .modal{ border-radius:14px; max-height:95vh; overflow-y:auto; width:100%; }
+  .modal-body{ padding:14px 14px 18px; }
+  .modal-head{ padding:16px 18px; }
   .m-grid{ grid-template-columns:1fr 1fr; }
   .m-facts{ grid-template-columns:1fr 1fr; }
 
   /* ── Upload XML ── */
-  .upload-page{ padding:16px 12px; }
-  .upload-card{ padding:20px 16px; border-radius:14px; }
-  .drop-zone{ padding:24px 16px; }
-  .ia-resultado{ max-height:380px; }
+  .upload-page{ padding:12px; }
+  .upload-card{ padding:18px 14px; border-radius:14px; }
+  .drop-zone{ padding:20px 14px; }
+  .ia-resultado{ max-height:360px; }
+  .ia-box-header{ padding:10px 12px; }
 
   /* ── Formulários ── */
   .form-grid{ grid-template-columns:1fr; }
 
-  /* ── Toast ── */
-  .toast{ right:12px; left:12px; bottom:12px; width:auto; }
+  /* ── Tabelas com scroll horizontal ── */
+  .panel-body div[style*="overflow"]{ -webkit-overflow-scrolling:touch; }
+  table{ font-size:12px; min-width:auto; }
+  th,td{ padding:7px 8px; white-space:nowrap; }
 
-  /* ── Tabelas ── */
-  table{ font-size:12px; }
-  th,td{ padding:8px 8px; }
+  /* ── Toast ── */
+  .toast{ right:10px; left:10px; bottom:10px; width:auto; }
+
+  /* ── Painel equipe ── */
+  .painel-equipe{ margin-top:0; }
+  .func-comp-bar-wrap{ min-width:0; }
 }
 /* ===== Upload XML ===== */
 .upload-page{min-height:calc(100vh - 72px);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
