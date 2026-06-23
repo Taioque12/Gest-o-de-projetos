@@ -22,6 +22,7 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
     nome:               funcionario?.nome               ?? '',
     cargo:              funcionario?.cargo              ?? '',
     equipe:             funcionario?.equipe             ?? '',
+    custo_dia:          funcionario?.custo_dia          ?? '',
     sdai:               funcionario?.sdai               ?? 0,
     instalacao_eletrica:funcionario?.instalacao_eletrica?? 0,
     infraestrutura:     funcionario?.infraestrutura     ?? 0,
@@ -71,6 +72,7 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
       nome:                form.nome.trim(),
       cargo:               form.cargo.trim(),
       equipe:              form.equipe.trim(),
+      custo_dia:           form.custo_dia === '' ? null : Number(form.custo_dia),
       sdai:                Number(form.sdai),
       instalacao_eletrica: Number(form.instalacao_eletrica),
       infraestrutura:      Number(form.infraestrutura),
@@ -141,6 +143,10 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
             <div className="field">
               <label>Equipe</label>
               <input value={form.equipe} onChange={e => set('equipe', e.target.value)} placeholder="Equipe A" />
+            </div>
+            <div className="field">
+              <label>Custo/dia (R$)</label>
+              <input type="number" min="0" step="0.01" value={form.custo_dia} onChange={e => set('custo_dia', e.target.value)} placeholder="ex: 450,00" />
             </div>
           </div>
 

@@ -12,7 +12,7 @@ function fmtWeek(iso) {
   return `${d}/${m}`
 }
 
-export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes, onAlocar, podeEditar, onSincronizar, sincronizando }) {
+export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes, onAlocar, podeEditar }) {
   const semanas = useMemo(() => {
     const arr = []
     let ms = p._s
@@ -27,7 +27,9 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
   }, [alocacoes])
 
   const [localEdits, setLocalEdits] = useState({})
-  const [saving, setSaving] = useState({})
+  const [saving, setSaving]         = useState({})
+  // #2 — conflito: { [fid__semana]: totalDiasOutrosProjetos }
+  const [conflitos, setConflitos]   = useState({})
 
   const getDias = useCallback((fid, semana) => {
     const key = `${fid}__${semana}`
@@ -44,13 +46,17 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
     if (localEdits[key] === undefined) return
     setSaving(s => ({ ...s, [key]: true }))
     try {
-      await onAlocar({ funcionario_id: fid, data_semana: semana, dias: localEdits[key] === '' ? 0 : Number(localEdits[key]) })
+      const diasNovos = localEdits[key] === '' ? 0 : Number(localEdits[key])
+      // #1 — alocar() agora auto-sincroniza efetivo_semana e retorna conflitos externos
+      const conflitosExternos = await onAlocar({ funcionario_id: fid, data_semana: semana, dias: diasNovos })
       setLocalEdits(e => { const n = { ...e }; delete n[key]; return n })
-    } catch { /* silently ignore — DB offline */ }
+      // #2 — atualiza alerta de conflito para esta célula
+      const totalOutros = (conflitosExternos ?? []).reduce((s, c) => s + (c.dias || 0), 0)
+      setConflitos(c => ({ ...c, [key]: totalOutros }))
+    } catch { /* DB offline */ }
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
   }
 
-  // Count of people with dias > 0 per week (feeds the Histograma "mobilizados")
   const totals = useMemo(() => {
     const t = {}
     for (const s of semanas) {
@@ -108,30 +114,48 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
                     {f.equipe && <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 1 }}>{f.equipe}</div>}
                   </td>
                   {semanas.map(s => {
-                    const key = `${f.id}__${s}`
-                    const val = getDias(f.id, s)
-                    const dias = Number(val) || 0
-                    const hasVal = dias > 0
-                    const isSaving = saving[key]
+                    const key       = `${f.id}__${s}`
+                    const val       = getDias(f.id, s)
+                    const dias      = Number(val) || 0
+                    const hasVal    = dias > 0
+                    const isSaving  = saving[key]
+                    const outrosDias = conflitos[key] ?? 0
+                    // #2 — conflito: funcionário já tem horas em outro projeto e o total passa de 5d
+                    const temConflito = hasVal && outrosDias > 0 && (dias + outrosDias) > 5
+
+                    const borderColor = temConflito ? '#d97706' : hasVal ? '#0f7a3d' : 'var(--line)'
+                    const bgColor     = isSaving
+                      ? 'var(--surface-2)'
+                      : temConflito ? 'rgba(217,119,6,.10)'
+                      : hasVal      ? 'rgba(15,122,61,.10)'
+                      : 'var(--surface)'
+                    const textColor   = temConflito ? '#92400e' : hasVal ? '#0f7a3d' : 'var(--ink-3)'
+
                     return (
                       <td key={s} style={{ textAlign: 'center', padding: '3px 4px' }}>
                         {podeEditar ? (
-                          <input
-                            type="number" min="0" max="7"
-                            value={val}
-                            onChange={e => handleChange(f.id, s, e.target.value)}
-                            onBlur={() => handleBlur(f.id, s)}
-                            style={{
-                              width: 42, textAlign: 'center', padding: '3px 2px',
-                              borderRadius: 6,
-                              border: hasVal ? '1.5px solid #0f7a3d' : '1px solid var(--line)',
-                              background: isSaving ? 'var(--surface-2)' : hasVal ? 'rgba(15,122,61,.10)' : 'var(--surface)',
-                              color: hasVal ? '#0f7a3d' : 'var(--ink-3)',
-                              fontSize: 12, fontWeight: hasVal ? 700 : 400, outline: 'none',
-                            }}
-                          />
+                          <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <input
+                              type="number" min="0" max="7"
+                              value={val}
+                              onChange={e => handleChange(f.id, s, e.target.value)}
+                              onBlur={() => handleBlur(f.id, s)}
+                              title={temConflito ? `⚠ ${f.nome} já tem ${outrosDias}d em outro projeto esta semana (total: ${dias + outrosDias}d)` : ''}
+                              style={{
+                                width: 42, textAlign: 'center', padding: '3px 2px',
+                                borderRadius: 6,
+                                border: `${temConflito ? 2 : hasVal ? 1.5 : 1}px solid ${borderColor}`,
+                                background: bgColor,
+                                color: textColor,
+                                fontSize: 12, fontWeight: hasVal ? 700 : 400, outline: 'none',
+                              }}
+                            />
+                            {temConflito && (
+                              <span style={{ position: 'absolute', top: -6, right: -6, fontSize: 10, lineHeight: 1 }} title={`${f.nome} já tem ${outrosDias}d em outro projeto esta semana`}>⚠</span>
+                            )}
+                          </div>
                         ) : (
-                          <span style={{ color: hasVal ? '#0f7a3d' : 'var(--ink-3)', fontWeight: hasVal ? 700 : 400 }}>
+                          <span style={{ color: textColor, fontWeight: hasVal ? 700 : 400 }}>
                             {hasVal ? `${dias}d` : '—'}
                           </span>
                         )}
@@ -161,23 +185,9 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
         </table>
       </div>
 
-      {podeEditar && (
-        <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => onSincronizar(semanas, totals)}
-            disabled={sincronizando}
-            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--brand)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: sincronizando ? 0.6 : 1 }}
-          >
-            {sincronizando ? 'Atualizando...' : 'Sincronizar → Histograma'}
-          </button>
-          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-            Atualiza os "Mobilizados" do Histograma com a contagem desta tabela.
-          </span>
-        </div>
-      )}
-
-      <div style={{ marginTop: 8, fontSize: 11, color: 'var(--ink-3)' }}>
-        Digite 0–7 dias por célula e pressione Tab/Enter para salvar. A linha "Mobilizados" é atualizada ao sincronizar com o Histograma.
+      <div style={{ marginTop: 8, fontSize: 11, color: 'var(--ink-3)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <span>Digite 0–7 dias e pressione Tab para salvar. O Histograma é atualizado automaticamente.</span>
+        <span style={{ color: '#92400e' }}>⚠ = conflito com outro projeto na mesma semana.</span>
       </div>
     </div>
   )

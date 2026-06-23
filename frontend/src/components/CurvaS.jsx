@@ -1,6 +1,6 @@
 import { fmt } from '../utils/helpers'
 
-export default function CurvaS({ opts, height = 340 }) {
+export default function CurvaS({ opts, baseline = null, height = 340 }) {
   if (!opts) return null
   const { plannedPts, actualPts, ticks, todayX, prevToday, realToday } = opts
   const W = 800, H = height
@@ -32,6 +32,18 @@ export default function CurvaS({ opts, height = 340 }) {
       <line x1={hx} y1={padT} x2={hx} y2={y0} stroke="#c4cfc8" strokeWidth="1.5" strokeDasharray="4 4" />
       <rect x={hx - 22} y={padT - 3} width="44" height="17" rx="4" fill="#102018" />
       <text x={hx} y={padT + 9} textAnchor="middle" fontSize="10" fontWeight="700" fill="#fff" fontFamily="Inter">HOJE</text>
+
+      {/* Baseline — linha laranja tracejada (pontos pre-calculados fora do SVG) */}
+      {baseline?.pts?.length > 1 && (() => {
+        const bPath = baseline.pts.map(pt => `${PX(pt.x)},${PY(pt.y)}`).join(' ')
+        const lastBL = baseline.pts[baseline.pts.length - 1]
+        return (
+          <g>
+            <polyline points={bPath} fill="none" stroke="#f97316" strokeWidth="2" strokeDasharray="10 5" strokeLinejoin="round" opacity="0.8" />
+            <text x={PX(lastBL.x) - 22} y={PY(lastBL.y) - 6} fontSize="10" fill="#f97316" fontFamily="Inter" fontWeight="700">BL</text>
+          </g>
+        )
+      })()}
 
       <polyline points={pPath} fill="none" stroke="#90a298" strokeWidth="2.5" strokeDasharray="7 5" strokeLinejoin="round" />
 

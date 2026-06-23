@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { classify, valorFmt, fmtFull, fmt, projectCurveOpts, histogramaOpts } from '../utils/helpers'
+import { classify, valorFmt, fmtFull, fmt, projectCurveOpts, histogramaOpts, baselineCurveOpts } from '../utils/helpers'
 import { useAnexos } from '../hooks/useAnexos'
 import { useEfetivo } from '../hooks/useEfetivo'
 import { useProgramacao } from '../hooks/useProgramacao'
 import { useFuncionarios } from '../hooks/useFuncionarios'
+import { useBaseline } from '../hooks/useBaseline'
 import CurvaS from './CurvaS'
 import Histograma from './Histograma'
 import ProgramacaoSemanal from './ProgramacaoSemanal'
@@ -37,7 +38,10 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
 
   const { alocacoes, alocar } = useProgramacao(p.id)
   const { funcionarios } = useFuncionarios()
-  const [sincronizando, setSincronizando] = useState(false)
+  const { baselines, baselineAtivo, congelarBaseline, excluirBaseline } = useBaseline(p.id)
+  const baselineOpts = baselineCurveOpts(baselineAtivo, p)
+  const [congelando, setCongelando] = useState(false)
+  const [descBaseline, setDescBaseline] = useState('')
 
   const hist = [...atualizacoes]
     .filter(a => a.projeto_id === p.id)
@@ -77,25 +81,6 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
     setSavingEf(false)
   }
 
-  async function handleSincronizar(semanas, totals) {
-    setSincronizando(true)
-    try {
-      for (const semana of semanas) {
-        const mob = totals[semana] ?? 0
-        const existente = efetivo.find(e => e.data_semana === semana)
-        if (mob > 0 || existente) {
-          await salvarEfetivo({
-            data_semana: semana,
-            previstos: existente?.previstos ?? 0,
-            mobilizados: mob,
-          })
-        }
-      }
-    } catch (err) {
-      console.error('Erro ao sincronizar:', err)
-    }
-    setSincronizando(false)
-  }
 
   return (
     <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
@@ -156,9 +141,48 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
               </div>
 
               <div className="m-sec">
-                <h4>📈 Curva S do projeto (semanal)</h4>
-                <CurvaS opts={curveOpts} />
+                <h4>📈 Curva S do projeto {baselineAtivo && <span style={{ fontSize: 11, color: '#f97316', fontWeight: 600, marginLeft: 6 }}>· BL: {baselineAtivo.descricao || baselineAtivo.data_congelamento}</span>}</h4>
+                <CurvaS opts={curveOpts} baseline={baselineOpts} />
               </div>
+
+              {podeEditar && (
+                <div className="m-sec">
+                  <h4>🔒 Baseline do planejamento</h4>
+                  {baselineAtivo ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8, border: '1px solid #fed7aa', background: 'rgba(249,115,22,.06)' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316' }}>
+                          Baseline ativo — {baselineAtivo.descricao || 'sem descrição'}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>
+                          Congelado em {new Date(baselineAtivo.data_congelamento + 'T00:00:00').toLocaleDateString('pt-BR')} · Início original: {new Date(baselineAtivo.inicio_original + 'T00:00:00').toLocaleDateString('pt-BR')} · Fim original: {new Date(baselineAtivo.fim_original + 'T00:00:00').toLocaleDateString('pt-BR')} · Prev: {baselineAtivo.prev_original}%
+                        </div>
+                      </div>
+                      {baselines.length > 0 && (
+                        <button onClick={() => excluirBaseline(baselineAtivo.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--vermelho)', fontSize: 13, fontWeight: 600 }}>
+                          Remover
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                      <label style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                        Descrição (opcional)<br />
+                        <input value={descBaseline} onChange={e => setDescBaseline(e.target.value)} placeholder="ex: Planejamento original abril/26"
+                          style={inp} />
+                      </label>
+                      <button
+                        onClick={async () => { setCongelando(true); try { await congelarBaseline(p, descBaseline); setDescBaseline('') } catch {} setCongelando(false) }}
+                        disabled={congelando}
+                        style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #f97316', background: 'rgba(249,115,22,.08)', color: '#f97316', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                        {congelando ? 'Salvando...' : '🔒 Congelar baseline'}
+                      </button>
+                      <span style={{ fontSize: 11, color: 'var(--ink-3)', alignSelf: 'center' }}>Guarda início, fim e % previsto atual como referência permanente.</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {p.frentes?.length > 0 && (
                 <div className="m-sec">
@@ -253,18 +277,59 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
           )}
 
           {aba === 'Programação' && (
-            <div className="m-sec">
-              <h4>🗓️ Programação semanal de efetivo</h4>
-              <ProgramacaoSemanal
-                projeto={p}
-                funcionarios={funcionarios}
-                alocacoes={alocacoes}
-                onAlocar={alocar}
-                podeEditar={podeEditar}
-                onSincronizar={handleSincronizar}
-                sincronizando={sincronizando}
-              />
-            </div>
+            <>
+              <div className="m-sec">
+                <h4>🗓️ Programação semanal de efetivo</h4>
+                <ProgramacaoSemanal
+                  projeto={p}
+                  funcionarios={funcionarios}
+                  alocacoes={alocacoes}
+                  onAlocar={alocar}
+                  podeEditar={podeEditar}
+                />
+              </div>
+
+              {/* #5 — Custo de MO */}
+              {(() => {
+                const funcMap = Object.fromEntries(funcionarios.map(f => [f.id, f]))
+                const custoPrev  = alocacoes.reduce((s, a) => s + (a.dias || 0) * (funcMap[a.funcionario_id]?.custo_dia || 0), 0)
+                const diasTotal  = alocacoes.reduce((s, a) => s + (a.dias || 0), 0)
+                const temCusto   = funcionarios.some(f => (f.custo_dia || 0) > 0)
+                if (!temCusto && alocacoes.length === 0) return null
+                return (
+                  <div className="m-sec">
+                    <h4>💰 Custo de mão de obra (MO)</h4>
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ padding: '12px 18px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface-2)', minWidth: 150 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>Dias alocados</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', marginTop: 2 }}>{diasTotal}d</div>
+                      </div>
+                      {temCusto && (
+                        <div style={{ padding: '12px 18px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface-2)', minWidth: 150 }}>
+                          <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>Custo MO previsto</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: '#0f7a3d', marginTop: 2 }}>
+                            {custoPrev >= 1000 ? `R$ ${(custoPrev/1000).toFixed(1)}k` : `R$ ${custoPrev.toFixed(0)}`}
+                          </div>
+                        </div>
+                      )}
+                      {temCusto && p.valor > 0 && (
+                        <div style={{ padding: '12px 18px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface-2)', minWidth: 150 }}>
+                          <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>MO / Valor OS</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: '#2563EB', marginTop: 2 }}>
+                            {((custoPrev / p.valor) * 100).toFixed(1)}%
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {!temCusto && (
+                      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 8 }}>
+                        Cadastre o custo/dia de cada funcionário na aba Equipes para ver o custo total.
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
+            </>
           )}
 
           {aba === 'Histórico' && (

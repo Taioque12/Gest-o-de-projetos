@@ -56,6 +56,39 @@ export const projectCurveOpts = p => {
   return {plannedPts:planned, actualPts:actual, ticks, todayX:p._tau, prevToday:p.prev, realToday:p.real}
 }
 
+// Gera os pontos da Curva S original congelada no baseline para sobreposição no gráfico.
+// baseline: { inicio_original, fim_original, prev_original }
+// currentP: projeto preparado (tem _s e _e para normalizar o eixo X do gráfico atual)
+export const baselineCurveOpts = (baseline, currentP) => {
+  if (!baseline || !currentP) return null
+  const s = parse(baseline.inicio_original).getTime()
+  const e = parse(baseline.fim_original).getTime()
+  const span = e - s
+  const prev = Number(baseline.prev_original ?? 0)
+  const cSpan = currentP._e - currentP._s
+
+  // Função de previsto proporcional simplificada (sem avanço real — só o planejado)
+  const pctAt = ms => {
+    const tau = clamp((ms - s) / span, 0, 1)
+    const tk = T(tau)
+    const Tc = T(clamp((HOJE - s) / span, 0, 1))
+    if (Tc <= 0) return 0
+    if (Tc >= 1) return tk * 100
+    return tk <= Tc ? prev * tk / Tc : prev + (100 - prev) * (tk - Tc) / (1 - Tc)
+  }
+
+  const n = Math.ceil(span / WEEK)
+  const pts = []
+  for (let k = 0; k <= n; k++) {
+    const ms = Math.min(s + k * WEEK, e)
+    // X é relativo ao eixo do projeto ATUAL para sobrepor corretamente
+    const x = clamp((ms - currentP._s) / cSpan, 0, 1)
+    pts.push({ x, y: pctAt(ms) })
+  }
+  if (pts[pts.length - 1].x < 1) pts.push({ x: clamp((e - currentP._s) / cSpan, 0, 1), y: 100 })
+  return { pts, inicio: baseline.inicio_original, fim: baseline.fim_original, descricao: baseline.descricao }
+}
+
 // Histograma de mão de obra + Curva S.
 // Reaproveita a Curva S de projectCurveOpts e adiciona as barras de efetivo
 // (previstos x mobilizados) posicionadas na mesma linha do tempo.
