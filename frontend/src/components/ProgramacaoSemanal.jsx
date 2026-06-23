@@ -12,7 +12,7 @@ function fmtWeek(iso) {
   return `${d}/${m}`
 }
 
-export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes, onAlocar, podeEditar }) {
+export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes, conflitos: conflitosHook = {}, onAlocar, podeEditar }) {
   const semanas = useMemo(() => {
     const arr = []
     let ms = p._s
@@ -28,8 +28,8 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
 
   const [localEdits, setLocalEdits] = useState({})
   const [saving, setSaving]         = useState({})
-  // #2 — conflito: { [fid__semana]: totalDiasOutrosProjetos }
-  const [conflitos, setConflitos]   = useState({})
+  // conflitos vêm do hook (já carregados no mount)
+  const conflitos = conflitosHook
 
   const getDias = useCallback((fid, semana) => {
     const key = `${fid}__${semana}`
@@ -47,12 +47,9 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
     setSaving(s => ({ ...s, [key]: true }))
     try {
       const diasNovos = localEdits[key] === '' ? 0 : Number(localEdits[key])
-      // #1 — alocar() agora auto-sincroniza efetivo_semana e retorna conflitos externos
-      const conflitosExternos = await onAlocar({ funcionario_id: fid, data_semana: semana, dias: diasNovos })
+      await onAlocar({ funcionario_id: fid, data_semana: semana, dias: diasNovos })
       setLocalEdits(e => { const n = { ...e }; delete n[key]; return n })
-      // #2 — atualiza alerta de conflito para esta célula
-      const totalOutros = (conflitosExternos ?? []).reduce((s, c) => s + (c.dias || 0), 0)
-      setConflitos(c => ({ ...c, [key]: totalOutros }))
+      // conflitos são re-calculados pelo hook via refetch
     } catch { /* DB offline */ }
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
   }

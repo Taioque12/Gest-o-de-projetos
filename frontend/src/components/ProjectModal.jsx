@@ -36,7 +36,7 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
   const [savingEf, setSavingEf] = useState(false)
   const [erroEf, setErroEf] = useState('')
 
-  const { alocacoes, alocar } = useProgramacao(p.id)
+  const { alocacoes, conflitos, alocar } = useProgramacao(p.id)
   const { funcionarios } = useFuncionarios()
   const { baselines, baselineAtivo, congelarBaseline, excluirBaseline } = useBaseline(p.id)
   const baselineOpts = baselineCurveOpts(baselineAtivo, p)
@@ -284,6 +284,7 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
                   projeto={p}
                   funcionarios={funcionarios}
                   alocacoes={alocacoes}
+                  conflitos={conflitos}
                   onAlocar={alocar}
                   podeEditar={podeEditar}
                 />
