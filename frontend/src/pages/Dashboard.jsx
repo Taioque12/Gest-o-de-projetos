@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
 import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
 import Header from '../components/Header'
@@ -27,8 +27,14 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
   const [toast, setToast] = useState('')
+  const [ocultarValores, setOcultarValores] = useState(() => localStorage.getItem('ocultarValores') === '1')
+
+  useEffect(() => {
+    localStorage.setItem('ocultarValores', ocultarValores ? '1' : '0')
+  }, [ocultarValores])
 
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
+  const mask = v => ocultarValores ? '••••••' : v
 
   if (loading) return <div className="loading-screen">Carregando projetos...</div>
 
@@ -128,14 +134,28 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
 
       <div className="wrap">
         {/* KPIs */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <div />
+          <button
+            onClick={() => setOcultarValores(v => !v)}
+            title={ocultarValores ? 'Mostrar valores' : 'Ocultar valores'}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, padding: '4px 8px', borderRadius: 7 }}
+          >
+            {ocultarValores
+              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+            {ocultarValores ? 'Mostrar valores' : 'Ocultar valores'}
+          </button>
+        </div>
         <div className="kpis">
           <KPICard lbl="Projetos Ativos" val={kpiBase.length} sub={kpiLabel} />
-          <KPICard lbl="Valor em Carteira" val={valorFmt(VTOT)} sub={`${kpiBase.length} ${kpiBase.length === 1 ? 'ordem de serviço' : 'ordens de serviço'}`} />
-          <KPICard lbl="Avanço Previsto" val={`${fmt(wAvgPrev)}%`} sub="ponderado por valor" />
-          <KPICard lbl="Avanço Realizado" val={`${fmt(wAvgReal)}%`} sub="ponderado por valor" />
+          <KPICard lbl="Valor em Carteira" val={mask(valorFmt(VTOT))} sub={`${kpiBase.length} ${kpiBase.length === 1 ? 'ordem de serviço' : 'ordens de serviço'}`} />
+          <KPICard lbl="Avanço Previsto" val={mask(`${fmt(wAvgPrev)}%`)} sub="ponderado por valor" />
+          <KPICard lbl="Avanço Realizado" val={mask(`${fmt(wAvgReal)}%`)} sub="ponderado por valor" />
           <KPICard
             lbl="Desvio Médio"
-            val={`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))} p.p.`}
+            val={mask(`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))} p.p.`)}
             sub={clsDesv.lbl}
             cls={clsDesv.k}
             valCls={clsDesv.k}
