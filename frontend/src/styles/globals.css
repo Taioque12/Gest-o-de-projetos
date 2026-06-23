@@ -228,8 +228,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .head-divider{ display:none; }
   .head-spacer{ display:none; }
   .updated{ display:none; }
-  .head-right{ gap:5px; flex-wrap:nowrap; flex-shrink:0; overflow-x:auto; max-width:60vw; }
+  .head-right{ gap:4px; flex-wrap:nowrap; flex-shrink:0; }
   .btn{ padding:7px 9px; font-size:11px; }
+  .btn-text{ display:none; }
 
   /* Nav tabs — linha 2, scroll horizontal se necessário */
   .nav-tabs{
