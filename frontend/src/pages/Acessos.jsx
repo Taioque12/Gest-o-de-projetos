@@ -3,6 +3,7 @@ import { useUsuarios } from '../hooks/useUsuarios'
 import { useProjetos } from '../hooks/useProjetos'
 import Header from '../components/Header'
 import Toast from '../components/Toast'
+import { supabase } from '../supabase'
 
 const PERFIS = ['admin', 'equipe', 'cliente']
 
@@ -12,16 +13,35 @@ const PERFIL_COR = {
   cliente: { bg: '#fef3c7', txt: '#92400e' },
 }
 
+const CAMPO = ({ label, children }) => (
+  <div className="field" style={{ marginBottom: 12 }}>
+    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 4, display: 'block' }}>{label}</label>
+    {children}
+  </div>
+)
+
+const INPUT_STYLE = { fontSize: 13, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', fontFamily: 'inherit', background: 'var(--surface)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' }
+
 export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
   const { usuarios, acessos, loading, atualizarPerfil, atualizarNome, concederAcesso, revogarAcesso } = useUsuarios()
   const { projetos } = useProjetos(perfil, user?.id)
-  const [editando, setEditando]   = useState(null) // id do usuário em edição
-  const [nomeEdit, setNomeEdit]   = useState('')
-  const [salvando, setSalvando]   = useState(false)
-  const [toast, setToast]         = useState('')
-  const [expandido, setExpandido] = useState(null) // id do cliente expandido
+
+  const [editando, setEditando]     = useState(null)
+  const [nomeEdit, setNomeEdit]     = useState('')
+  const [salvando, setSalvando]     = useState(false)
+  const [toast, setToast]           = useState('')
+  const [expandido, setExpandido]   = useState(null)
+  const [showForm, setShowForm]     = useState(false)
+  const [erroForm, setErroForm]     = useState('')
+
+  const formVazio = { email: '', senha: '', nome: '', perfil: 'equipe', funcao: '', data_nascimento: '' }
+  const [form, setForm] = useState(formVazio)
 
   if (loading) return <div className="loading-screen">Carregando acessos...</div>
+
+  function campo(k) {
+    return e => setForm(f => ({ ...f, [k]: e.target.value }))
+  }
 
   function projetosDoUsuario(uid) {
     return acessos.filter(a => a.usuario_id === uid).map(a => a.projeto_id)
@@ -60,17 +80,49 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     setSalvando(false)
   }
 
+  async function handleCriarUsuario(e) {
+    e.preventDefault()
+    setErroForm('')
+    setSalvando(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            email: form.email,
+            senha: form.senha,
+            nome: form.nome || null,
+            perfil: form.perfil,
+            funcao: form.funcao || null,
+            data_nascimento: form.data_nascimento || null,
+          }),
+        }
+      )
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Erro ao criar usuário')
+      setShowForm(false)
+      setForm(formVazio)
+      setToast('Usuário criado com sucesso!')
+      // Recarrega a lista
+      window.location.reload()
+    } catch (err) {
+      setErroForm(err.message)
+    }
+    setSalvando(false)
+  }
+
   const clientes = usuarios.filter(u => u.perfil === 'cliente')
   const staff    = usuarios.filter(u => u.perfil !== 'cliente')
 
   return (
     <>
-      <Header
-        perfil={perfil}
-        onSignOut={onSignOut}
-        view="acessos"
-        onChangeView={onChangeView}
-      />
+      <Header perfil={perfil} onSignOut={onSignOut} view="acessos" onChangeView={onChangeView} />
 
       <div className="wrap">
 
@@ -78,7 +130,16 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
         <div className="panel">
           <div className="panel-head">
             <h2><span className="ico">👤</span> Usuários — Equipe Interna</h2>
-            <span className="hint">{staff.length} usuário(s)</span>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <span className="hint">{staff.length} usuário(s)</span>
+              <button
+                className="btn btn-ghost"
+                style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
+                onClick={() => { setShowForm(true); setErroForm('') }}
+              >
+                + Novo Usuário
+              </button>
+            </div>
           </div>
           <div className="panel-body" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
@@ -86,6 +147,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                 <tr style={{ borderBottom: '2px solid var(--line)' }}>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Nome</th>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>E-mail</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Função</th>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Perfil</th>
                 </tr>
               </thead>
@@ -95,13 +157,8 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                     <td style={{ padding: '10px 12px' }}>
                       {editando === u.id ? (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <input
-                            value={nomeEdit}
-                            onChange={e => setNomeEdit(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleNome(u.id)}
-                            style={{ fontSize: 13, padding: '5px 10px', borderRadius: 7, border: '1px solid var(--line)', fontFamily: 'inherit', background: 'var(--surface)', color: 'var(--ink)' }}
-                            autoFocus
-                          />
+                          <input value={nomeEdit} onChange={e => setNomeEdit(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleNome(u.id)}
+                            style={{ ...INPUT_STYLE, width: 160 }} autoFocus />
                           <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }} onClick={() => handleNome(u.id)} disabled={salvando}>✓</button>
                           <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setEditando(null)}>✕</button>
                         </div>
@@ -116,13 +173,10 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                       )}
                     </td>
                     <td style={{ padding: '10px 12px', color: 'var(--ink-2)' }}>{u.email || '—'}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--ink-2)', fontSize: 13 }}>{u.funcao || '—'}</td>
                     <td style={{ padding: '10px 12px' }}>
-                      <select
-                        value={u.perfil}
-                        onChange={e => handlePerfil(u.id, e.target.value)}
-                        disabled={salvando}
-                        style={{ fontSize: 12, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--line)', fontFamily: 'inherit', fontWeight: 700, cursor: 'pointer', background: PERFIL_COR[u.perfil]?.bg, color: PERFIL_COR[u.perfil]?.txt }}
-                      >
+                      <select value={u.perfil} onChange={e => handlePerfil(u.id, e.target.value)} disabled={salvando}
+                        style={{ fontSize: 12, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--line)', fontFamily: 'inherit', fontWeight: 700, cursor: 'pointer', background: PERFIL_COR[u.perfil]?.bg, color: PERFIL_COR[u.perfil]?.txt }}>
                         {PERFIS.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </td>
@@ -133,7 +187,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
           </div>
         </div>
 
-        {/* Clientes e seus acessos */}
+        {/* Clientes */}
         <div className="panel">
           <div className="panel-head">
             <h2><span className="ico">🏢</span> Clientes — Projetos Liberados</h2>
@@ -143,7 +197,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
             {clientes.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)' }}>
                 <p>Nenhum cliente cadastrado.</p>
-                <p style={{ fontSize: 12, marginTop: 6 }}>Crie um usuário com perfil "cliente" na seção acima.</p>
+                <p style={{ fontSize: 12, marginTop: 6 }}>Crie um usuário com perfil "cliente" acima.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -152,11 +206,8 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                   const aberto = expandido === u.id
                   return (
                     <div key={u.id} style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
-                      {/* Cabeçalho do cliente */}
-                      <div
-                        onClick={() => setExpandido(aberto ? null : u.id)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'pointer', background: 'var(--surface-2)' }}
-                      >
+                      <div onClick={() => setExpandido(aberto ? null : u.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'pointer', background: 'var(--surface-2)' }}>
                         <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fef3c7', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
                           {(u.nome || u.email || '?').charAt(0).toUpperCase()}
                         </div>
@@ -171,33 +222,26 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                           <polyline points="6 9 12 15 18 9"/>
                         </svg>
                       </div>
-
-                      {/* Lista de projetos */}
                       {aberto && (
                         <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {projetos.length === 0 ? (
-                            <p style={{ fontSize: 13, color: 'var(--ink-3)' }}>Nenhum projeto cadastrado.</p>
-                          ) : projetos.map(p => {
-                            const ativo = temAcesso(u.id, p.id)
-                            return (
-                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 8, background: ativo ? '#f0fdf4' : 'var(--surface-2)', border: `1px solid ${ativo ? '#bbf7d0' : 'var(--line)'}` }}>
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 600 }}>OS {p.os} · {p.nome}</div>
-                                  <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.cliente}</div>
+                          {projetos.length === 0
+                            ? <p style={{ fontSize: 13, color: 'var(--ink-3)' }}>Nenhum projeto cadastrado.</p>
+                            : projetos.map(p => {
+                              const ativo = temAcesso(u.id, p.id)
+                              return (
+                                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 8, background: ativo ? '#f0fdf4' : 'var(--surface-2)', border: `1px solid ${ativo ? '#bbf7d0' : 'var(--line)'}` }}>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>OS {p.os} · {p.nome}</div>
+                                    <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.cliente}</div>
+                                  </div>
+                                  <button onClick={() => handleAcesso(u.id, p.id, !ativo)} disabled={salvando}
+                                    style={{ fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 7, cursor: 'pointer', border: 'none', background: ativo ? '#dc2626' : 'var(--brand)', color: '#fff' }}>
+                                    {ativo ? 'Revogar' : 'Liberar'}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleAcesso(u.id, p.id, !ativo)}
-                                  disabled={salvando}
-                                  style={{
-                                    fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 7, cursor: 'pointer', border: 'none', transition: '.15s',
-                                    background: ativo ? '#dc2626' : 'var(--brand)', color: '#fff',
-                                  }}
-                                >
-                                  {ativo ? 'Revogar' : 'Liberar'}
-                                </button>
-                              </div>
-                            )
-                          })}
+                              )
+                            })
+                          }
                         </div>
                       )}
                     </div>
@@ -210,6 +254,46 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
 
         <footer><b>Painel MA CONEGLIAN</b> · Gestão de Acessos</footer>
       </div>
+
+      {/* Modal novo usuário */}
+      {showForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--surface)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 440, boxShadow: 'var(--shadow-lg)' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Novo Usuário</h3>
+            {erroForm && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '8px 12px', borderRadius: 8, fontSize: 13, marginBottom: 14 }}>{erroForm}</div>}
+            <form onSubmit={handleCriarUsuario}>
+              <CAMPO label="Nome completo *">
+                <input style={INPUT_STYLE} value={form.nome} onChange={campo('nome')} placeholder="Ex: Carlos Silva" required />
+              </CAMPO>
+              <CAMPO label="E-mail *">
+                <input style={INPUT_STYLE} type="email" value={form.email} onChange={campo('email')} placeholder="carlos@maconeglia.com" required />
+              </CAMPO>
+              <CAMPO label="Senha *">
+                <input style={INPUT_STYLE} type="password" value={form.senha} onChange={campo('senha')} placeholder="Mínimo 6 caracteres" required minLength={6} />
+              </CAMPO>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <CAMPO label="Função / Cargo">
+                  <input style={INPUT_STYLE} value={form.funcao} onChange={campo('funcao')} placeholder="Ex: Engenheiro" />
+                </CAMPO>
+                <CAMPO label="Data de nascimento">
+                  <input style={INPUT_STYLE} type="date" value={form.data_nascimento} onChange={campo('data_nascimento')} />
+                </CAMPO>
+              </div>
+              <CAMPO label="Perfil de acesso *">
+                <select style={INPUT_STYLE} value={form.perfil} onChange={campo('perfil')} required>
+                  {PERFIS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+                </select>
+              </CAMPO>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => { setShowForm(false); setErroForm('') }} disabled={salvando}>Cancelar</button>
+                <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
+                  {salvando ? 'Criando...' : 'Criar usuário'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
     </>
