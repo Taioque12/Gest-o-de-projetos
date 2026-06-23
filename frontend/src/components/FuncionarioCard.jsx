@@ -1,26 +1,18 @@
-const ITENS = [
-  { key: 'sdai',                label: 'SDAI' },
-  { key: 'instalacao_eletrica', label: 'Inst. Elétrica' },
-  { key: 'infraestrutura',      label: 'Infraestrutura' },
-  { key: 'instrumentacao',      label: 'Instrumentação' },
-  { key: 'media_tensao',        label: 'Média Tensão' },
-  { key: 'alta_tensao',         label: 'Alta Tensão' },
-]
-
 function corNota(n) {
   if (n >= 8) return { bg: '#dcfce7', txt: '#166534', bar: '#16a34a' }
   if (n >= 5) return { bg: '#fef9c3', txt: '#92400e', bar: '#ca8a04' }
   return              { bg: '#fee2e2', txt: '#991b1b', bar: '#dc2626' }
 }
 
-function mediaGeral(f) {
-  const vals = ITENS.map(i => parseFloat(f[i.key] ?? 0))
+function mediaGeral(f, habilidades) {
+  if (!habilidades.length) return '—'
+  const vals = habilidades.map(h => parseFloat(f.avaliacoes?.[h.id] ?? 0))
   return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)
 }
 
-export default function FuncionarioCard({ funcionario: f, onEditar, onExcluir, selecionado, onToggleSeleção }) {
-  const media    = mediaGeral(f)
-  const corMedia = corNota(parseFloat(media))
+export default function FuncionarioCard({ funcionario: f, habilidades = [], onEditar, onExcluir, selecionado, onToggleSeleção }) {
+  const media    = mediaGeral(f, habilidades)
+  const corMedia = media !== '—' ? corNota(parseFloat(media)) : { txt: 'var(--ink-3)' }
 
   return (
     <div className={`func-card${selecionado ? ' func-card-sel' : ''}`}>
@@ -40,21 +32,23 @@ export default function FuncionarioCard({ funcionario: f, onEditar, onExcluir, s
         </div>
       </div>
 
-      <div className="func-competencias">
-        {ITENS.map(({ key, label }) => {
-          const n = parseFloat(f[key] ?? 0)
-          const c = corNota(n)
-          return (
-            <div key={key} className="func-comp-row">
-              <span className="func-comp-label">{label}</span>
-              <div className="func-comp-bar-wrap">
-                <div className="func-comp-bar" style={{ width: `${n * 10}%`, background: c.bar }} />
+      {habilidades.length > 0 && (
+        <div className="func-competencias">
+          {habilidades.map(h => {
+            const n = parseFloat(f.avaliacoes?.[h.id] ?? 0)
+            const c = corNota(n)
+            return (
+              <div key={h.id} className="func-comp-row">
+                <span className="func-comp-label">{h.nome}</span>
+                <div className="func-comp-bar-wrap">
+                  <div className="func-comp-bar" style={{ width: `${n * 10}%`, background: c.bar }} />
+                </div>
+                <span className="func-comp-nota" style={{ color: c.txt }}>{n}</span>
               </div>
-              <span className="func-comp-nota" style={{ color: c.txt }}>{n}</span>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       <div className="func-actions">
         <button

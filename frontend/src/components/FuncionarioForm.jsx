@@ -1,39 +1,35 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 
-const ITENS = [
-  { key: 'sdai',                label: 'Alarme de Incêndio (SDAI)' },
-  { key: 'instalacao_eletrica', label: 'Instalação Elétrica' },
-  { key: 'infraestrutura',      label: 'Montagem de Infraestrutura' },
-  { key: 'instrumentacao',      label: 'Instrumentação' },
-  { key: 'media_tensao',        label: 'Média Tensão' },
-  { key: 'alta_tensao',         label: 'Alta Tensão' },
-]
-
 function corNota(n) {
   if (n >= 8) return '#166534'
   if (n >= 5) return '#92400e'
   return '#991b1b'
 }
 
-export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salvando }) {
+export default function FuncionarioForm({ funcionario, habilidades = [], onSalvar, onFechar, salvando }) {
   const ed = !!funcionario
+
   const [form, setForm] = useState({
-    nome:               funcionario?.nome               ?? '',
-    cargo:              funcionario?.cargo              ?? '',
-    equipe:             funcionario?.equipe             ?? '',
-    custo_dia:          funcionario?.custo_dia          ?? '',
-    sdai:               funcionario?.sdai               ?? 0,
-    instalacao_eletrica:funcionario?.instalacao_eletrica?? 0,
-    infraestrutura:     funcionario?.infraestrutura     ?? 0,
-    instrumentacao:     funcionario?.instrumentacao     ?? 0,
-    media_tensao:       funcionario?.media_tensao       ?? 0,
-    alta_tensao:        funcionario?.alta_tensao        ?? 0,
+    nome:      funcionario?.nome      ?? '',
+    cargo:     funcionario?.cargo     ?? '',
+    equipe:    funcionario?.equipe    ?? '',
+    custo_dia: funcionario?.custo_dia ?? '',
+    avaliacoes: funcionario?.avaliacoes ?? {},
   })
   const [fotoPreview, setFotoPreview] = useState(funcionario?.foto_url ?? null)
   const [fotoFile, setFotoFile]       = useState(null)
   const [erro, setErro]               = useState('')
   const inputFotoRef = useRef()
+
+  // Quando habilidades carregam, inicializa notas ausentes com 0
+  useEffect(() => {
+    setForm(f => {
+      const avs = { ...f.avaliacoes }
+      habilidades.forEach(h => { if (avs[h.id] === undefined) avs[h.id] = 0 })
+      return { ...f, avaliacoes: avs }
+    })
+  }, [habilidades])
 
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onFechar() }
@@ -42,6 +38,9 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
   }, [onFechar])
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
+  function setNota(hid, v) {
+    setForm(f => ({ ...f, avaliacoes: { ...f.avaliacoes, [hid]: v } }))
+  }
 
   function handleFotoChange(e) {
     const file = e.target.files?.[0]
@@ -56,7 +55,6 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
     setErro('')
 
     let foto_url = funcionario?.foto_url ?? null
-
     if (fotoFile) {
       const ext  = fotoFile.name.split('.').pop()
       const path = `${Date.now()}.${ext}`
@@ -69,16 +67,11 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
     }
 
     onSalvar({
-      nome:                form.nome.trim(),
-      cargo:               form.cargo.trim(),
-      equipe:              form.equipe.trim(),
-      custo_dia:           form.custo_dia === '' ? null : Number(form.custo_dia),
-      sdai:                Number(form.sdai),
-      instalacao_eletrica: Number(form.instalacao_eletrica),
-      infraestrutura:      Number(form.infraestrutura),
-      instrumentacao:      Number(form.instrumentacao),
-      media_tensao:        Number(form.media_tensao),
-      alta_tensao:         Number(form.alta_tensao),
+      nome:      form.nome.trim(),
+      cargo:     form.cargo.trim(),
+      equipe:    form.equipe.trim(),
+      custo_dia: form.custo_dia === '' ? null : Number(form.custo_dia),
+      avaliacoes: form.avaliacoes,
       foto_url,
     })
   }
@@ -97,7 +90,6 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
 
           <div className="form-section-title">Dados Pessoais</div>
 
-          {/* Upload de foto */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
             <div
               onClick={() => inputFotoRef.current.click()}
@@ -105,7 +97,7 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
                 width: 72, height: 72, borderRadius: 16, overflow: 'hidden', flexShrink: 0,
                 background: fotoPreview ? 'transparent' : 'var(--brand)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '2px dashed var(--brand)', position: 'relative'
+                border: '2px dashed var(--brand)', position: 'relative',
               }}
             >
               {fotoPreview
@@ -150,31 +142,44 @@ export default function FuncionarioForm({ funcionario, onSalvar, onFechar, salva
             </div>
           </div>
 
-          <div className="form-section-title">Avaliação Técnica</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {ITENS.map(({ key, label }) => (
-              <div key={key}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600 }}>{label}</label>
-                  <span style={{ fontWeight: 800, fontSize: 15, color: corNota(form[key]), minWidth: 24, textAlign: 'right' }}>
-                    {form[key]}
-                  </span>
-                </div>
-                <input
-                  type="range" min="0" max="10" step="0.5"
-                  value={form[key]}
-                  onChange={e => set(key, e.target.value)}
-                  className="avaliacao-slider"
-                  style={{ '--pct': `${form[key] * 10}%` }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>
-                  <span>0 — Sem conhecimento</span>
-                  <span>5 — Intermediário</span>
-                  <span>10 — Especialista</span>
-                </div>
-              </div>
-            ))}
+          <div className="form-section-title">
+            Avaliação Técnica
+            {habilidades.length === 0 && (
+              <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 8 }}>
+                (nenhuma habilidade cadastrada)
+              </span>
+            )}
           </div>
+
+          {habilidades.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {habilidades.map(h => {
+                const nota = parseFloat(form.avaliacoes[h.id] ?? 0)
+                return (
+                  <div key={h.id}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600 }}>{h.nome}</label>
+                      <span style={{ fontWeight: 800, fontSize: 15, color: corNota(nota), minWidth: 24, textAlign: 'right' }}>
+                        {nota}
+                      </span>
+                    </div>
+                    <input
+                      type="range" min="0" max="10" step="0.5"
+                      value={nota}
+                      onChange={e => setNota(h.id, e.target.value)}
+                      className="avaliacao-slider"
+                      style={{ '--pct': `${nota * 10}%` }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>
+                      <span>0 — Sem conhecimento</span>
+                      <span>5 — Intermediário</span>
+                      <span>10 — Especialista</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
             <button type="button" className="btn btn-ghost"
