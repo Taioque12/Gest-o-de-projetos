@@ -4,6 +4,7 @@ import { supabaseConfigurado } from './supabase'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Equipes from './pages/Equipes'
+import Acessos from './pages/Acessos'
 
 export default function App() {
   const { user, perfil, loading, signIn, signOut } = useAuth()
@@ -18,6 +19,17 @@ export default function App() {
   if (view === 'equipes') {
     return (
       <Equipes
+        user={user}
+        perfil={perfil}
+        onSignOut={signOut}
+        onChangeView={setView}
+      />
+    )
+  }
+
+  if (view === 'acessos' && perfil === 'admin') {
+    return (
+      <Acessos
         user={user}
         perfil={perfil}
         onSignOut={signOut}
