@@ -87,7 +87,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-use`,
         {
           method: 'POST',
           headers: {
