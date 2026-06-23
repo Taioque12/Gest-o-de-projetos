@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
-import { classify, valorFmt, fmt, portfolioCurveOpts } from '../utils/helpers'
+import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
 import Header from '../components/Header'
 import KPICard from '../components/KPICard'
 import CurvaS from '../components/CurvaS'
@@ -16,6 +16,7 @@ import Toast from '../components/Toast'
 export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
   const [filtro, setFiltro] = useState('todos')
+  const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
   const [modalProjeto, setModalProjeto] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
   const [showSemanal, setShowSemanal] = useState(false)
@@ -72,7 +73,10 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
     ? projetos
     : projetos.filter(p => classify(p.prev, p.real).k === filtro)
 
-  const curveOpts = projetos.length ? portfolioCurveOpts(projetos) : null
+  const projetoSelecionado = projetos.find(p => p.id === curvaFiltro)
+  const curveOpts = projetos.length
+    ? (projetoSelecionado ? projectCurveOpts(projetoSelecionado) : portfolioCurveOpts(projetos))
+    : null
 
   async function handleSalvar(dados) {
     setSalvando(true)
@@ -134,19 +138,44 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
           />
         </div>
 
-        {/* Curva S Portfólio */}
+        {/* Curva S */}
         <div className="panel">
           <div className="panel-head">
-            <h2><span className="ico">📈</span> Curva S do Portfólio — Avanço Físico</h2>
+            <h2>
+              <span className="ico">📈</span>
+              {projetoSelecionado
+                ? `Curva S — OS ${projetoSelecionado.os} · ${projetoSelecionado.nome}`
+                : 'Curva S do Portfólio — Avanço Físico'}
+            </h2>
             <div className="legend">
               <span><i className="swatch-dash" /> Previsto (linha de base)</span>
               <span><i className="swatch-solid" /> Realizado</span>
             </div>
           </div>
           <div className="panel-body">
+            {/* Filtro por projeto */}
+            <div className="filters" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+              <button
+                className={`chip${curvaFiltro === 'portfolio' ? ' active' : ''}`}
+                onClick={() => setCurvaFiltro('portfolio')}
+              >
+                Portfólio completo
+              </button>
+              {projetos.map(p => (
+                <button
+                  key={p.id}
+                  className={`chip${curvaFiltro === p.id ? ' active' : ''}`}
+                  onClick={() => setCurvaFiltro(p.id)}
+                >
+                  OS {p.os} · {p.nome}
+                </button>
+              ))}
+            </div>
             {curveOpts && <CurvaS opts={curveOpts} />}
             <p style={{ marginTop: 10, color: 'var(--ink-3)', fontSize: 12 }}>
-              Médias ponderadas por valor de contrato · linha do tempo em calendário (semanal).
+              {projetoSelecionado
+                ? `Curva individual · ${projetoSelecionado.cliente}`
+                : 'Médias ponderadas por valor de contrato · linha do tempo em calendário (semanal).'}
             </p>
           </div>
         </div>
