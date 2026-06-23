@@ -8,7 +8,7 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onA
       <div className="head-inner">
 
         {/* Marca */}
-        <div className="brand">
+        <div className="brand" onClick={() => onChangeView?.('dashboard')} style={{ cursor: onChangeView ? 'pointer' : 'default' }}>
           <div className="logo">MA</div>
           <div>
             <h1>MA CONEGLIAN · Gestão de Projetos</h1>
