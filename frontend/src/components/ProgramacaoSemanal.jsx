@@ -123,13 +123,13 @@ export default function ProgramacaoSemanal({ projeto: p, funcionarios, alocacoes
                     // #2 — conflito: funcionário já tem horas em outro projeto e o total passa de 5d
                     const temConflito = hasVal && outrosDias > 0 && (dias + outrosDias) > 5
 
-                    const borderColor = temConflito ? '#d97706' : hasVal ? '#0f7a3d' : 'var(--line)'
+                    const borderColor = temConflito ? '#dc2626' : hasVal ? '#0f7a3d' : 'var(--line)'
                     const bgColor     = isSaving
                       ? 'var(--surface-2)'
-                      : temConflito ? 'rgba(217,119,6,.10)'
+                      : temConflito ? 'rgba(220,38,38,.12)'
                       : hasVal      ? 'rgba(15,122,61,.10)'
                       : 'var(--surface)'
-                    const textColor   = temConflito ? '#92400e' : hasVal ? '#0f7a3d' : 'var(--ink-3)'
+                    const textColor   = temConflito ? '#dc2626' : hasVal ? '#0f7a3d' : 'var(--ink-3)'
 
                     return (
                       <td key={s} style={{ textAlign: 'center', padding: '3px 4px' }}>
