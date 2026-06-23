@@ -16,6 +16,7 @@ import Toast from '../components/Toast'
 export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const { projetos, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
   const [filtro, setFiltro] = useState('todos')
+  const [filtroResp, setFiltroResp] = useState('todos')
   const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
   const [modalProjeto, setModalProjeto] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
@@ -69,9 +70,11 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const nC = projetos.filter(p => classify(p.prev, p.real).k === 'vermelho').length
   const nA = projetos.filter(p => classify(p.prev, p.real).k === 'amarelo').length
 
-  const projetosFiltrados = filtro === 'todos'
-    ? projetos
-    : projetos.filter(p => classify(p.prev, p.real).k === filtro)
+  const responsaveis = ['todos', ...Array.from(new Set(projetos.map(p => p.responsavel).filter(Boolean))).sort()]
+
+  const projetosFiltrados = projetos
+    .filter(p => filtro === 'todos' || classify(p.prev, p.real).k === filtro)
+    .filter(p => filtroResp === 'todos' || p.responsavel === filtroResp)
 
   const projetoSelecionado = projetos.find(p => p.id === curvaFiltro)
   const curveOpts = projetos.length
@@ -192,6 +195,16 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
                   </button>
                 ))}
               </div>
+              <select
+                value={filtroResp}
+                onChange={e => setFiltroResp(e.target.value)}
+                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer' }}
+              >
+                <option value="todos">Todos os responsáveis</option>
+                {responsaveis.filter(r => r !== 'todos').map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
               {podeEditar && (
                 <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
                   onClick={() => setFormProjeto('novo')}>
