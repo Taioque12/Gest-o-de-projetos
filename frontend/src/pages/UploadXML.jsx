@@ -7,15 +7,11 @@ const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL  ?? 'gemini-1.5-pro-lates
 const GEMINI_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models'
 const GEMINI_URL   = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
-function buildPrompt(projeto, tarefas) {
+function buildDados(projeto, tarefas) {
   const hoje = new Date().toISOString().slice(0, 10)
-
-  // Calcula dias corridos restantes
   const diasRestantes = projeto.fim
     ? Math.round((new Date(projeto.fim) - new Date(hoje)) / 86400000)
     : null
-
-  // Calcula avanço esperado proporcional ao tempo decorrido
   const diasTotais = projeto.inicio && projeto.fim
     ? Math.round((new Date(projeto.fim) - new Date(projeto.inicio)) / 86400000)
     : null
@@ -28,121 +24,100 @@ function buildPrompt(projeto, tarefas) {
   const desvioTemporal = avancoPrevistoProporcional !== null
     ? (projeto.prev - avancoPrevistoProporcional).toFixed(1)
     : null
-
-  // Classifica tarefas por status
   const naoIniciadas  = tarefas.filter(t => t.previsto === 0)
   const emAndamento   = tarefas.filter(t => t.previsto > 0 && t.previsto < 100)
   const concluidas    = tarefas.filter(t => t.previsto === 100)
   const atrasadas     = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
-
   const linhasTarefas = tarefas.slice(0, 60).map(t => {
     const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠ ATRASADA' : t.previsto > 0 ? '▶' : '○'
     return `  ${status} ${t.nome}: ${t.previsto}% | ${t.inicio} → ${t.fim}`
   }).join('\n')
+  return { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas }
+}
 
-  return `Você é um engenheiro sênior de planejamento e controle de projetos (PCP), especialista em projetos de engenharia elétrica industrial — subestações de média e alta tensão, instalações elétricas BT/MT, SPDA, SDAI, automação e comissionamento. Você aplica rigorosamente as metodologias do PMBOK 7ª edição e EVM (Earned Value Management).
+function buildPromptParte1(projeto, tarefas) {
+  const { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas } = buildDados(projeto, tarefas)
 
-Realize uma análise técnica completa e detalhada do cronograma a seguir. Seja específico, técnico e direto. Baseie TODAS as conclusões nos dados fornecidos — não invente informações.
+  return `Você é um engenheiro sênior de planejamento e controle de projetos (PCP), especialista em engenharia elétrica industrial. Analise RAPIDAMENTE (conciso mas completo) o cronograma do projeto. Baseie-se APENAS nos dados fornecidos — não invente.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DADOS DO PROJETO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Nome: ${projeto.nome || '(não informado)'}
-Data de início: ${projeto.inicio || '(não informada)'}
-Data de término contratual: ${projeto.fim || '(não informada)'}
-Data de referência da análise: ${hoje}
-${diasRestantes !== null ? `Dias restantes até o término: ${diasRestantes} dias` : ''}
-${diasTotais !== null ? `Duração total do projeto: ${diasTotais} dias corridos` : ''}
-${diasDecorridos !== null ? `Dias decorridos desde o início: ${diasDecorridos} dias` : ''}
+Data de término: ${projeto.fim || '(não informada)'}
+Avanço atual: ${projeto.prev}% | Esperado: ${avancoPrevistoProporcional ?? 'N/D'}% | Desvio: ${desvioTemporal ?? 'N/D'} p.p.
+Tarefas: ${concluidas.length} concluídas, ${emAndamento.length} em andamento, ${atrasadas.length} atrasadas
 
-AVANÇO FÍSICO ATUAL: ${projeto.prev}%
-${avancoPrevistoProporcional !== null ? `Avanço esperado proporcional ao tempo: ${avancoPrevistoProporcional}%` : ''}
-${desvioTemporal !== null ? `Desvio de avanço (real − esperado): ${desvioTemporal} p.p.` : ''}
-
-RESUMO DAS TAREFAS:
-- Total de tarefas: ${tarefas.length}
-- Concluídas (100%): ${concluidas.length}
-- Em andamento: ${emAndamento.length}
-- Não iniciadas (0%): ${naoIniciadas.length}
-- ATRASADAS (fim passado, < 100%): ${atrasadas.length}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CRONOGRAMA DETALHADO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Legenda: ✓ Concluída | ▶ Em andamento | ○ Não iniciada | ⚠ ATRASADA
-
+CRONOGRAMA
 ${linhasTarefas}
-${tarefas.length > 60 ? `\n  ... (+ ${tarefas.length - 60} tarefas adicionais não listadas)` : ''}
+${tarefas.length > 60 ? `(+ ${tarefas.length - 60} tarefas não listadas)` : ''}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INSTRUÇÕES DE ANÁLISE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Produza uma análise técnica estruturada com TODAS as seções abaixo. Seja específico — cite nomes de tarefas reais do cronograma.
+INSTRUÇÕES — PARTE 1 (DIAGNÓSTICO RÁPIDO)
 
 ### 🔴🟡🟢 Veredito Executivo
-Status geral do projeto em UMA frase objetiva: (CRÍTICO / ATENÇÃO / CONTROLADO). Inclua o desvio de avanço e o risco ao prazo contratual.
+Uma frase: (CRÍTICO / ATENÇÃO / CONTROLADO) + desvio + risco ao prazo.
 
-### 📐 Análise de Valor Agregado (EVM)
-Com base nos dados disponíveis, estime:
-- **SPI (Schedule Performance Index)**: avanço real ÷ avanço esperado. Interprete: SPI < 0,85 = crítico, 0,85–0,95 = atenção, > 0,95 = controlado.
-- **Tendência de término**: se o ritmo atual for mantido, o projeto terminará antes, no prazo ou com quantos dias de atraso estimados?
-- **Data de término estimada**: calcule a data prevista de conclusão com base no SPI.
-- **Tarefas no caminho crítico**: identifique as tarefas em andamento com maior risco de impacto no término contratual.
+### 📐 EVM Essencial
+- SPI (avanço real ÷ esperado): estime
+- Dias de atraso estimados se ritmo mantido
+- Data de término estimada
 
-### ⚠️ Tarefas e Frentes Críticas
-Para cada tarefa atrasada ou em risco, informe:
-- Nome exato da tarefa
-- Status atual (% concluído vs. % esperado)
-- Impacto potencial no prazo geral (em dias estimados)
-- Causa provável do atraso (com base no padrão do cronograma)
-- Ação imediata recomendada para esta tarefa específica
+### ⚠️ Tarefas Críticas (máx 5)
+Para cada uma: nome, status, impacto em dias, causa provável
 
-### 🔧 Análise Técnica por Disciplina
-Agrupe as tarefas por disciplina (civil, elétrica BT, elétrica MT, automação, comissionamento, documentação, etc.) e avalie o desempenho de cada frente. Identifique quais disciplinas estão comprometendo o caminho crítico.
-
-### 🚀 Ações Imediatas — Top 3 (Esta Semana)
-As 3 ações mais urgentes que devem ser tomadas AGORA, com maior impacto na recuperação do projeto. Para cada uma:
-- **O quê**: descrição objetiva da ação (1–2 linhas)
-- **Quem**: responsável direto (Gestor / Engenheiro de campo / Equipe técnica / Escritório)
-- **Como**: passo a passo resumido (3–5 passos concretos)
-- **Meta**: resultado mensurável esperado ao final da semana
-
-### 🎯 Plano de Ação Corretivo Completo
-Liste de 6 a 10 ações corretivas priorizadas por impacto. Para cada ação informe:
-- **Prioridade**: 🔴 Alta / 🟡 Média / 🟢 Baixa
-- **Ação**: o que fazer exatamente (seja específico, cite tarefas e frentes reais)
-- **Responsável**: Gestor / Engenheiro / Equipe / Escritório
-- **Prazo**: Imediato (esta semana) / Curto prazo (este mês) / Médio prazo (próximo mês)
-- **Esforço estimado**: Baixo / Médio / Alto
-- **Impacto esperado**: ganho de avanço ou dias recuperados estimados
-- **Indicador de sucesso**: como saber que a ação funcionou (métrica mensurável)
-
-### 📅 Cronograma de Recuperação
-Caso o projeto esteja atrasado, proponha um plano semana a semana para as próximas 4 semanas:
-- **Semana 1**: foco e meta de avanço
-- **Semana 2**: foco e meta de avanço
-- **Semana 3**: foco e meta de avanço
-- **Semana 4**: foco e meta de avanço
-- **Meta ao fim das 4 semanas**: % de avanço esperado para voltar ao trilho
+### 🔧 Disciplinas em Risco
+Quais disciplinas (elétrica, automação, etc) estão comprometendo o prazo?
 
 ### 📊 Painel de Indicadores
 | Indicador | Valor | Status |
-|---|---|---|
-| Avanço físico atual | ${projeto.prev}% | - |
-| Avanço esperado proporcional | ${avancoPrevistoProporcional ?? 'N/D'}% | - |
-| Desvio de avanço | ${desvioTemporal ?? 'N/D'} p.p. | - |
+| Avanço atual | ${projeto.prev}% | - |
 | SPI estimado | (calcule) | - |
-| Data de término estimada | (calcule) | - |
-| Tarefas atrasadas | ${atrasadas.length} de ${tarefas.length} | - |
-| Risco de não conclusão no prazo | (Baixo/Médio/Alto/Muito Alto) | - |
+| Tarefas atrasadas | ${atrasadas.length}/${tarefas.length} | - |
+| Risco ao prazo | Baixo/Médio/Alto/Crítico | - |
 
-Complete a coluna Status com: 🟢 / 🟡 / 🔴
+Complete com 🟢 / 🟡 / 🔴
 
-### 💡 Recomendações Estratégicas
-2 a 3 recomendações de médio/longo prazo para melhorar a gestão do cronograma nas próximas fases do projeto ou em projetos futuros similares. Inclua boas práticas de engenharia elétrica industrial.
+IMPORTANTE: Seja técnico, direto e baseado nos dados. Cite nomes reais de tarefas.`
+}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IMPORTANTE: Baseie-se APENAS nos dados fornecidos. Cite tarefas pelo nome exato. Seja técnico, preciso e orientado a resultados. O foco principal é o PLANO DE AÇÃO — cada sugestão deve ser concreta, executável e com responsável definido.`
+function buildPromptParte2(projeto, tarefas) {
+  const { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas } = buildDados(projeto, tarefas)
+
+  return `Você é um engenheiro sênior PCP em engenharia elétrica industrial. PARTE 2 — PLANO DE AÇÃO DETALHADO baseado no cronograma a seguir.
+
+DADOS RESUMIDOS
+Nome: ${projeto.nome || '(não informado)'}
+Avanço: ${projeto.prev}% (esperado: ${avancoPrevistoProporcional ?? 'N/D'}% | desvio: ${desvioTemporal ?? 'N/D'} p.p.)
+Prazo: ${projeto.fim || '(não informado)'} (${diasRestantes} dias restantes)
+Tarefas: ${concluidas.length}✓ / ${emAndamento.length}▶ / ${atrasadas.length}⚠
+
+CRONOGRAMA
+${linhasTarefas}
+
+INSTRUÇÕES — PARTE 2 (PLANO DE AÇÃO)
+
+### 🚀 Top 3 Ações Imediatas (Esta Semana)
+As 3 ações de maior impacto para HOJE/ESTA SEMANA. Para cada uma:
+- **Ação**: objetivo específico (1–2 linhas)
+- **Quem**: Gestor / Eng. Campo / Equipe / Escritório
+- **Como**: 3–5 passos concretos
+- **Meta**: resultado mensurável (ex: ganho de 5% em avanço)
+
+### 🎯 Plano de Ação Corretivo (6–10 ações)
+Priorizadas por impacto. Estrutura:
+1. **Prioridade**: 🔴 Alta / 🟡 Média / 🟢 Baixa
+2. **Ação**: específica, cite tarefas reais do cronograma
+3. **Responsável**: Gestor / Eng. / Equipe / Escritório
+4. **Prazo**: Imediato / Curto (este mês) / Médio (próximo mês)
+5. **Esforço**: Baixo / Médio / Alto
+6. **Impacto**: % avanço ou dias recuperados
+7. **Indicador de sucesso**: métrica para validar (ex: ✓ Tarefa X em 80%)
+
+### 📅 Cronograma de Recuperação (Se Atrasado)
+Próximas 4 semanas — foco e meta de avanço semanal para voltar ao trilho.
+
+### 💡 Recomendações Estratégicas (Médio/Longo Prazo)
+2–3 dicas para melhorar gestão de cronograma em projetos similares.
+
+IMPORTANTE: Seja técnico, direto e acionável. Cada ação deve ter responsável, prazo e métrica de sucesso.`
 }
 
 export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto }) {
@@ -209,6 +184,23 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setLoading(false)
   }
 
+  async function chamarGemini(prompt) {
+    const resp = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
+      }),
+    })
+    if (!resp.ok) {
+      const err = await resp.json()
+      throw new Error(err.error?.message ?? `Erro ${resp.status}`)
+    }
+    const data = await resp.json()
+    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta.'
+  }
+
   async function analisarComIA() {
     if (!resultado?.ok) return
     if (!GEMINI_KEY) {
@@ -219,22 +211,15 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setAnalise('')
     setErroIA('')
     try {
-      const prompt = buildPrompt(resultado.projeto, resultado.tarefas)
-      const resp = await fetch(GEMINI_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.2 },
-        }),
-      })
-      if (!resp.ok) {
-        const err = await resp.json()
-        throw new Error(err.error?.message ?? `Erro ${resp.status}`)
-      }
-      const data = await resp.json()
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta da IA.'
-      setAnalise(texto)
+      // Parte 1: diagnóstico rápido (renderiza logo)
+      const prompt1 = buildPromptParte1(resultado.projeto, resultado.tarefas)
+      const texto1 = await chamarGemini(prompt1)
+      setAnalise(texto1)
+
+      // Parte 2: plano de ação detalhado (concatena depois)
+      const prompt2 = buildPromptParte2(resultado.projeto, resultado.tarefas)
+      const texto2 = await chamarGemini(prompt2)
+      setAnalise(texto1 + '\n\n' + texto2)
     } catch (err) {
       setErroIA('Erro ao consultar Gemini: ' + err.message)
     }
