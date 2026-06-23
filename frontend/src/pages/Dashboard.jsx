@@ -192,9 +192,9 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
 
         {/* Projetos */}
         <div className="panel">
-          <div className="panel-head">
+          <div className="panel-head" style={{ flexWrap: 'wrap', gap: 10 }}>
             <h2><span className="ico">🗂️</span> Projetos do Portfólio</h2>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginLeft: 'auto' }}>
               <div className="filters">
                 {['todos', 'verde', 'amarelo', 'vermelho'].map(f => (
                   <button key={f} className={`chip${filtro === f ? ' active' : ''}`} onClick={() => setFiltro(f)}>
@@ -214,7 +214,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
                 ))}
               </select>
               {podeEditar && (
-                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
+                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none', whiteSpace: 'nowrap' }}
                   onClick={() => setFormProjeto('novo')}>
                   + Nova OS
                 </button>
