@@ -149,7 +149,6 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
       />
 
       <div className="wrap">
-        <NotificacoesPrazo projetos={projetos} />
         {/* KPIs */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div />
@@ -184,6 +183,8 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
             cls={nC ? 'vermelho' : 'amarelo'}
           />
         </div>
+
+        <NotificacoesPrazo projetos={projetos} />
 
         {/* Curva S */}
         <div className="panel">
