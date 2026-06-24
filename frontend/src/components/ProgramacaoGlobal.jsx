@@ -452,7 +452,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                   return s <= hojeISO && hojeISO < weekEnd
                 })
                 return (
-                  <th key={ci} style={{ ...thBase, minWidth: col.length === 2 ? 90 : 72,
+                  <th key={ci} style={{ ...thBase, minWidth: col.length === 2 ? 140 : 100,
                     color: isAtual ? 'var(--brand)' : 'var(--ink-2)',
                     fontWeight: isAtual ? 700 : 500,
                     background: isAtual ? 'rgba(37,99,235,.07)' : 'var(--surface-2)' }}>
@@ -516,7 +516,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                             title={itens.length === 0 ? (podeEditar ? 'Clique para alocar' : '') : itens.map(i => `OS ${i.os}: ${i.dias}d`).join(' | ')}
                             style={{
                               display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                              minWidth: 68, borderRadius: 6, padding: '3px 6px',
+                              minWidth: col.length === 2 ? 120 : 88, borderRadius: 6, padding: '3px 8px',
                               cursor: podeEditar ? 'pointer' : 'default',
                               background: itens.length === 0 ? 'transparent' : conflito ? 'rgba(220,38,38,.10)' : 'rgba(15,122,61,.10)',
                               border: `1.5px solid ${itens.length === 0 ? (podeEditar ? 'var(--line)' : 'transparent') : conflito ? '#dc2626' : '#0f7a3d'}`,
@@ -530,7 +530,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                                   {totalDias}d {conflito ? '⚠' : ''}
                                 </span>
                                 {itens.map((it, idx) => (
-                                  <span key={idx} style={{ fontSize: 9, color: conflito ? '#991b1b' : '#166534', lineHeight: 1.3, maxWidth: 84, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  <span key={idx} style={{ fontSize: 9, color: conflito ? '#991b1b' : '#166534', lineHeight: 1.3, maxWidth: col.length === 2 ? 120 : 96, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {it.os} · {it.dias}d
                                   </span>
                                 ))}
