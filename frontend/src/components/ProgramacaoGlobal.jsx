@@ -118,120 +118,176 @@ function CelulaEditor({ funcionario, semanas, projetos, alocacoes, indisponibili
     setSaving(false)
   }
 
+  const totalGeralDias = todosProjetosLocal.reduce((total, pid) =>
+    total + semanas.reduce((s, sem) => s + (Number(local[`${pid}__${sem}`]) || 0), 0), 0)
+  const maxDiasTotal = 5 * semanas.length
+  const sobrecarregado = totalGeralDias > maxDiasTotal
+
   return (
     <div ref={ref} style={{
-      position: 'absolute', zIndex: 50, top: '100%', left: 0,
+      position: 'absolute', zIndex: 50, top: 'calc(100% + 6px)', left: '50%',
+      transform: 'translateX(-50%)',
       background: 'var(--surface)', border: '1.5px solid var(--brand)',
-      borderRadius: 10, padding: 12, minWidth: 270, maxWidth: 320,
-      boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+      borderRadius: 12, minWidth: 320, maxWidth: 380,
+      boxShadow: '0 12px 32px rgba(0,0,0,.20)',
+      overflow: 'hidden',
     }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand)', marginBottom: 8 }}>
-        {funcionario.nome}
-        {funcionario.equipe && <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}> · {funcionario.equipe}</span>}
+
+      {/* Cabeçalho */}
+      <div style={{ padding: '10px 14px', background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{funcionario.nome}</div>
+          {funcionario.equipe && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.75)', marginTop: 1 }}>{funcionario.equipe}</div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: sobrecarregado ? '#fca5a5' : '#fff', lineHeight: 1 }}>
+              {totalGeralDias}d
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,.65)' }}>
+              de {maxDiasTotal}d {sobrecarregado ? '⚠' : ''}
+            </div>
+          </div>
+          <button onClick={onFechar}
+            style={{ background: 'rgba(255,255,255,.2)', border: 'none', borderRadius: 6, width: 26, height: 26, cursor: 'pointer', color: '#fff', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+        </div>
       </div>
 
-      {/* Indisponibilidades ativas */}
-      {indispAtiva.map(i => {
-        const cor = MOTIVO_COR[i.motivo] ?? MOTIVO_COR.outro
-        return (
-          <div key={i.id} style={{ marginBottom: 8, padding: '6px 8px', borderRadius: 7, background: cor.bg, border: `1px solid ${cor.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ flex: 1, fontSize: 11, fontWeight: 600, color: cor.text }}>
-              {cor.label} {i.observacao ? `— ${i.observacao}` : ''} <span style={{ fontWeight: 400 }}>({fmtWeek(i.data_semana)})</span>
-            </span>
-            <button onClick={() => handleDesmarcar(i.data_semana)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: cor.text, fontSize: 13, fontWeight: 700 }} title="Remover">×</button>
-          </div>
-        )
-      })}
+      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-      {/* Alocações por projeto */}
-      {todosProjetosLocal.length === 0 && indispAtiva.length === 0 && (
-        <p style={{ fontSize: 11, color: 'var(--ink-3)', margin: '4px 0 10px' }}>Sem alocações. Adicione um projeto abaixo.</p>
-      )}
-
-      {todosProjetosLocal.map(pid => {
-        const proj = projetos.find(p => p.id === pid)
-        if (!proj) return null
-        const totalDias = semanas.reduce((s, sem) => s + (Number(local[`${pid}__${sem}`]) || 0), 0)
-        return (
-          <div key={pid} style={{ marginBottom: 8, padding: '6px 8px', borderRadius: 7, background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>
-              OS {proj.os} <span style={{ fontWeight: 400, color: 'var(--ink-2)' }}>— {proj.nome.length > 26 ? proj.nome.slice(0, 25) + '…' : proj.nome}</span>
+        {/* Indisponibilidades ativas */}
+        {indispAtiva.map(i => {
+          const cor = MOTIVO_COR[i.motivo] ?? MOTIVO_COR.outro
+          return (
+            <div key={i.id} style={{ padding: '8px 10px', borderRadius: 8, background: cor.bg, border: `1.5px solid ${cor.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: cor.text }}>{cor.label}</div>
+                {i.observacao && <div style={{ fontSize: 11, color: cor.text, opacity: .8, marginTop: 2 }}>{i.observacao}</div>}
+                <div style={{ fontSize: 10, color: cor.text, opacity: .6, marginTop: 2 }}>Semana {fmtWeek(i.data_semana)}</div>
+              </div>
+              <button onClick={() => handleDesmarcar(i.data_semana)}
+                style={{ background: cor.border, border: 'none', borderRadius: 6, width: 24, height: 24, cursor: 'pointer', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                title="Remover indisponibilidade">×</button>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              {semanas.map(sem => (
-                <label key={sem} style={{ fontSize: 11, color: 'var(--ink-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  <span>{fmtWeek(sem)}</span>
-                  <input type="number" min="0" max="7"
-                    value={local[`${pid}__${sem}`] ?? 0}
-                    onChange={e => setLocal(l => ({ ...l, [`${pid}__${sem}`]: e.target.value }))}
-                    onBlur={e => salvar(pid, sem, e.target.value)}
-                    style={{ width: 44, textAlign: 'center', padding: '3px 2px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 13, fontWeight: 600 }}
-                  />
-                </label>
-              ))}
-              <span style={{ fontSize: 11, color: totalDias > 5 * semanas.length ? 'var(--vermelho)' : 'var(--ink-3)', marginLeft: 4, alignSelf: 'flex-end', paddingBottom: 3 }}>
-                {totalDias}d {totalDias > 5 * semanas.length ? '⚠' : ''}
-              </span>
-            </div>
-          </div>
-        )
-      })}
+          )
+        })}
 
-      {/* Adicionar projeto */}
-      {projetosDisponiveis.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-          <select value={novoProjeto} onChange={e => setNovoProjeto(e.target.value)}
-            style={{ flex: 1, fontSize: 12, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-            <option value="">+ Adicionar projeto...</option>
-            {projetosDisponiveis.map(p => (
-              <option key={p.id} value={p.id}>OS {p.os} — {p.nome.slice(0, 28)}</option>
-            ))}
-          </select>
-          {novoProjeto && (
-            <button onClick={adicionarProjeto}
-              style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>OK</button>
-          )}
-        </div>
-      )}
-
-      {/* Marcar indisponível */}
-      <div style={{ marginTop: 10, borderTop: '1px solid var(--line)', paddingTop: 8 }}>
-        {!showIndisp ? (
-          <button onClick={() => setShowIndisp(true)}
-            style={{ fontSize: 11, color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', width: '100%' }}>
-            ⚠ Marcar indisponível nesta semana
-          </button>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <select value={motivoIndisp} onChange={e => setMotivoIndisp(e.target.value)}
-              style={{ fontSize: 12, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-              {MOTIVOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-            <input value={obsIndisp} onChange={e => setObsIndisp(e.target.value)}
-              placeholder="Observação (opcional)" maxLength={80}
-              style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)' }} />
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={handleMarcarIndisp}
-                style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>
-                Confirmar
-              </button>
-              <button onClick={() => setShowIndisp(false)}
-                style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 12, cursor: 'pointer' }}>
-                Cancelar
-              </button>
-            </div>
+        {/* Vazio */}
+        {todosProjetosLocal.length === 0 && indispAtiva.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--ink-3)', fontSize: 12 }}>
+            Nenhuma alocação. Adicione um projeto abaixo.
           </div>
         )}
+
+        {/* Alocações por projeto */}
+        {todosProjetosLocal.map(pid => {
+          const proj = projetos.find(p => p.id === pid)
+          if (!proj) return null
+          const totalDias = semanas.reduce((s, sem) => s + (Number(local[`${pid}__${sem}`]) || 0), 0)
+          return (
+            <div key={pid} style={{ borderRadius: 8, border: '1px solid var(--line)', overflow: 'hidden' }}>
+              {/* Nome do projeto */}
+              <div style={{ padding: '7px 10px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand)', background: 'rgba(37,99,235,.1)', borderRadius: 4, padding: '1px 5px', marginRight: 6 }}>
+                    OS {proj.os}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-2)', display: 'block', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {proj.nome}
+                  </span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 800, color: totalDias > 5 ? '#dc2626' : '#0f7a3d', flexShrink: 0, marginLeft: 8 }}>
+                  {totalDias}d
+                </span>
+              </div>
+              {/* Inputs de dias */}
+              <div style={{ padding: '8px 10px', display: 'flex', gap: 10, alignItems: 'center' }}>
+                {semanas.map(sem => (
+                  <div key={sem} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 10, color: 'var(--ink-3)', fontWeight: 600, letterSpacing: '.3px' }}>
+                      {fmtWeek(sem)}
+                    </span>
+                    <div style={{ position: 'relative' }}>
+                      <input type="number" min="0" max="7"
+                        value={local[`${pid}__${sem}`] ?? 0}
+                        onChange={e => setLocal(l => ({ ...l, [`${pid}__${sem}`]: e.target.value }))}
+                        onBlur={e => salvar(pid, sem, e.target.value)}
+                        style={{
+                          width: 52, height: 36, textAlign: 'center', padding: '0 4px',
+                          borderRadius: 8,
+                          border: `1.5px solid ${Number(local[`${pid}__${sem}`]) > 0 ? '#0f7a3d' : 'var(--line)'}`,
+                          background: Number(local[`${pid}__${sem}`]) > 0 ? 'rgba(15,122,61,.06)' : 'var(--surface)',
+                          fontSize: 16, fontWeight: 700,
+                          color: Number(local[`${pid}__${sem}`]) > 0 ? '#0f7a3d' : 'var(--ink-3)',
+                          outline: 'none',
+                        }}
+                      />
+                      <span style={{ position: 'absolute', bottom: 3, right: 5, fontSize: 9, color: 'var(--ink-3)', pointerEvents: 'none' }}>d</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+
+        {/* Adicionar projeto */}
+        {projetosDisponiveis.length > 0 && (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select value={novoProjeto} onChange={e => setNovoProjeto(e.target.value)}
+              style={{ flex: 1, fontSize: 12, padding: '7px 8px', borderRadius: 8, border: '1px dashed var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', cursor: 'pointer' }}>
+              <option value="">＋ Adicionar projeto...</option>
+              {projetosDisponiveis.map(p => (
+                <option key={p.id} value={p.id}>OS {p.os} — {p.nome.slice(0, 30)}</option>
+              ))}
+            </select>
+            {novoProjeto && (
+              <button onClick={adicionarProjeto}
+                style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--brand)', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>
+                OK
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Marcar indisponível */}
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+          {!showIndisp ? (
+            <button onClick={() => setShowIndisp(true)}
+              style={{ width: '100%', fontSize: 12, fontWeight: 600, color: '#92400e', background: '#fef9ee', border: '1px solid #fde68a', borderRadius: 8, padding: '8px', cursor: 'pointer', transition: '.15s' }}>
+              🚫 Marcar indisponível nesta semana
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px', background: '#fef9ee', borderRadius: 8, border: '1px solid #fde68a' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 2 }}>Motivo da indisponibilidade</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {MOTIVOS.map(m => (
+                  <button key={m.value} onClick={() => setMotivoIndisp(m.value)}
+                    style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600, border: `1.5px solid ${motivoIndisp === m.value ? '#f59e0b' : '#fde68a'}`, background: motivoIndisp === m.value ? '#f59e0b' : '#fff', color: motivoIndisp === m.value ? '#fff' : '#92400e', transition: '.1s' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <input value={obsIndisp} onChange={e => setObsIndisp(e.target.value)}
+                placeholder="Observação (opcional)" maxLength={80}
+                style={{ fontSize: 12, padding: '7px 8px', borderRadius: 8, border: '1px solid #fde68a', background: '#fff' }} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={handleMarcarIndisp}
+                  style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>
+                  Confirmar
+                </button>
+                <button onClick={() => setShowIndisp(false)}
+                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 12, cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {errMsg && <div style={{ fontSize: 11, color: 'var(--vermelho)', padding: '4px 0' }}>{errMsg}</div>}
+        {saving && <div style={{ fontSize: 11, color: 'var(--ink-3)', textAlign: 'center' }}>Salvando...</div>}
       </div>
-
-      {errMsg && <p style={{ fontSize: 11, color: 'var(--vermelho)', marginTop: 6 }}>{errMsg}</p>}
-      {saving && <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>Salvando...</p>}
-
-      <button onClick={onFechar}
-        style={{ marginTop: 8, fontSize: 11, color: 'var(--ink-3)', background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'right' }}>
-        Fechar ×
-      </button>
     </div>
   )
 }
