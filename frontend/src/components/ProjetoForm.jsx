@@ -38,8 +38,18 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
   const [equipes, setEquipes] = useState(projeto?.equipes ?? iv.equipes ?? [])
   const [equipeInput, setEquipeInput] = useState('')
   const [erro, setErro] = useState('')
+  const [camposErro, setCamposErro] = useState({})
 
   const prazo = calcPrazo(form.data_inicio, form.data_fim)
+
+  const hoje = new Date().toISOString().slice(0, 10)
+  const warnings = []
+  if (form.data_fim && form.data_fim < hoje)
+    warnings.push('⚠️ Data de término no passado — projeto já encerrado.')
+  if (form.data_inicio && form.data_inicio > hoje && Number(form.real) > 0)
+    warnings.push('⚠️ Projeto tem avanço realizado mas ainda não iniciou.')
+  if (Number(form.real) - Number(form.prev) > 20)
+    warnings.push('⚠️ Realizado está muito acima do previsto (+20 p.p.) — verifique os valores.')
 
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onFechar() }
@@ -47,7 +57,15 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
     return () => document.removeEventListener('keydown', onKey)
   }, [onFechar])
 
-  function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
+  function set(k, v) {
+    setForm(f => ({ ...f, [k]: v }))
+    if (camposErro[k]) setCamposErro(e => { const n = { ...e }; delete n[k]; return n })
+  }
+
+  const fieldStyle = k => camposErro[k] ? { border: '1.5px solid var(--vermelho)' } : {}
+  const FieldErro = ({ k }) => camposErro[k]
+    ? <span style={{ fontSize: 11, color: 'var(--vermelho)', marginTop: 2 }}>{camposErro[k]}</span>
+    : null
 
   function addEquipe() {
     const v = equipeInput.trim()
@@ -58,22 +76,29 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
   function removeEquipe(i) { setEquipes(eq => eq.filter((_, idx) => idx !== i)) }
 
   function validate() {
-    if (!form.os.trim())         return 'Informe o número da OS.'
-    if (!form.nome.trim())       return 'Informe o nome do projeto.'
-    if (!form.cliente.trim())    return 'Informe o cliente.'
-    if (!form.data_inicio)       return 'Informe a data de início.'
-    if (!form.data_fim)          return 'Informe a data de término.'
-    if (form.data_fim <= form.data_inicio) return 'Data de término deve ser após o início.'
+    const erros = {}
+    if (!form.os.trim())         erros.os = 'Obrigatório.'
+    if (!form.nome.trim())       erros.nome = 'Obrigatório.'
+    if (!form.cliente.trim())    erros.cliente = 'Obrigatório.'
+    if (!form.data_inicio)       erros.data_inicio = 'Obrigatório.'
+    if (!form.data_fim)          erros.data_fim = 'Obrigatório.'
+    if (form.data_inicio && form.data_fim && form.data_fim <= form.data_inicio)
+      erros.data_fim = 'Término deve ser após o início.'
     const prev = Number(form.prev), real = Number(form.real)
-    if (prev < 0 || prev > 100) return 'Avanço previsto deve estar entre 0 e 100.'
-    if (real < 0 || real > 100) return 'Avanço realizado deve estar entre 0 e 100.'
-    return ''
+    if (prev < 0 || prev > 100) erros.prev = 'Entre 0 e 100.'
+    if (real < 0 || real > 100) erros.real = 'Entre 0 e 100.'
+    return erros
   }
 
   function handleSubmit(e) {
     e.preventDefault()
-    const err = validate()
-    if (err) { setErro(err); return }
+    const erros = validate()
+    if (Object.keys(erros).length) {
+      setCamposErro(erros)
+      setErro('Corrija os campos destacados antes de salvar.')
+      return
+    }
+    setCamposErro({})
     setErro('')
     onSalvar({
       os:              form.os.trim(),
@@ -103,23 +128,29 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
 
         <form className="modal-body" onSubmit={handleSubmit}>
           {erro && <div className="form-erro">{erro}</div>}
+          {warnings.map((w, i) => (
+            <div key={i} style={{ background: '#fefce8', border: '1px solid #fde047', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#854d0e', marginBottom: 8 }}>{w}</div>
+          ))}
 
           <div className="form-section-title">Identificação</div>
           <div className="form-grid">
             <div className="field">
               <label>Nº OS *</label>
               <input value={form.os} onChange={e => set('os', e.target.value)}
-                placeholder="2024-0142" disabled={ed} />
+                placeholder="2024-0142" disabled={ed} style={fieldStyle('os')} />
+              <FieldErro k="os" />
             </div>
             <div className="field" style={{ gridColumn: 'span 2' }}>
               <label>Nome do Projeto *</label>
               <input value={form.nome} onChange={e => set('nome', e.target.value)}
-                placeholder="Subestação 13,8kV / 480V — Ampliação" />
+                placeholder="Subestação 13,8kV / 480V — Ampliação" style={fieldStyle('nome')} />
+              <FieldErro k="nome" />
             </div>
             <div className="field" style={{ gridColumn: 'span 2' }}>
               <label>Cliente *</label>
               <input value={form.cliente} onChange={e => set('cliente', e.target.value)}
-                placeholder="Petroquímica Norte S.A." />
+                placeholder="Petroquímica Norte S.A." style={fieldStyle('cliente')} />
+              <FieldErro k="cliente" />
             </div>
             <div className="field">
               <label>Escopo</label>
@@ -139,11 +170,13 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
           <div className="form-grid">
             <div className="field">
               <label>Data Início *</label>
-              <input type="date" value={form.data_inicio} onChange={e => set('data_inicio', e.target.value)} />
+              <input type="date" value={form.data_inicio} onChange={e => set('data_inicio', e.target.value)} style={fieldStyle('data_inicio')} />
+              <FieldErro k="data_inicio" />
             </div>
             <div className="field">
               <label>Data Término *</label>
-              <input type="date" value={form.data_fim} onChange={e => set('data_fim', e.target.value)} />
+              <input type="date" value={form.data_fim} onChange={e => set('data_fim', e.target.value)} style={fieldStyle('data_fim')} />
+              <FieldErro k="data_fim" />
             </div>
             <div className="field">
               <label>Prazo (meses)</label>
@@ -161,12 +194,14 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
             <div className="field">
               <label>Previsto (%)</label>
               <input type="number" min="0" max="100" step="0.1" value={form.prev}
-                onChange={e => set('prev', e.target.value)} />
+                onChange={e => set('prev', e.target.value)} style={fieldStyle('prev')} />
+              <FieldErro k="prev" />
             </div>
             <div className="field">
               <label>Realizado (%)</label>
               <input type="number" min="0" max="100" step="0.1" value={form.real}
-                onChange={e => set('real', e.target.value)} />
+                onChange={e => set('real', e.target.value)} style={fieldStyle('real')} />
+              <FieldErro k="real" />
             </div>
             <div className="field" style={{ display: 'flex', alignItems: 'flex-end' }}>
               {form.prev !== '' && form.real !== '' && (
