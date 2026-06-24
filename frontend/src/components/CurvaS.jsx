@@ -17,77 +17,74 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
   const last = actualPts[actualPts.length - 1]
 
   const desvio = realToday - prevToday
-  const desvioColor = desvio >= 0 ? '#0f7a3d' : '#dc2626'
+  const desvioPositivo = desvio >= 0
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
       <defs>
-        {/* Gradiente área realizado */}
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#0f7a3d" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#0f7a3d" stopOpacity="0.02" />
+          <stop offset="0%"   stopColor="#22c55e" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#22c55e" stopOpacity="0.02" />
         </linearGradient>
-        {/* Sombra linha realizado */}
         <filter id="lineShadow" x="-10%" y="-40%" width="120%" height="180%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#0f7a3d" floodOpacity="0.25" />
+          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#22c55e" floodOpacity="0.35" />
         </filter>
-        {/* Brilho ponto final */}
         <filter id="dotGlow" x="-80%" y="-80%" width="260%" height="260%">
-          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#0f7a3d" floodOpacity="0.5" />
+          <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#22c55e" floodOpacity="0.6" />
+        </filter>
+        <filter id="labelShadow" x="-20%" y="-40%" width="140%" height="180%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.5" />
         </filter>
       </defs>
 
-      {/* Fundo levíssimo */}
-      <rect x={padL} y={padT} width={pw} height={ph} rx="4" fill="rgba(240,253,244,.4)" />
-
-      {/* Grid horizontal */}
+      {/* Grid horizontal — linhas mais visíveis no escuro */}
       {[0, 25, 50, 75, 100].map(v => (
         <g key={v}>
           <line
             x1={padL} y1={PY(v)} x2={W - padR} y2={PY(v)}
-            stroke={v === 0 || v === 100 ? '#c8d8d0' : '#e8f0ec'}
+            stroke="rgba(255,255,255,.12)"
             strokeWidth={v === 0 || v === 100 ? 1.5 : 1}
           />
-          <text x={padL - 10} y={PY(v) + 4} textAnchor="end" fontSize="11" fill="#7fa090" fontFamily="Inter, sans-serif" fontWeight="500">
+          <text x={padL - 10} y={PY(v) + 4} textAnchor="end" fontSize="11" fill="rgba(255,255,255,.5)" fontFamily="Inter, sans-serif" fontWeight="500">
             {v}%
           </text>
         </g>
       ))}
 
-      {/* Ticks do eixo X */}
+      {/* Ticks eixo X */}
       {ticks.map((t, i) => (
         <g key={i}>
-          <line x1={PX(t.x)} y1={y0} x2={PX(t.x)} y2={y0 + 4} stroke="#c8d8d0" strokeWidth="1" />
-          <text x={PX(t.x)} y={H - 12} textAnchor="middle" fontSize="10.5" fill="#7fa090" fontFamily="Inter, sans-serif">
+          <line x1={PX(t.x)} y1={y0} x2={PX(t.x)} y2={y0 + 4} stroke="rgba(255,255,255,.2)" strokeWidth="1" />
+          <text x={PX(t.x)} y={H - 12} textAnchor="middle" fontSize="10.5" fill="rgba(255,255,255,.45)" fontFamily="Inter, sans-serif">
             {t.label}
           </text>
         </g>
       ))}
 
-      {/* Baseline — laranja tracejado */}
+      {/* Baseline — laranja */}
       {baseline?.pts?.length > 1 && (() => {
         const bPath = baseline.pts.map(pt => `${PX(pt.x)},${PY(pt.y)}`).join(' ')
         const lastBL = baseline.pts[baseline.pts.length - 1]
         return (
           <g>
-            <polyline points={bPath} fill="none" stroke="#f97316" strokeWidth="2" strokeDasharray="8 4" strokeLinejoin="round" opacity="0.75" />
-            <circle cx={PX(lastBL.x)} cy={PY(lastBL.y)} r="4" fill="#f97316" opacity="0.8" />
-            <rect x={PX(lastBL.x) - 14} y={PY(lastBL.y) - 18} width="28" height="14" rx="4" fill="#f97316" opacity="0.9" />
+            <polyline points={bPath} fill="none" stroke="#fb923c" strokeWidth="2" strokeDasharray="8 4" strokeLinejoin="round" opacity="0.9" />
+            <circle cx={PX(lastBL.x)} cy={PY(lastBL.y)} r="4" fill="#fb923c" />
+            <rect x={PX(lastBL.x) - 14} y={PY(lastBL.y) - 18} width="28" height="14" rx="4" fill="#fb923c" />
             <text x={PX(lastBL.x)} y={PY(lastBL.y) - 8} textAnchor="middle" fontSize="9" fill="#fff" fontFamily="Inter, sans-serif" fontWeight="700">BL</text>
           </g>
         )
       })()}
 
-      {/* Linha previsto — tracejado cinza refinado */}
-      <polyline points={pPath} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="8 5" strokeLinejoin="round" opacity="0.85" />
+      {/* Linha previsto — tracejado mais visível */}
+      <polyline points={pPath} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth="2" strokeDasharray="8 5" strokeLinejoin="round" />
 
-      {/* Área realizado com gradiente */}
+      {/* Área realizado */}
       <polygon points={areaPath} fill="url(#areaGrad)" />
 
-      {/* Linha realizado com sombra */}
-      <polyline points={aPath} fill="none" stroke="#0f7a3d" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" filter="url(#lineShadow)" />
+      {/* Linha realizado */}
+      <polyline points={aPath} fill="none" stroke="#22c55e" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" filter="url(#lineShadow)" />
 
-      {/* Pontos na linha realizado */}
+      {/* Pontos */}
       {actualPts.map((p, i) => {
         const isLast = i === actualPts.length - 1
         return (
@@ -95,8 +92,8 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
             key={i}
             cx={PX(p.x)} cy={PY(p.y)}
             r={isLast ? 6 : 3}
-            fill={isLast ? '#0f7a3d' : '#0f7a3d'}
-            stroke="#fff"
+            fill="#22c55e"
+            stroke="rgba(0,0,0,.4)"
             strokeWidth={isLast ? 2.5 : 1.5}
             filter={isLast ? 'url(#dotGlow)' : undefined}
           />
@@ -104,28 +101,40 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
       })}
 
       {/* Label % realizado */}
-      <rect x={PX(last.x) + 10} y={PY(realToday) - 11} width="46" height="18" rx="5" fill="#0f7a3d" />
+      <rect x={PX(last.x) + 10} y={PY(realToday) - 11} width="46" height="18" rx="5" fill="#16a34a" />
       <text x={PX(last.x) + 33} y={PY(realToday) + 2} textAnchor="middle" fontSize="11" fontWeight="800" fill="#fff" fontFamily="Inter, sans-serif">
         {fmt(realToday, 0)}%
       </text>
 
-      {/* Linha HOJE */}
-      <line x1={hx} y1={padT} x2={hx} y2={y0} stroke="#1e293b" strokeWidth="1.5" strokeDasharray="5 4" opacity="0.4" />
+      {/* Linha HOJE — branca tracejada */}
+      <line x1={hx} y1={padT} x2={hx} y2={y0} stroke="rgba(255,255,255,.35)" strokeWidth="1.5" strokeDasharray="5 4" />
 
       {/* Badge HOJE */}
-      <rect x={hx - 26} y={padT - 4} width="52" height="19" rx="5" fill="#1e293b" />
+      <rect x={hx - 26} y={padT - 4} width="52" height="19" rx="5" fill="rgba(255,255,255,.15)" stroke="rgba(255,255,255,.3)" strokeWidth="1" />
       <text x={hx} y={padT + 10} textAnchor="middle" fontSize="10" fontWeight="800" fill="#fff" fontFamily="Inter, sans-serif" letterSpacing="0.5">
         HOJE
       </text>
 
-      {/* Label % previsto + desvio */}
-      <text x={hx + 8} y={PY(prevToday) - 10} fontSize="11" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+      {/* Label % previsto — branco visível */}
+      <text x={hx + 8} y={PY(prevToday) - 10} fontSize="11" fontWeight="700" fill="rgba(255,255,255,.75)" fontFamily="Inter, sans-serif" filter="url(#labelShadow)">
         {fmt(prevToday, 0)}%
       </text>
+
+      {/* Desvio — destaque com fundo */}
       {desvio !== 0 && (
-        <text x={hx + 8} y={PY(prevToday) + 6} fontSize="10" fontWeight="700" fill={desvioColor} fontFamily="Inter, sans-serif">
-          {desvio > 0 ? '+' : ''}{fmt(desvio, 1)}pp
-        </text>
+        <g>
+          <rect
+            x={hx + 6} y={PY(prevToday) - 2} width="54" height="16" rx="4"
+            fill={desvioPositivo ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'}
+            stroke={desvioPositivo ? 'rgba(34,197,94,.5)' : 'rgba(239,68,68,.5)'}
+            strokeWidth="1"
+          />
+          <text x={hx + 33} y={PY(prevToday) + 10} textAnchor="middle" fontSize="11" fontWeight="800"
+            fill={desvioPositivo ? '#4ade80' : '#f87171'}
+            fontFamily="Inter, sans-serif">
+            {desvio > 0 ? '+' : ''}{fmt(desvio, 1)}pp
+          </text>
+        </g>
       )}
     </svg>
   )
