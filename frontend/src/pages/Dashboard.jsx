@@ -296,17 +296,6 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
           </div>
         </div>
 
-        {/* Alocação */}
-        <div className="panel">
-          <div className="panel-head">
-            <h2><span className="ico">👷</span> Mapa de Alocação & Gargalos de Recurso</h2>
-            <span className="hint">Equipes em mais de um projeto/OS sinalizam conflito de recurso</span>
-          </div>
-          <div className="panel-body" style={{ overflowX: 'auto' }}>
-            <AlocacaoTable projetos={projetos} />
-          </div>
-        </div>
-
         <footer>
           <b>Gestão de Projetos</b>
           {usandoMock && ' · dados fictícios para validação do formato'}
