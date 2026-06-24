@@ -438,8 +438,8 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
         ))}
       </div>
 
-      <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--line)' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: 12, width: '100%' }}>
+      <div style={{ overflowX: 'scroll', borderRadius: 8, border: '1px solid var(--line)', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: 'max-content' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 3 }}>
             <tr style={{ background: 'var(--surface-2)' }}>
               <th style={{ ...thBase, textAlign: 'left', padding: '8px 12px', position: 'sticky', left: 0, background: 'var(--surface-2)', zIndex: 4, minWidth: 170, borderRight: '1px solid var(--line)', fontWeight: 700 }}>
