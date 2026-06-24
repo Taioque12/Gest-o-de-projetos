@@ -624,18 +624,8 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
   )
 }
 
-// ── Mapa de Alocação & Gargalos de Recursos ─────────────────
-function celulaHeatmapCor(dias, indisp) {
-  if (indisp) return { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' }
-  if (dias === 0)  return { bg: '#f1f5f9', border: '#e2e8f0', text: '#94a3b8' }
-  if (dias <= 2)   return { bg: '#dcfce7', border: '#86efac', text: '#166534' }
-  if (dias <= 4)   return { bg: '#4ade80', border: '#16a34a', text: '#fff' }
-  if (dias === 5)  return { bg: '#16a34a', border: '#15803d', text: '#fff' }
-  return             { bg: '#dc2626', border: '#991b1b', text: '#fff' }
-}
-
+// ── Gargalos de Recursos ─────────────────────────────────────
 function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, semanasBase, indispMap }) {
-  const [expandido, setExpandido] = useState(false)
 
   // Alocações indexadas: funcId__semana → total dias
   const diasPorFuncSem = useMemo(() => {
@@ -693,173 +683,69 @@ function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, s
 
   const temGargalos = sobrecarregados.length || ociosos.length || projetosSemEquipe.length
 
+  if (!temGargalos) return (
+    <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: 12, fontWeight: 600, color: '#16a34a' }}>
+      ✓ Nenhum gargalo identificado nas próximas 8 semanas
+    </div>
+  )
+
   return (
-    <div style={{ marginTop: 24 }}>
-      {/* Cabeçalho seção */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '.5px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-          Mapa de Alocação &amp; Gargalos
-        </span>
-        <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+    <div style={{ marginTop: 20 }}>
+      {/* Cabeçalho */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)' }}>Gargalos de Recursos</span>
+        {sobrecarregados.length > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+            {sobrecarregados.length} sobrecarregado{sobrecarregados.length > 1 ? 's' : ''}
+          </span>
+        )}
+        {ociosos.length > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#94a3b8', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+            {ociosos.length} ocioso{ociosos.length > 1 ? 's' : ''}
+          </span>
+        )}
+        {projetosSemEquipe.length > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+            {projetosSemEquipe.length} projeto{projetosSemEquipe.length > 1 ? 's' : ''} sem equipe
+          </span>
+        )}
       </div>
 
-      {/* Heatmap */}
-      <div style={{ overflowX: 'auto', marginBottom: 20, borderRadius: 10, border: '1.5px solid var(--line)' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: 11, width: '100%', minWidth: 560 }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-2)' }}>
-              <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, fontSize: 11, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)', minWidth: 150, position: 'sticky', left: 0, background: 'var(--surface-2)' }}>
-                Colaborador
-              </th>
-              {semanasBase.map(s => (
-                <th key={s} style={{ padding: '7px 4px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: 'var(--ink-3)', borderBottom: '1px solid var(--line)', minWidth: 44 }}>
-                  {fmtWeek(s)}
-                </th>
-              ))}
-              <th style={{ padding: '7px 10px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: 'var(--ink-3)', borderBottom: '1px solid var(--line)', borderLeft: '1.5px solid var(--line)', minWidth: 60 }}>
-                Média/sem
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {funcionarios.map((f, fi) => {
-              const rowBg = fi % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)'
-              let totalDias = 0, semsDisponiveis = 0
-              return (
-                <tr key={f.id} style={{ background: rowBg }}>
-                  <td style={{ padding: '6px 12px', fontWeight: 600, fontSize: 12, position: 'sticky', left: 0, background: rowBg, borderRight: '1px solid var(--line)' }}>
-                    <div>{f.nome}</div>
-                    {f.equipe && <div style={{ fontSize: 10, color: 'var(--ink-3)', fontWeight: 400 }}>{f.equipe}</div>}
-                  </td>
-                  {semanasBase.map(s => {
-                    const indisp = !!indispMap[`${f.id}__${s}`]
-                    const dias = indisp ? 0 : (diasPorFuncSem[`${f.id}__${s}`] || 0)
-                    if (!indisp) { totalDias += dias; semsDisponiveis++ }
-                    const cor = celulaHeatmapCor(dias, indisp)
-                    return (
-                      <td key={s} style={{ padding: '4px 3px', textAlign: 'center' }}>
-                        <div title={indisp ? 'Indisponível' : `${dias}d alocado`} style={{
-                          margin: '0 auto',
-                          width: 34, height: 28, borderRadius: 6,
-                          background: cor.bg, border: `1.5px solid ${cor.border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 10, fontWeight: 700, color: cor.text,
-                          transition: '.2s',
-                        }}>
-                          {indisp ? '—' : dias > 0 ? `${dias}d` : ''}
-                        </div>
-                      </td>
-                    )
-                  })}
-                  <td style={{ padding: '6px 10px', textAlign: 'center', borderLeft: '1.5px solid var(--line)' }}>
-                    {(() => {
-                      const media = semsDisponiveis > 0 ? (totalDias / semsDisponiveis).toFixed(1) : '0'
-                      const cor = Number(media) === 0 ? '#94a3b8' : Number(media) >= 4.5 ? '#16a34a' : Number(media) >= 2 ? '#ca8a04' : '#94a3b8'
-                      return <span style={{ fontWeight: 700, fontSize: 12, color: cor }}>{media}d</span>
-                    })()}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-
-        {/* Legenda heatmap */}
-        <div style={{ padding: '8px 12px', background: 'var(--surface-2)', borderTop: '1px solid var(--line)', display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 10, color: 'var(--ink-3)', fontWeight: 600 }}>Ocupação:</span>
-          {[
-            { label: 'Livre', bg: '#f1f5f9', border: '#e2e8f0', text: '#64748b' },
-            { label: '1-2d', bg: '#dcfce7', border: '#86efac', text: '#166534' },
-            { label: '3-4d', bg: '#4ade80', border: '#16a34a', text: '#fff' },
-            { label: 'Pleno', bg: '#16a34a', border: '#15803d', text: '#fff' },
-            { label: 'Conflito', bg: '#dc2626', border: '#991b1b', text: '#fff' },
-            { label: 'Indisp.', bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
-          ].map(({ label, bg, border, text }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 14, height: 14, borderRadius: 3, background: bg, border: `1.5px solid ${border}` }} />
-              <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>{label}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {sobrecarregados.map(({ func, semanas }) => (
+          <div key={func.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #fecaca', boxShadow: '0 1px 4px rgba(220,38,38,.08)' }}>
+            <div style={{ width: 4, background: '#dc2626', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#991b1b' }}>⚠ Sobrecarregado · {func.nome}</div>
+              <div style={{ fontSize: 11, color: '#7f1d1d', marginTop: 2 }}>
+                {semanas.map(s => `Sem ${fmtWeek(s)}: ${diasPorFuncSem[`${func.id}__${s}`] || 0}d`).join(' · ')}
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+
+        {ociosos.map(f => (
+          <div key={f.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+            <div style={{ width: 4, background: '#94a3b8', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#475569' }}>○ Sem alocação · {f.nome}</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Nenhum projeto nas próximas 4 semanas</div>
+            </div>
+          </div>
+        ))}
+
+        {projetosSemEquipe.map(p => (
+          <div key={p.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #fde68a', boxShadow: '0 1px 4px rgba(245,158,11,.07)' }}>
+            <div style={{ width: 4, background: '#f59e0b', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#92400e' }}>
+                🔧 Sem equipe · <span style={{ fontFamily: 'monospace' }}>OS {p.os}</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#78350f', marginTop: 2 }}>{p.nome} — sem alocação nas próximas 4 semanas</div>
+            </div>
+          </div>
+        ))}
       </div>
-
-      {/* Gargalos */}
-      {temGargalos ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button
-            onClick={() => setExpandido(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: 'fit-content' }}
-          >
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)' }}>
-              {expandido ? '▾' : '▸'} Gargalos identificados
-            </span>
-            {sobrecarregados.length > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
-                {sobrecarregados.length} sobrecarregado{sobrecarregados.length > 1 ? 's' : ''}
-              </span>
-            )}
-            {ociosos.length > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, background: '#94a3b8', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
-                {ociosos.length} ocioso{ociosos.length > 1 ? 's' : ''}
-              </span>
-            )}
-            {projetosSemEquipe.length > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
-                {projetosSemEquipe.length} projeto{projetosSemEquipe.length > 1 ? 's' : ''} sem equipe
-              </span>
-            )}
-          </button>
-
-          {expandido && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {/* Sobrecarregados */}
-              {sobrecarregados.map(({ func, semanas }) => (
-                <div key={func.id} style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid #fecaca', boxShadow: '0 1px 4px rgba(220,38,38,.08)' }}>
-                  <div style={{ width: 4, background: '#dc2626', flexShrink: 0 }} />
-                  <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: '#991b1b' }}>⚠ Sobrecarregado · {func.nome}</div>
-                    <div style={{ fontSize: 11, color: '#7f1d1d', marginTop: 2 }}>
-                      {semanas.map(s => {
-                        const d = diasPorFuncSem[`${func.id}__${s}`] || 0
-                        return `Sem ${fmtWeek(s)}: ${d}d`
-                      }).join(' · ')}
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Ociosos */}
-              {ociosos.map(f => (
-                <div key={f.id} style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                  <div style={{ width: 4, background: '#94a3b8', flexShrink: 0 }} />
-                  <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: '#475569' }}>○ Sem alocação · {f.nome}</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Nenhum projeto nas próximas 4 semanas</div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Projetos sem equipe */}
-              {projetosSemEquipe.map(p => (
-                <div key={p.id} style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid #fde68a', boxShadow: '0 1px 4px rgba(245,158,11,.07)' }}>
-                  <div style={{ width: 4, background: '#f59e0b', flexShrink: 0 }} />
-                  <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: '#92400e' }}>
-                      🔧 Sem equipe · <span style={{ fontFamily: 'monospace' }}>OS {p.os}</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#78350f', marginTop: 2 }}>{p.nome} — sem alocação nas próximas 4 semanas</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center', padding: '14px 0', color: '#16a34a', fontSize: 12, fontWeight: 600 }}>
-          ✓ Nenhum gargalo identificado nas próximas 8 semanas
-        </div>
-      )}
     </div>
   )
 }
