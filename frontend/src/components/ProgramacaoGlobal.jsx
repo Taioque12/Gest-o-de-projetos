@@ -684,7 +684,7 @@ function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, s
   const temGargalos = sobrecarregados.length || ociosos.length || projetosSemEquipe.length
 
   if (!temGargalos) return (
-    <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: 12, fontWeight: 600, color: '#16a34a' }}>
+    <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 10, background: 'rgba(15,122,61,.12)', border: '1px solid rgba(15,122,61,.3)', fontSize: 12, fontWeight: 600, color: '#0f7a3d' }}>
       ✓ Nenhum gargalo identificado nas próximas 8 semanas
     </div>
   )
@@ -700,7 +700,7 @@ function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, s
           </span>
         )}
         {ociosos.length > 0 && (
-          <span style={{ fontSize: 11, fontWeight: 700, background: '#94a3b8', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#64748b', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
             {ociosos.length} ocioso{ociosos.length > 1 ? 's' : ''}
           </span>
         )}
@@ -713,11 +713,11 @@ function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, s
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {sobrecarregados.map(({ func, semanas }) => (
-          <div key={func.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #fecaca', boxShadow: '0 1px 4px rgba(220,38,38,.08)' }}>
+          <div key={func.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(220,38,38,.35)', background: 'rgba(220,38,38,.08)' }}>
             <div style={{ width: 4, background: '#dc2626', flexShrink: 0 }} />
-            <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#991b1b' }}>⚠ Sobrecarregado · {func.nome}</div>
-              <div style={{ fontSize: 11, color: '#7f1d1d', marginTop: 2 }}>
+            <div style={{ flex: 1, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#f87171' }}>⚠ Sobrecarregado · {func.nome}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
                 {semanas.map(s => `Sem ${fmtWeek(s)}: ${diasPorFuncSem[`${func.id}__${s}`] || 0}d`).join(' · ')}
               </div>
             </div>
@@ -725,23 +725,23 @@ function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, s
         ))}
 
         {ociosos.map(f => (
-          <div key={f.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-            <div style={{ width: 4, background: '#94a3b8', flexShrink: 0 }} />
-            <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#475569' }}>○ Sem alocação · {f.nome}</div>
-              <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Nenhum projeto nas próximas 4 semanas</div>
+          <div key={f.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--surface-2)' }}>
+            <div style={{ width: 4, background: '#64748b', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-2)' }}>○ Sem alocação · {f.nome}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>Nenhum projeto nas próximas 4 semanas</div>
             </div>
           </div>
         ))}
 
         {projetosSemEquipe.map(p => (
-          <div key={p.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #fde68a', boxShadow: '0 1px 4px rgba(245,158,11,.07)' }}>
+          <div key={p.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(245,158,11,.35)', background: 'rgba(245,158,11,.08)' }}>
             <div style={{ width: 4, background: '#f59e0b', flexShrink: 0 }} />
-            <div style={{ flex: 1, padding: '10px 14px', background: '#fff' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#92400e' }}>
+            <div style={{ flex: 1, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#fbbf24' }}>
                 🔧 Sem equipe · <span style={{ fontFamily: 'monospace' }}>OS {p.os}</span>
               </div>
-              <div style={{ fontSize: 11, color: '#78350f', marginTop: 2 }}>{p.nome} — sem alocação nas próximas 4 semanas</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{p.nome} — sem alocação nas próximas 4 semanas</div>
             </div>
           </div>
         ))}
