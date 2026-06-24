@@ -326,18 +326,16 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
     filtroEquipe === 'todas' ? funcionarios : funcionarios.filter(f => f.equipe === filtroEquipe),
   [funcionarios, filtroEquipe])
 
-  // Semanas base: existentes no banco + próximas 8 semanas a partir de hoje
+  // Janela fixa: semana atual + 7 próximas = 8 colunas exatas
   const semanasBase = useMemo(() => {
-    const seen = new Set(alocacoes.map(a => a.data_semana))
+    const semanas = []
     for (let i = 0; i < 8; i++) {
       const d = new Date(semAtual)
       d.setDate(d.getDate() + i * 7)
-      seen.add(toISO(d.getTime()))
+      semanas.push(toISO(d.getTime()))
     }
-    // Inclui semana anterior para "copiar semana"
-    seen.add(semAnterior)
-    return [...seen].sort()
-  }, [alocacoes, semAtual, semAnterior])
+    return semanas
+  }, [semAtual])
 
   // Agrupa em colunas (semana ou quinzena)
   const colunas = useMemo(() => {
