@@ -400,12 +400,12 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
   return (
     <div>
       {/* Toolbar */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
         {/* Toggle período */}
         <div style={{ display: 'flex', border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden' }}>
           {['semana', 'quinzena'].map(p => (
             <button key={p} onClick={() => setPeriodo(p)}
-              style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
+              style={{ padding: '6px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
                 background: periodo === p ? 'var(--brand)' : 'var(--surface)',
                 color: periodo === p ? '#fff' : 'var(--ink-2)', transition: '.15s' }}>
               {p === 'semana' ? 'Semanal' : 'Quinzenal'}
@@ -413,24 +413,10 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
           ))}
         </div>
 
-        {/* Copiar semana anterior */}
-        {podeEditar && copiarSemana && (
-          <button onClick={handleCopiarSemana} disabled={copiando}
-            style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: '1px solid #0f7a3d', background: copiando ? 'var(--surface-2)' : '#f0fdf4', color: '#0f7a3d', cursor: copiando ? 'default' : 'pointer', transition: '.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
-            {copiando ? '⏳ Copiando...' : '↩ Repetir semana anterior'}
-          </button>
-        )}
-
-        {msgCopia && (
-          <span style={{ fontSize: 12, color: msgCopia.startsWith('✓') ? '#0f7a3d' : 'var(--vermelho)', fontWeight: 600 }}>
-            {msgCopia}
-          </span>
-        )}
-
         {/* Filtro equipe */}
         {equipes.length > 1 && equipes.map(eq => (
           <button key={eq} onClick={() => setFiltroEquipe(eq)}
-            style={{ padding: '5px 12px', fontSize: 12, borderRadius: 20, border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 600, transition: '.15s',
+            style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 600, transition: '.15s',
               background: filtroEquipe === eq ? 'var(--brand)' : 'var(--surface)',
               color: filtroEquipe === eq ? '#fff' : 'var(--ink-2)' }}>
             {eq === 'todas' ? 'Todas as equipes' : eq}
@@ -438,7 +424,15 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
         ))}
       </div>
 
-      <div style={{ overflowX: 'scroll', overflowY: 'visible', borderRadius: 8, border: '1px solid var(--line)', WebkitOverflowScrolling: 'touch' }}>
+      {/* Área de rolagem delimitada */}
+      <div style={{
+        overflowX: 'scroll', overflowY: 'auto',
+        borderRadius: 10, border: '2px solid var(--line)',
+        maxHeight: 480,
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--brand) var(--surface-2)',
+      }}>
         <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: `${170 + colunas.length * (periodo === 'quinzena' ? 148 : 108) + 90}px` }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 3 }}>
             <tr style={{ background: 'var(--surface-2)' }}>
