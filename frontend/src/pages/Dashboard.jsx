@@ -15,7 +15,7 @@ import Toast from '../components/Toast'
 import NotificacoesPrazo from '../components/NotificacoesPrazo'
 
 export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
-  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
+  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, user?.email)
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
   const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
@@ -79,6 +79,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
           projetos={projetos}
           criarProjeto={criarProjeto}
           editarProjeto={editarProjeto}
+          user={user}
         />
       </>
     )

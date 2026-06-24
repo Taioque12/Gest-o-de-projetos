@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 import { MOCK_PROJETOS, normalizarProjeto, prepararProjeto } from '../utils/helpers'
 
-export function useProjetos(perfil, userId) {
+export function useProjetos(perfil, userId, userEmail) {
   const [projetos, setProjetos] = useState([])
   const [loading, setLoading] = useState(true)
   const [usandoMock, setUsandoMock] = useState(false)
@@ -87,13 +87,16 @@ export function useProjetos(perfil, userId) {
         avanco_previsto:  prev ?? 0,
         avanco_realizado: real ?? 0,
         semana_numero:    1,
+        usuario_id:       userId ?? null,
+        lancado_por:      userEmail ?? null,
+        origem:           'manual',
       })
     }
     await fetchProjetos()
     return data
   }
 
-  async function editarProjeto(id, dados) {
+  async function editarProjeto(id, dados, origem = 'manual') {
     const { prev, real, ...projetoData } = dados
     const { error } = await supabase
       .from('projetos')
@@ -122,6 +125,9 @@ export function useProjetos(perfil, userId) {
           data_atualizacao: hoje,
           avanco_previsto:  prev ?? 0,
           avanco_realizado: real ?? 0,
+          usuario_id:       userId ?? null,
+          lancado_por:      userEmail ?? null,
+          origem,
         }, { onConflict: 'projeto_id,data_atualizacao' })
     }
     await fetchProjetos()
@@ -150,6 +156,9 @@ export function useProjetos(perfil, userId) {
           data_atualizacao: data,
           avanco_previsto:  prev,
           avanco_realizado: real,
+          usuario_id:       userId ?? null,
+          lancado_por:      userEmail ?? null,
+          origem:           'manual',
         }, { onConflict: 'projeto_id,data_atualizacao' })
       if (e2) throw e2
     }))
