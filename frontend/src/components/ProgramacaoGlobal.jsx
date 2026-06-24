@@ -610,6 +610,142 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
         <span style={{ color: '#f59e0b', fontWeight: 600 }}>■</span> Indisponível &nbsp;
         {podeEditar && <span>Clique na célula para editar.</span>}
       </div>
+
+      {/* ── Mapa de Alocação & Gargalos ────────────────────────── */}
+      <MapaGargalos
+        funcionarios={funcsFiltrados}
+        alocacoes={alocacoes}
+        indisponibilidades={indisponibilidades}
+        projetos={projetos}
+        semanasBase={semanasBase}
+        indispMap={indispMap}
+      />
+    </div>
+  )
+}
+
+// ── Gargalos de Recursos ─────────────────────────────────────
+function MapaGargalos({ funcionarios, alocacoes, indisponibilidades, projetos, semanasBase, indispMap }) {
+
+  // Alocações indexadas: funcId__semana → total dias
+  const diasPorFuncSem = useMemo(() => {
+    const m = {}
+    for (const a of alocacoes) {
+      const k = `${a.funcionario_id}__${a.data_semana}`
+      m[k] = (m[k] || 0) + (a.dias || 0)
+    }
+    return m
+  }, [alocacoes])
+
+  // Projetos com alocações indexados: projeto_id → Set de semanas
+  const semanasPorProjeto = useMemo(() => {
+    const m = {}
+    for (const a of alocacoes) {
+      if (!m[a.projeto_id]) m[a.projeto_id] = new Set()
+      m[a.projeto_id].add(a.data_semana)
+    }
+    return m
+  }, [alocacoes])
+
+  // Gargalos ─────────────────────────────────────────────────
+  const sobrecarregados = useMemo(() => {
+    const res = []
+    for (const f of funcionarios) {
+      const semanasCriticas = semanasBase.filter(s => {
+        const indisp = indispMap[`${f.id}__${s}`]
+        const dias = diasPorFuncSem[`${f.id}__${s}`] || 0
+        return !indisp && dias > 5
+      })
+      if (semanasCriticas.length) res.push({ func: f, semanas: semanasCriticas })
+    }
+    return res
+  }, [funcionarios, semanasBase, diasPorFuncSem, indispMap])
+
+  const ociosos = useMemo(() => {
+    return funcionarios.filter(f => {
+      const proximas = semanasBase.slice(0, 4)
+      return proximas.every(s => {
+        const indisp = indispMap[`${f.id}__${s}`]
+        const dias = diasPorFuncSem[`${f.id}__${s}`] || 0
+        return indisp || dias === 0
+      })
+    })
+  }, [funcionarios, semanasBase, diasPorFuncSem, indispMap])
+
+  const projetosSemEquipe = useMemo(() => {
+    const proximas = new Set(semanasBase.slice(0, 4))
+    return projetos.filter(p => {
+      const sems = semanasPorProjeto[p.id]
+      if (!sems) return true
+      return [...proximas].every(s => !sems.has(s))
+    })
+  }, [projetos, semanasBase, semanasPorProjeto])
+
+  const temGargalos = sobrecarregados.length || ociosos.length || projetosSemEquipe.length
+
+  if (!temGargalos) return (
+    <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 10, background: 'rgba(15,122,61,.12)', border: '1px solid rgba(15,122,61,.3)', fontSize: 12, fontWeight: 600, color: '#0f7a3d' }}>
+      ✓ Nenhum gargalo identificado nas próximas 8 semanas
+    </div>
+  )
+
+  return (
+    <div style={{ marginTop: 20 }}>
+      {/* Cabeçalho */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)' }}>Gargalos de Recursos</span>
+        {sobrecarregados.length > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+            {sobrecarregados.length} sobrecarregado{sobrecarregados.length > 1 ? 's' : ''}
+          </span>
+        )}
+        {ociosos.length > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#64748b', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+            {ociosos.length} ocioso{ociosos.length > 1 ? 's' : ''}
+          </span>
+        )}
+        {projetosSemEquipe.length > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 8px' }}>
+            {projetosSemEquipe.length} projeto{projetosSemEquipe.length > 1 ? 's' : ''} sem equipe
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {sobrecarregados.map(({ func, semanas }) => (
+          <div key={func.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(220,38,38,.35)', background: 'rgba(220,38,38,.08)' }}>
+            <div style={{ width: 4, background: '#dc2626', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#f87171' }}>⚠ Sobrecarregado · {func.nome}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
+                {semanas.map(s => `Sem ${fmtWeek(s)}: ${diasPorFuncSem[`${func.id}__${s}`] || 0}d`).join(' · ')}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {ociosos.map(f => (
+          <div key={f.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--surface-2)' }}>
+            <div style={{ width: 4, background: '#64748b', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-2)' }}>○ Sem alocação · {f.nome}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>Nenhum projeto nas próximas 4 semanas</div>
+            </div>
+          </div>
+        ))}
+
+        {projetosSemEquipe.map(p => (
+          <div key={p.id} style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(245,158,11,.35)', background: 'rgba(245,158,11,.08)' }}>
+            <div style={{ width: 4, background: '#f59e0b', flexShrink: 0 }} />
+            <div style={{ flex: 1, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#fbbf24' }}>
+                🔧 Sem equipe · <span style={{ fontFamily: 'monospace' }}>OS {p.os}</span>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{p.nome} — sem alocação nas próximas 4 semanas</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

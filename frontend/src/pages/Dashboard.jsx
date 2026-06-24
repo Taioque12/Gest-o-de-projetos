@@ -149,7 +149,6 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
       />
 
       <div className="wrap">
-        <NotificacoesPrazo projetos={projetos} />
         {/* KPIs */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div />
@@ -184,6 +183,8 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
             cls={nC ? 'vermelho' : 'amarelo'}
           />
         </div>
+
+        <NotificacoesPrazo projetos={projetos} />
 
         {/* Curva S */}
         <div className="panel">
@@ -292,17 +293,6 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Alocação */}
-        <div className="panel">
-          <div className="panel-head">
-            <h2><span className="ico">👷</span> Mapa de Alocação & Gargalos de Recurso</h2>
-            <span className="hint">Equipes em mais de um projeto/OS sinalizam conflito de recurso</span>
-          </div>
-          <div className="panel-body" style={{ overflowX: 'auto' }}>
-            <AlocacaoTable projetos={projetos} />
           </div>
         </div>
 
