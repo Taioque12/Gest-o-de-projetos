@@ -326,10 +326,10 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
     filtroEquipe === 'todas' ? funcionarios : funcionarios.filter(f => f.equipe === filtroEquipe),
   [funcionarios, filtroEquipe])
 
-  // Semanas base: existentes no banco + próximas 12 semanas a partir de hoje
+  // Semanas base: existentes no banco + próximas 8 semanas a partir de hoje
   const semanasBase = useMemo(() => {
     const seen = new Set(alocacoes.map(a => a.data_semana))
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 8; i++) {
       const d = new Date(semAtual)
       d.setDate(d.getDate() + i * 7)
       seen.add(toISO(d.getTime()))
