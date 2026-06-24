@@ -200,7 +200,7 @@ export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeVi
         </div>
       </div>
 
-      <div className="wrap" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
+      <div className="wrap equipe-layout" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
         <div>
 
           {/* ── ABA PROGRAMAÇÃO ── */}
@@ -318,7 +318,7 @@ export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeVi
             </div>
 
             <footer>
-              <b>Painel MA CONEGLIAN</b>
+              <b>Gestão de Projetos</b>
               {usandoMock && ' · dados fictícios para validação do formato'}
             </footer>
           </>)}

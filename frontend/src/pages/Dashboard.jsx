@@ -15,7 +15,7 @@ import Toast from '../components/Toast'
 import NotificacoesPrazo from '../components/NotificacoesPrazo'
 
 export default function Dashboard({ user, perfil, empresaId, onSignOut, onChangeView }) {
-  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, empresaId)
+  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, user?.email, empresaId)
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
   const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
@@ -79,6 +79,7 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
           projetos={projetos}
           criarProjeto={criarProjeto}
           editarProjeto={editarProjeto}
+          user={user}
         />
       </>
     )
@@ -306,7 +307,7 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
         </div>
 
         <footer>
-          <b>Painel MA CONEGLIAN</b>
+          <b>Gestão de Projetos</b>
           {usandoMock && ' · dados fictícios para validação do formato'}
           <br />
           Estrutura: Projeto · OS · Cliente · Responsável · Prazo · Valor · Avanço Previsto × Realizado · Desvio · Alocação · Ação.

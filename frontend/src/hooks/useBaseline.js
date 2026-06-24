@@ -23,12 +23,13 @@ export function useBaseline(projetoId) {
     const { error } = await supabase
       .from('baseline_projetos')
       .insert({
-        projeto_id:       projetoId,
+        projeto_id:        projetoId,
         data_congelamento: new Date().toISOString().slice(0, 10),
-        inicio_original:  projeto.inicio,
-        fim_original:     projeto.fim,
-        prev_original:    projeto.prev,
-        descricao:        descricao || null,
+        inicio_original:   projeto.inicio,
+        fim_original:      projeto.fim,
+        prev_original:     projeto.prev,
+        real_original:     projeto.real,
+        descricao:         descricao || null,
       })
     if (error) throw error
     await refetch()
