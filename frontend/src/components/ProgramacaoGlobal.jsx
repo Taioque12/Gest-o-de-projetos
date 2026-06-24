@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 const MS_WEEK = 7 * 24 * 3600 * 1000
 
@@ -35,7 +36,7 @@ const MOTIVO_COR = {
 }
 
 // ── Editor inline por célula ─────────────────────────────────
-function CelulaEditor({ funcionario, semanas, projetos, alocacoes, indisponibilidades, onAlocar, onMarcarIndisp, onDesmarcarIndisp, onFechar }) {
+function CelulaEditor({ funcionario, semanas, projetos, alocacoes, indisponibilidades, onAlocar, onMarcarIndisp, onDesmarcarIndisp, onFechar, anchorRect }) {
   const ref = useRef(null)
   const [saving, setSaving] = useState(false)
   const [errMsg, setErrMsg] = useState('')
@@ -123,15 +124,27 @@ function CelulaEditor({ funcionario, semanas, projetos, alocacoes, indisponibili
   const maxDiasTotal = 5 * semanas.length
   const sobrecarregado = totalGeralDias > maxDiasTotal
 
-  return (
-    <div ref={ref} style={{
-      position: 'absolute', zIndex: 50, top: 'calc(100% + 6px)', left: '50%',
-      transform: 'translateX(-50%)',
-      background: 'var(--surface)', border: '1.5px solid var(--brand)',
-      borderRadius: 12, minWidth: 320, maxWidth: 380,
-      boxShadow: '0 12px 32px rgba(0,0,0,.20)',
-      overflow: 'hidden',
-    }}>
+  // Posicionamento fixed para escapar do overflow da tabela
+  const popupWidth = 360
+  const spaceBelow = anchorRect ? window.innerHeight - anchorRect.bottom : 999
+  const openUpward = anchorRect && spaceBelow < 320
+
+  const fixedLeft = anchorRect
+    ? Math.max(8, Math.min(anchorRect.left + anchorRect.width / 2 - popupWidth / 2, window.innerWidth - popupWidth - 8))
+    : 200
+  const fixedStyle = {
+    position: 'fixed', zIndex: 9999,
+    left: fixedLeft, width: popupWidth,
+    ...(openUpward
+      ? { bottom: window.innerHeight - (anchorRect?.top ?? 0) + 6 }
+      : { top: (anchorRect?.bottom ?? 0) + 6 }),
+    background: 'var(--surface)', border: '1.5px solid var(--brand)',
+    borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.25)',
+    overflow: 'hidden', maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+  }
+
+  return createPortal(
+    <div ref={ref} style={fixedStyle}>
 
       {/* Cabeçalho */}
       <div style={{ padding: '10px 14px', background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -153,7 +166,7 @@ function CelulaEditor({ funcionario, semanas, projetos, alocacoes, indisponibili
         </div>
       </div>
 
-      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', maxHeight: 'calc(85vh - 60px)' }}>
 
         {/* Indisponibilidades ativas */}
         {indispAtiva.map(i => {
@@ -288,7 +301,8 @@ function CelulaEditor({ funcionario, semanas, projetos, alocacoes, indisponibili
         {errMsg && <div style={{ fontSize: 11, color: 'var(--vermelho)', padding: '4px 0' }}>{errMsg}</div>}
         {saving && <div style={{ fontSize: 11, color: 'var(--ink-3)', textAlign: 'center' }}>Salvando...</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -486,7 +500,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                         {motivoIndisp ? (
                           // Célula de indisponibilidade
                           <div
-                            onClick={() => podeEditar && setCelulaAtiva(ativa ? null : { funcId: f.id, colIdx: ci })}
+                            onClick={e => podeEditar && setCelulaAtiva(ativa ? null : { funcId: f.id, colIdx: ci, anchorRect: e.currentTarget.getBoundingClientRect() })}
                             title={corIndisp.label}
                             style={{
                               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -498,7 +512,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                         ) : (
                           // Célula normal
                           <div
-                            onClick={() => podeEditar && setCelulaAtiva(ativa ? null : { funcId: f.id, colIdx: ci })}
+                            onClick={e => podeEditar && setCelulaAtiva(ativa ? null : { funcId: f.id, colIdx: ci, anchorRect: e.currentTarget.getBoundingClientRect() })}
                             title={itens.length === 0 ? (podeEditar ? 'Clique para alocar' : '') : itens.map(i => `OS ${i.os}: ${i.dias}d`).join(' | ')}
                             style={{
                               display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -536,6 +550,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                             onMarcarIndisp={onMarcarIndisp}
                             onDesmarcarIndisp={onDesmarcarIndisp}
                             onFechar={() => setCelulaAtiva(null)}
+                            anchorRect={celulaAtiva?.anchorRect}
                           />
                         )}
                       </td>
