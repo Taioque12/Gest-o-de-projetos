@@ -424,8 +424,9 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
         ))}
       </div>
 
-      {/* Área de rolagem delimitada */}
+      {/* Área de rolagem delimitada — width:100% garante que o scroll fica DENTRO da página */}
       <div style={{
+        width: '100%', boxSizing: 'border-box',
         overflowX: 'scroll', overflowY: 'auto',
         borderRadius: 10, border: '2px solid var(--line)',
         maxHeight: 480,
