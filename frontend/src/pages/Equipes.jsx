@@ -206,9 +206,22 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
           {/* ── ABA PROGRAMAÇÃO ── */}
           {abaEquipe === 'programacao' && (
             <div className="panel">
-              <div className="panel-head">
-                <h2><span className="ico">🗓️</span> Programação Semanal — Visão Geral</h2>
-                <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Próximas 14 semanas · todos os projetos</span>
+              <div className="panel-head" style={{ flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+                  <span className="ico">🗓️</span>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>Programação Semanal</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>Visão geral · todos os colaboradores e projetos</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: 'var(--ink-3)', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 10px' }}>
+                    {funcionarios.length} colaborador{funcionarios.length !== 1 ? 'es' : ''}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-3)', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 10px' }}>
+                    {alocacoes.length > 0 ? `${new Set(alocacoes.map(a => a.projeto_id)).size} projetos ativos` : 'Sem alocações'}
+                  </span>
+                </div>
               </div>
               <div className="panel-body">
                 {loadingProg ? (

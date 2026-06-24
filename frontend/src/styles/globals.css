@@ -208,7 +208,7 @@ footer b{color:var(--ink-2)}
    ═══════════════════════════════════════════════ */
 
 /* Previne overflow horizontal global */
-html, body { overflow-x: hidden; max-width: 100%; }
+html, body { max-width: 100%; }
 *, *::before, *::after { max-width: 100%; }
 
 @media (max-width:640px){

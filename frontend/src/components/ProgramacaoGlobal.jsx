@@ -438,8 +438,8 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
         ))}
       </div>
 
-      <div style={{ overflowX: 'scroll', borderRadius: 8, border: '1px solid var(--line)', WebkitOverflowScrolling: 'touch' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: 'max-content' }}>
+      <div style={{ overflowX: 'scroll', overflowY: 'visible', borderRadius: 8, border: '1px solid var(--line)', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: `${170 + colunas.length * (periodo === 'quinzena' ? 148 : 108) + 90}px` }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 3 }}>
             <tr style={{ background: 'var(--surface-2)' }}>
               <th style={{ ...thBase, textAlign: 'left', padding: '8px 12px', position: 'sticky', left: 0, background: 'var(--surface-2)', zIndex: 4, minWidth: 170, borderRight: '1px solid var(--line)', fontWeight: 700 }}>
@@ -461,7 +461,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                 )
               })}
               {/* Coluna dias livres */}
-              <th style={{ ...thBase, minWidth: 80, position: 'sticky', right: 0, background: 'var(--surface-2)', zIndex: 4, borderLeft: '1px solid var(--line)', color: '#0f7a3d', fontWeight: 700 }}>
+              <th style={{ ...thBase, minWidth: 90, background: 'var(--surface-2)', borderLeft: '2px solid var(--line)', color: '#0f7a3d', fontWeight: 700 }}>
                 Livre hoje
               </th>
             </tr>
@@ -558,7 +558,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                   })}
 
                   {/* Coluna "Livre hoje" */}
-                  <td style={{ textAlign: 'center', padding: '6px 8px', position: 'sticky', right: 0, background: rowBg, borderLeft: '1px solid var(--line)', minWidth: 80 }}>
+                  <td style={{ textAlign: 'center', padding: '6px 8px', background: rowBg, borderLeft: '2px solid var(--line)', minWidth: 90 }}>
                     {indispAtual ? (
                       <span style={{ fontSize: 11, color: '#92400e', fontWeight: 600 }}>Indisp.</span>
                     ) : colIdxAtual < 0 ? (
@@ -605,7 +605,7 @@ export default function ProgramacaoGlobal({ funcionarios, alocacoes, projetos, i
                 )
               })}
               {/* placeholder coluna livre */}
-              <td style={{ position: 'sticky', right: 0, background: 'var(--surface-2)', borderLeft: '1px solid var(--line)' }} />
+              <td style={{ background: 'var(--surface-2)', borderLeft: '2px solid var(--line)' }} />
             </tr>
           </tfoot>
         </table>
