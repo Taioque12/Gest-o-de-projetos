@@ -58,6 +58,18 @@ export function useProjetos(perfil, userId, userEmail) {
 
   useEffect(() => { fetchProjetos() }, [fetchProjetos])
 
+  // Realtime: re-fetch quando qualquer outro usuário alterar projetos ou avanços
+  useEffect(() => {
+    if (!supabaseConfigurado) return
+    const channel = supabase
+      .channel('db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projetos' }, fetchProjetos)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'atualizacoes_semana' }, fetchProjetos)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'efetivo_semana' }, fetchProjetos)
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [fetchProjetos])
+
   async function criarProjeto(dados) {
     const { prev, real, ...projetoData } = dados
     const { data, error } = await supabase
