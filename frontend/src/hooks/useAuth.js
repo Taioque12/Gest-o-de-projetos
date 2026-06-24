@@ -2,49 +2,56 @@ import { useState, useEffect } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 
 export function useAuth() {
-  const [user, setUser] = useState(null)
-  const [perfil, setPerfil] = useState('admin')
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]           = useState(null)
+  const [perfil, setPerfil]       = useState(null)
+  const [empresaId, setEmpresaId] = useState(null)
+  const [empresa, setEmpresa]     = useState(null)
+  const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
     if (!supabaseConfigurado) { setLoading(false); return }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchPerfil(session.user.id)
+      if (session?.user) fetchEmpresa(session.user.id)
       else setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_ev, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchPerfil(session.user.id)
-      else { setPerfil('admin'); setLoading(false) }
+      if (session?.user) fetchEmpresa(session.user.id)
+      else { setPerfil(null); setEmpresaId(null); setEmpresa(null); setLoading(false) }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Busca perfil usando auth.uid() — usuarios.id deve ser igual ao auth.uid()
-  async function fetchPerfil(authUid) {
+  async function fetchEmpresa(authUid) {
     try {
       const { data, error } = await supabase
-        .from('usuarios')
-        .select('perfil')
-        .eq('id', authUid)
+        .from('usuarios_empresa')
+        .select('perfil, empresa_id, empresas(*)')
+        .eq('auth_user_id', authUid)
+        .eq('ativo', true)
         .maybeSingle()
 
       if (error) throw error
 
-      if (!data) {
-        // Usuário existe no Auth mas não na tabela usuarios — cria com perfil padrão
-        await supabase.from('usuarios').insert({ id: authUid, perfil: 'equipe' })
-        setPerfil('equipe')
+      if (data) {
+        setPerfil(data.perfil)
+        setEmpresaId(data.empresa_id)
+        setEmpresa(data.empresas)
+        localStorage.setItem('empresa_id', data.empresa_id)
       } else {
-        setPerfil(data.perfil ?? 'equipe')
+        // Sem empresa — onboarding necessário
+        setPerfil(null)
+        setEmpresaId(null)
+        setEmpresa(null)
+        localStorage.removeItem('empresa_id')
       }
     } catch {
-      // Se RLS bloquear (ex: policy ainda não criada), assume equipe como fallback seguro
-      setPerfil('equipe')
+      setPerfil(null)
+      setEmpresaId(null)
     }
     setLoading(false)
   }
@@ -52,7 +59,14 @@ export function useAuth() {
   const signIn = (email, password) =>
     supabase.auth.signInWithPassword({ email, password })
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = () => {
+    localStorage.removeItem('empresa_id')
+    return supabase.auth.signOut()
+  }
 
-  return { user, perfil, loading, signIn, signOut }
+  const refreshEmpresa = () => {
+    if (user) fetchEmpresa(user.id)
+  }
+
+  return { user, perfil, empresaId, empresa, loading, signIn, signOut, refreshEmpresa }
 }

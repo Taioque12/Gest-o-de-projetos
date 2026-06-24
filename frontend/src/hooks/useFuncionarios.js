@@ -26,7 +26,7 @@ function normalizarFuncionario(f) {
   }
 }
 
-export function useFuncionarios() {
+export function useFuncionarios(empresaId) {
   const [funcionarios, setFuncionarios] = useState([])
   const [loading, setLoading]           = useState(true)
   const [usandoMock, setUsandoMock]     = useState(false)
@@ -56,7 +56,7 @@ export function useFuncionarios() {
     const { avaliacoes, ...dadosPrincipais } = dados
     const { data, error } = await supabase
       .from('funcionarios')
-      .insert(dadosPrincipais)
+      .insert({ ...dadosPrincipais, empresa_id: empresaId })
       .select('id')
       .single()
     if (error) throw error

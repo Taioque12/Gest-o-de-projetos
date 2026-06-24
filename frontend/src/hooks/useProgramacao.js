@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 
-export function useProgramacao(projetoId) {
+export function useProgramacao(projetoId, empresaId) {
   const [alocacoes, setAlocacoes] = useState([])
   const [conflitos, setConflitos] = useState({}) // { [funcId__semana]: totalDiasOutrosProjetos }
   const [loading, setLoading] = useState(true)
@@ -51,7 +51,7 @@ export function useProgramacao(projetoId) {
       const { error } = await supabase
         .from('programacao_semanal')
         .upsert(
-          { projeto_id: projetoId, funcionario_id, data_semana, dias: d },
+          { projeto_id: projetoId, funcionario_id, data_semana, dias: d, empresa_id: empresaId },
           { onConflict: 'projeto_id,funcionario_id,data_semana' }
         )
       if (error) throw error
@@ -76,7 +76,7 @@ export function useProgramacao(projetoId) {
     await supabase
       .from('efetivo_semana')
       .upsert(
-        { projeto_id: projetoId, data_semana, previstos: ef?.previstos ?? 0, mobilizados: mob },
+        { projeto_id: projetoId, data_semana, previstos: ef?.previstos ?? 0, mobilizados: mob, empresa_id: empresaId },
         { onConflict: 'projeto_id,data_semana' }
       )
   }

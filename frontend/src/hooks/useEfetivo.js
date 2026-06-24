@@ -3,7 +3,7 @@ import { supabase, supabaseConfigurado } from '../supabase'
 
 // Efetivo semanal (profissionais previstos x mobilizados) de um projeto.
 // Espelha o padrão de useAnexos: busca por projeto_id, salva (upsert) e exclui.
-export function useEfetivo(projetoId) {
+export function useEfetivo(projetoId, empresaId) {
   const [efetivo, setEfetivo] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -31,6 +31,7 @@ export function useEfetivo(projetoId) {
         previstos:     toInt(previstos) ?? 0,
         mobilizados:   toInt(mobilizados),
         semana_numero: toInt(semana_numero),
+        empresa_id:    empresaId,
       }, { onConflict: 'projeto_id,data_semana' })
     if (error) throw error
     await fetch()

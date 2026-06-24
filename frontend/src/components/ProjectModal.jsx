@@ -20,7 +20,7 @@ function fmtBytes(b) {
   return `${(b / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function ProjectModal({ projeto, atualizacoes = [], onClose, podeEditar = false }) {
+export default function ProjectModal({ projeto, atualizacoes = [], onClose, podeEditar = false, empresaId }) {
   const p = projeto
   const c = classify(p.prev, p.real)
   const desv = p.real - p.prev
@@ -30,14 +30,14 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
   const [uploading, setUploading] = useState(false)
   const [erroUpload, setErroUpload] = useState('')
 
-  const { efetivo, salvarEfetivo, excluirEfetivo } = useEfetivo(p.id)
+  const { efetivo, salvarEfetivo, excluirEfetivo } = useEfetivo(p.id, empresaId)
   const histOpts = histogramaOpts(p, efetivo)
   const [efForm, setEfForm] = useState({ data_semana: '', previstos: '', mobilizados: '' })
   const [savingEf, setSavingEf] = useState(false)
   const [erroEf, setErroEf] = useState('')
 
-  const { alocacoes, conflitos, alocar } = useProgramacao(p.id)
-  const { funcionarios } = useFuncionarios()
+  const { alocacoes, conflitos, alocar } = useProgramacao(p.id, empresaId)
+  const { funcionarios } = useFuncionarios(empresaId)
   const { baselines, baselineAtivo, congelarBaseline, excluirBaseline } = useBaseline(p.id)
   const baselineOpts = baselineCurveOpts(baselineAtivo, p)
   const [congelando, setCongelando] = useState(false)

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 import { MOCK_PROJETOS, normalizarProjeto, prepararProjeto } from '../utils/helpers'
 
-export function useProjetos(perfil, userId) {
+export function useProjetos(perfil, userId, empresaId) {
   const [projetos, setProjetos] = useState([])
   const [loading, setLoading] = useState(true)
   const [usandoMock, setUsandoMock] = useState(false)
@@ -74,6 +74,7 @@ export function useProjetos(perfil, userId) {
         valor_os:         projetoData.valor_os,
         equipes:          projetoData.equipes,
         acao_recomendada: projetoData.acao_recomendada,
+        empresa_id:       empresaId,
       })
       .select()
       .single()

@@ -14,8 +14,8 @@ import Relatorio from '../components/Relatorio'
 import Toast from '../components/Toast'
 import NotificacoesPrazo from '../components/NotificacoesPrazo'
 
-export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
-  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id)
+export default function Dashboard({ user, perfil, empresaId, onSignOut, onChangeView }) {
+  const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, empresaId)
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
   const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
@@ -318,6 +318,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
           projeto={modalProjeto}
           atualizacoes={atualizacoes}
           podeEditar={podeEditar}
+          empresaId={empresaId}
           onClose={() => setModalProjeto(null)}
         />
       )}

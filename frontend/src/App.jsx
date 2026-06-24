@@ -6,9 +6,10 @@ import Dashboard from './pages/Dashboard'
 import Equipes from './pages/Equipes'
 import Acessos from './pages/Acessos'
 import ClienteView from './pages/ClienteView'
+import OnboardingEmpresa from './pages/OnboardingEmpresa'
 
 export default function App() {
-  const { user, perfil, loading, signIn, signOut } = useAuth()
+  const { user, perfil, empresaId, empresa, loading, signIn, signOut, refreshEmpresa } = useAuth()
   const [view, setView] = useState('dashboard')
 
   if (loading) return <div className="loading-screen">Carregando...</div>
@@ -17,11 +18,17 @@ export default function App() {
     return <Login onSignIn={signIn} />
   }
 
+  // Usuário autenticado mas sem empresa — precisa criar ou aguardar convite
+  if (supabaseConfigurado && user && !empresaId) {
+    return <OnboardingEmpresa user={user} onEmpresaCriada={refreshEmpresa} onSignOut={signOut} />
+  }
+
   if (view === 'equipes') {
     return (
       <Equipes
         user={user}
         perfil={perfil}
+        empresaId={empresaId}
         onSignOut={signOut}
         onChangeView={setView}
       />
@@ -33,6 +40,7 @@ export default function App() {
       <ClienteView
         user={user}
         perfil={perfil}
+        empresaId={empresaId}
         onSignOut={signOut}
         onChangeView={setView}
       />
@@ -44,6 +52,7 @@ export default function App() {
       <Acessos
         user={user}
         perfil={perfil}
+        empresaId={empresaId}
         onSignOut={signOut}
         onChangeView={setView}
       />
@@ -54,6 +63,8 @@ export default function App() {
     <Dashboard
       user={user}
       perfil={perfil}
+      empresaId={empresaId}
+      empresa={empresa}
       onSignOut={signOut}
       view={view}
       setView={setView}

@@ -10,7 +10,7 @@ export const MOCK_HABILIDADES = [
   { id: 'mock-hab-6', nome: 'Alta Tensão',                  ordem: 6, ativo: true },
 ]
 
-export function useHabilidades() {
+export function useHabilidades(empresaId) {
   const [habilidades, setHabilidades] = useState([])
   const [loading, setLoading]         = useState(true)
 
@@ -43,7 +43,7 @@ export function useHabilidades() {
       : 0
     const { error } = await supabase
       .from('habilidades')
-      .insert({ nome: nome.trim(), ordem: maxOrdem + 1 })
+      .insert({ nome: nome.trim(), ordem: maxOrdem + 1, empresa_id: empresaId })
     if (error) throw error
     await fetchHabilidades()
   }
