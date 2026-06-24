@@ -54,9 +54,9 @@ export default function Relatorio({ projetos, onFechar }) {
 
         {/* Cabeçalho */}
         <div className="rel-header">
-          <div className="rel-logo">MA</div>
+          <div className="rel-logo">GP</div>
           <div>
-            <div className="rel-empresa">MA CONEGLIAN Engenharia Elétrica</div>
+            <div className="rel-empresa">Gestão de Projetos</div>
             <div className="rel-titulo">Relatório de Gestão de Projetos</div>
             <div className="rel-data">Emitido em {hoje}</div>
           </div>
@@ -171,7 +171,7 @@ export default function Relatorio({ projetos, onFechar }) {
         )}
 
         <div className="rel-footer">
-          MA CONEGLIAN Engenharia Elétrica · Sistema de Gestão de Projetos · {hoje}
+          Gestão de Projetos · {hoje}
         </div>
       </div>
     </>

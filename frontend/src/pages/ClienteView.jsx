@@ -24,7 +24,7 @@ export default function ClienteView({ user, perfil, onSignOut, onChangeView }) {
             {projetos.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-3)' }}>
                 <p>Nenhum projeto liberado para o seu acesso.</p>
-                <p style={{ fontSize: 12, marginTop: 6 }}>Entre em contato com a equipe MA CONEGLIAN.</p>
+                <p style={{ fontSize: 12, marginTop: 6 }}>Entre em contato com a equipe de Gestão de Projetos.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -71,7 +71,7 @@ export default function ClienteView({ user, perfil, onSignOut, onChangeView }) {
           </div>
         </div>
 
-        <footer><b>Painel MA CONEGLIAN</b> · Portal do Cliente</footer>
+        <footer><b>Gestão de Projetos</b> · Portal do Cliente</footer>
       </div>
 
       {modal && (

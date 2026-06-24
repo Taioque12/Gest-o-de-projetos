@@ -20,7 +20,7 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onA
 
         {/* Marca */}
         <div className="brand" onClick={() => onChangeView?.('dashboard')} style={{ cursor: onChangeView ? 'pointer' : 'default' }}>
-          <div className="logo">MA</div>
+          <div className="logo">GP</div>
           <div>
             <h1>Gestão de Projetos</h1>
             <p>Engenharia Elétrica · instalações, automação e comissionamento</p>

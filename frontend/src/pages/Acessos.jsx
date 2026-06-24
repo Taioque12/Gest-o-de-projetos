@@ -275,7 +275,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
           </div>
         </div>
 
-        <footer><b>Painel MA CONEGLIAN</b> · Gestão de Acessos</footer>
+        <footer><b>Gestão de Projetos</b> · Gestão de Acessos</footer>
       </div>
 
       {/* Modal novo usuário */}

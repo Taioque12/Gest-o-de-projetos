@@ -318,7 +318,7 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
             </div>
 
             <footer>
-              <b>Painel MA CONEGLIAN</b>
+              <b>Gestão de Projetos</b>
               {usandoMock && ' · dados fictícios para validação do formato'}
             </footer>
           </>)}
