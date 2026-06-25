@@ -59,13 +59,16 @@ frontend/
 
 ## 🗺 Roadmap — SaaS Multi-Tenant
 
-A branch `saas-multitenant` contém a evolução da plataforma para um modelo SaaS com isolamento por empresa (CNPJ) via Row Level Security:
+**Status atual:** `main` em testes operacionais. O branch `saas-multitenant` será iniciado após consolidação do `main` com base no feedback dos usuários.
+
+**Fluxo:** feedback → ajustes no `main` → `main` consolidado → iniciar fases SaaS
 
 | Fase | Descrição | Status |
 |------|-----------|--------|
+| — | Testes operacionais (main) | 🔄 |
 | 1 | Estrutura de dados (empresas, usuarios_empresa) | ✅ |
 | 2 | RLS multi-tenant | ✅ |
-| 3 | Autenticação e onboarding | 🔄 |
+| 3 | Autenticação e onboarding | ⏳ |
 | 4 | Frontend (hooks por empresa) | ⏳ |
 | 5 | Migração de dados existentes | ⏳ |
 | 6 | Testes de isolamento | ⏳ |
