@@ -1,4 +1,4 @@
-# MA CONEGLIAN · Gestão de Projetos Elétricos
+# Gestão de Projetos Elétricos
 
 Sistema web para planejamento, acompanhamento e controle de projetos de engenharia elétrica industrial — instalações, infraestrutura, SPDA, iluminação e automação.
 
@@ -80,7 +80,3 @@ A branch `saas-multitenant` contém a evolução da plataforma para um modelo Sa
 | Free | 3 | 10 | R$ 0 |
 | Pro | ∞ | 50 | R$ 299 |
 | Enterprise | ∞ | ∞ | R$ 999+ |
-
----
-
-Desenvolvido por **MA CONEGLIAN Engenharia**
