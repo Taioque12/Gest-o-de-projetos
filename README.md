@@ -77,6 +77,6 @@ A branch `saas-multitenant` contém a evolução da plataforma para um modelo Sa
 
 | Plano | Projetos | Funcionários | Preço/mês |
 |-------|----------|--------------|-----------|
-| Free | 3 | 10 | R$ 0 |
-| Pro | ∞ | 50 | R$ 299 |
-| Enterprise | ∞ | ∞ | R$ 999+ |
+| Free | 2 | 5 | R$ 0 |
+| Pro | 15 | 30 | R$ 497 |
+| Enterprise | ∞ | ∞ | R$ 1.497 |
