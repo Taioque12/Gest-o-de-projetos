@@ -30,10 +30,14 @@ export default function OnboardingEmpresa({ user, onEmpresaCriada, onSignOut }) 
     setErro('')
     setLoading(true)
     try {
+      // Gera UUID no cliente para evitar SELECT no RETURNING (bloqueado por RLS antes do vínculo)
+      const empresaId = crypto.randomUUID()
+
       // 1. Cria empresa
-      const { data: empresa, error: errEmp } = await supabase
+      const { error: errEmp } = await supabase
         .from('empresas')
         .insert({
+          id:                empresaId,
           cnpj:              form.cnpj,
           nome_empresa:      form.nome_empresa.trim(),
           nome_responsavel:  form.nome_responsavel.trim(),
@@ -41,8 +45,6 @@ export default function OnboardingEmpresa({ user, onEmpresaCriada, onSignOut }) 
           telefone:          form.telefone.trim() || null,
           plano:             'free',
         })
-        .select('id')
-        .single()
 
       if (errEmp) {
         if (errEmp.code === '23505') throw new Error('CNPJ já cadastrado no sistema.')
@@ -54,7 +56,7 @@ export default function OnboardingEmpresa({ user, onEmpresaCriada, onSignOut }) 
         .from('usuarios_empresa')
         .insert({
           auth_user_id: user.id,
-          empresa_id:   empresa.id,
+          empresa_id:   empresaId,
           perfil:       'admin',
           data_aceite:  new Date().toISOString(),
         })
