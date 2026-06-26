@@ -9,7 +9,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
-    // Verifica que o caller é admin
+    // Verifica que o caller é admin da empresa
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -18,8 +18,18 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authErr } = await userClient.auth.getUser()
     if (authErr || !user) return json({ error: 'Não autenticado' }, 401)
 
-    const { data: perf } = await userClient.from('usuarios').select('perfil').eq('id', user.id).maybeSingle()
-    if (perf?.perfil !== 'admin') return json({ error: 'Sem permissão' }, 403)
+    const { email, senha, nome, perfil, empresa_id } = await req.json()
+    if (!email || !senha || !empresa_id) return json({ error: 'email, senha e empresa_id são obrigatórios' }, 400)
+
+    // Verifica que o caller é admin desta empresa
+    const { data: ue } = await userClient
+      .from('usuarios_empresa')
+      .select('perfil')
+      .eq('auth_user_id', user.id)
+      .eq('empresa_id', empresa_id)
+      .eq('ativo', true)
+      .maybeSingle()
+    if (ue?.perfil !== 'admin') return json({ error: 'Sem permissão' }, 403)
 
     // Cria usuário com service role
     const admin = createClient(
@@ -28,9 +38,6 @@ Deno.serve(async (req: Request) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { email, senha, nome, perfil, funcao, data_nascimento } = await req.json()
-    if (!email || !senha) return json({ error: 'E-mail e senha são obrigatórios' }, 400)
-
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
       password: senha,
@@ -38,13 +45,14 @@ Deno.serve(async (req: Request) => {
     })
     if (createErr) return json({ error: createErr.message }, 400)
 
-    const { error: insertErr } = await admin.from('usuarios').upsert({
-      id: created.user.id,
+    const { error: insertErr } = await admin.from('usuarios_empresa').insert({
+      auth_user_id: created.user.id,
+      empresa_id,
+      perfil:      perfil ?? 'equipe',
+      nome:        nome ?? null,
       email,
-      nome: nome ?? null,
-      perfil: perfil ?? 'equipe',
-      funcao: funcao ?? null,
-      data_nascimento: data_nascimento ?? null,
+      ativo:       true,
+      data_aceite: new Date().toISOString(),
     })
     if (insertErr) return json({ error: insertErr.message }, 500)
 

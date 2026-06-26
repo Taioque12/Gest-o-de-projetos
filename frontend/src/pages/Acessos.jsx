@@ -22,21 +22,19 @@ const CAMPO = ({ label, children }) => (
 
 const INPUT_STYLE = { fontSize: 13, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', fontFamily: 'inherit', background: 'var(--surface)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' }
 
-export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
-  const { usuarios, acessos, loading, atualizarPerfil, atualizarNome, concederAcesso, revogarAcesso, refetch } = useUsuarios()
-  const { projetos } = useProjetos(perfil, user?.id)
+export default function Acessos({ user, perfil, empresaId, onSignOut, onChangeView }) {
+  const { membros, acessos, loading, atualizarPerfil, atualizarNome, removerMembro, concederAcesso, revogarAcesso, refetch } = useUsuarios(empresaId)
+  const { projetos } = useProjetos(perfil, user?.id, user?.email, empresaId)
 
-  const [editando, setEditando]     = useState(null)
-  const [nomeEdit, setNomeEdit]     = useState('')
-  const [salvando, setSalvando]     = useState(false)
-  const [toast, setToast]           = useState('')
-  const [expandido, setExpandido]   = useState(null)
-  const [showForm, setShowForm]     = useState(false)
-  const [erroForm, setErroForm]     = useState('')
-  const [editUser, setEditUser]     = useState(null) // usuário em edição completa
-  const [editData, setEditData]     = useState({})
+  const [editando, setEditando]   = useState(null)
+  const [nomeEdit, setNomeEdit]   = useState('')
+  const [salvando, setSalvando]   = useState(false)
+  const [toast, setToast]         = useState('')
+  const [expandido, setExpandido] = useState(null)
+  const [showForm, setShowForm]   = useState(false)
+  const [erroForm, setErroForm]   = useState('')
 
-  const formVazio = { email: '', senha: '', nome: '', perfil: 'equipe', funcao: '', data_nascimento: '' }
+  const formVazio = { email: '', senha: '', nome: '', perfil: 'equipe' }
   const [form, setForm] = useState(formVazio)
 
   if (loading) return <div className="loading-screen">Carregando acessos...</div>
@@ -45,12 +43,12 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     return e => setForm(f => ({ ...f, [k]: e.target.value }))
   }
 
-  function projetosDoUsuario(uid) {
-    return acessos.filter(a => a.usuario_id === uid).map(a => a.projeto_id)
+  function projetosDoMembro(authUserId) {
+    return acessos.filter(a => a.usuario_id === authUserId).map(a => a.projeto_id)
   }
 
-  function temAcesso(uid, pid) {
-    return acessos.some(a => a.usuario_id === uid && a.projeto_id === pid)
+  function temAcesso(authUserId, pid) {
+    return acessos.some(a => a.usuario_id === authUserId && a.projeto_id === pid)
   }
 
   async function handlePerfil(id, novoPerfil) {
@@ -73,28 +71,21 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     setSalvando(false)
   }
 
-  async function handleAcesso(uid, pid, conceder) {
+  async function handleAcesso(authUserId, pid, conceder) {
     setSalvando(true)
     try {
-      if (conceder) await concederAcesso(uid, pid)
-      else          await revogarAcesso(uid, pid)
+      if (conceder) await concederAcesso(authUserId, pid)
+      else          await revogarAcesso(authUserId, pid)
     } catch (err) { alert('Erro: ' + err.message) }
     setSalvando(false)
   }
 
-  async function handleEditarUsuario(e) {
-    e.preventDefault()
+  async function handleRemover(id) {
+    if (!confirm('Remover este membro da empresa?')) return
     setSalvando(true)
     try {
-      const { error } = await supabase.from('usuarios').update({
-        nome:            editData.nome || null,
-        funcao:          editData.funcao || null,
-        data_nascimento: editData.data_nascimento || null,
-      }).eq('id', editUser.id)
-      if (error) throw error
-      await refetch()
-      setEditUser(null)
-      setToast('Usuário atualizado!')
+      await removerMembro(id)
+      setToast('Membro removido.')
     } catch (err) { alert('Erro: ' + err.message) }
     setSalvando(false)
   }
@@ -106,7 +97,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-use`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
         {
           method: 'POST',
           headers: {
@@ -114,12 +105,11 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            email: form.email,
-            senha: form.senha,
-            nome: form.nome || null,
-            perfil: form.perfil,
-            funcao: form.funcao || null,
-            data_nascimento: form.data_nascimento || null,
+            email:      form.email,
+            senha:      form.senha,
+            nome:       form.nome || null,
+            perfil:     form.perfil,
+            empresa_id: empresaId,
           }),
         }
       )
@@ -128,16 +118,15 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
       setShowForm(false)
       setForm(formVazio)
       setToast('Usuário criado com sucesso!')
-      // Recarrega a lista
-      window.location.reload()
+      await refetch()
     } catch (err) {
       setErroForm(err.message)
     }
     setSalvando(false)
   }
 
-  const clientes = usuarios.filter(u => u.perfil === 'cliente')
-  const staff    = usuarios.filter(u => u.perfil !== 'cliente')
+  const clientes = membros.filter(m => m.perfil === 'cliente')
+  const staff    = membros.filter(m => m.perfil !== 'cliente')
 
   return (
     <>
@@ -145,12 +134,12 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
 
       <div className="wrap">
 
-        {/* Usuários da equipe */}
+        {/* Equipe interna */}
         <div className="panel">
           <div className="panel-head">
             <h2><span className="ico">👤</span> Usuários — Equipe Interna</h2>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <span className="hint">{staff.length} usuário(s)</span>
+              <span className="hint">{staff.length} membro(s)</span>
               <button
                 className="btn btn-ghost"
                 style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
@@ -166,42 +155,43 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                 <tr style={{ borderBottom: '2px solid var(--line)' }}>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Nome</th>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>E-mail</th>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Função</th>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Perfil</th>
+                  <th style={{ padding: '8px 12px' }}></th>
                 </tr>
               </thead>
               <tbody>
-                {staff.map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                {staff.map(m => (
+                  <tr key={m.id} style={{ borderBottom: '1px solid var(--line)' }}>
                     <td style={{ padding: '10px 12px' }}>
-                      {editando === u.id ? (
+                      {editando === m.id ? (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <input value={nomeEdit} onChange={e => setNomeEdit(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleNome(u.id)}
+                          <input value={nomeEdit} onChange={e => setNomeEdit(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleNome(m.id)}
                             style={{ ...INPUT_STYLE, width: 160 }} autoFocus />
-                          <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }} onClick={() => handleNome(u.id)} disabled={salvando}>✓</button>
+                          <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }} onClick={() => handleNome(m.id)} disabled={salvando}>✓</button>
                           <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setEditando(null)}>✕</button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--brand)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
-                            {(u.nome || u.email || '?').charAt(0).toUpperCase()}
+                            {(m.nome || m.email || '?').charAt(0).toUpperCase()}
                           </div>
-                          <span style={{ fontWeight: 600 }}>{u.nome || '—'}</span>
-                          <button onClick={() => { setEditando(u.id); setNomeEdit(u.nome || '') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 13 }}>✏️</button>
+                          <span style={{ fontWeight: 600 }}>{m.nome || '—'}</span>
+                          <button onClick={() => { setEditando(m.id); setNomeEdit(m.nome || '') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 13 }}>✏️</button>
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '10px 12px', color: 'var(--ink-2)' }}>{u.email || '—'}</td>
-                    <td style={{ padding: '10px 12px', color: 'var(--ink-2)', fontSize: 13 }}>{u.funcao || '—'}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--ink-2)' }}>{m.email || '—'}</td>
                     <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <select value={u.perfil} onChange={e => handlePerfil(u.id, e.target.value)} disabled={salvando}
-                        style={{ fontSize: 12, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--line)', fontFamily: 'inherit', fontWeight: 700, cursor: 'pointer', background: PERFIL_COR[u.perfil]?.bg, color: PERFIL_COR[u.perfil]?.txt }}>
+                      <select value={m.perfil} onChange={e => handlePerfil(m.id, e.target.value)} disabled={salvando}
+                        style={{ fontSize: 12, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--line)', fontFamily: 'inherit', fontWeight: 700, cursor: 'pointer', background: PERFIL_COR[m.perfil]?.bg, color: PERFIL_COR[m.perfil]?.txt }}>
                         {PERFIS.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
-                      <button onClick={() => { setEditUser(u); setEditData({ nome: u.nome || '', funcao: u.funcao || '', data_nascimento: u.data_nascimento || '' }) }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 13, padding: 4 }} title="Editar usuário">✏️</button>
-                      </div>
+                    </td>
+                    <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                      {m.auth_user_id !== user?.id && (
+                        <button onClick={() => handleRemover(m.id)} disabled={salvando}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 13, padding: 4 }} title="Remover membro">✕</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -224,19 +214,19 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {clientes.map(u => {
-                  const qtd = projetosDoUsuario(u.id).length
-                  const aberto = expandido === u.id
+                {clientes.map(m => {
+                  const qtd = projetosDoMembro(m.auth_user_id).length
+                  const aberto = expandido === m.id
                   return (
-                    <div key={u.id} style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
-                      <div onClick={() => setExpandido(aberto ? null : u.id)}
+                    <div key={m.id} style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div onClick={() => setExpandido(aberto ? null : m.id)}
                         style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'pointer', background: 'var(--surface-2)' }}>
                         <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fef3c7', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-                          {(u.nome || u.email || '?').charAt(0).toUpperCase()}
+                          {(m.nome || m.email || '?').charAt(0).toUpperCase()}
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14 }}>{u.nome || u.email}</div>
-                          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{u.email}</div>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{m.nome || m.email}</div>
+                          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{m.email}</div>
                         </div>
                         <span style={{ fontSize: 12, fontWeight: 600, background: qtd > 0 ? '#dcfce7' : 'var(--surface)', color: qtd > 0 ? '#166534' : 'var(--ink-3)', padding: '3px 10px', borderRadius: 999, border: '1px solid var(--line)' }}>
                           {qtd} projeto{qtd !== 1 ? 's' : ''} liberado{qtd !== 1 ? 's' : ''}
@@ -250,14 +240,14 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                           {projetos.length === 0
                             ? <p style={{ fontSize: 13, color: 'var(--ink-3)' }}>Nenhum projeto cadastrado.</p>
                             : projetos.map(p => {
-                              const ativo = temAcesso(u.id, p.id)
+                              const ativo = temAcesso(m.auth_user_id, p.id)
                               return (
                                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 8, background: ativo ? '#f0fdf4' : 'var(--surface-2)', border: `1px solid ${ativo ? '#bbf7d0' : 'var(--line)'}` }}>
                                   <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: 13, fontWeight: 600 }}>OS {p.os} · {p.nome}</div>
                                     <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.cliente}</div>
                                   </div>
-                                  <button onClick={() => handleAcesso(u.id, p.id, !ativo)} disabled={salvando}
+                                  <button onClick={() => handleAcesso(m.auth_user_id, p.id, !ativo)} disabled={salvando}
                                     style={{ fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 7, cursor: 'pointer', border: 'none', background: ativo ? '#dc2626' : 'var(--brand)', color: '#fff' }}>
                                     {ativo ? 'Revogar' : 'Liberar'}
                                   </button>
@@ -288,23 +278,15 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
             </div>
             {erroForm && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '8px 12px', borderRadius: 8, fontSize: 13, marginBottom: 14 }}>{erroForm}</div>}
             <form onSubmit={handleCriarUsuario}>
-              <CAMPO label="Nome completo *">
-                <input style={INPUT_STYLE} value={form.nome} onChange={campo('nome')} placeholder="Ex: Carlos Silva" required />
+              <CAMPO label="Nome completo">
+                <input style={INPUT_STYLE} value={form.nome} onChange={campo('nome')} placeholder="Ex: Carlos Silva" />
               </CAMPO>
               <CAMPO label="E-mail *">
-                <input style={INPUT_STYLE} type="email" value={form.email} onChange={campo('email')} placeholder="carlos@maconeglia.com" required />
+                <input style={INPUT_STYLE} type="email" value={form.email} onChange={campo('email')} placeholder="carlos@empresa.com" required />
               </CAMPO>
               <CAMPO label="Senha *">
                 <input style={INPUT_STYLE} type="password" value={form.senha} onChange={campo('senha')} placeholder="Mínimo 6 caracteres" required minLength={6} />
               </CAMPO>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <CAMPO label="Função / Cargo">
-                  <input style={INPUT_STYLE} value={form.funcao} onChange={campo('funcao')} placeholder="Ex: Engenheiro" />
-                </CAMPO>
-                <CAMPO label="Data de nascimento">
-                  <input style={INPUT_STYLE} type="date" value={form.data_nascimento} onChange={campo('data_nascimento')} />
-                </CAMPO>
-              </div>
               <CAMPO label="Perfil de acesso *">
                 <select style={INPUT_STYLE} value={form.perfil} onChange={campo('perfil')} required>
                   {PERFIS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
@@ -314,35 +296,6 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
                 <button type="button" className="btn btn-ghost" onClick={() => { setShowForm(false); setErroForm('') }} disabled={salvando}>Cancelar</button>
                 <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
                   {salvando ? 'Criando...' : 'Criar usuário'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal editar usuário */}
-      {editUser && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--surface)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 420, boxShadow: 'var(--shadow-lg)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Editar Usuário</h3>
-              <button onClick={() => setEditUser(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 20 }}>✕</button>
-            </div>
-            <form onSubmit={handleEditarUsuario}>
-              <CAMPO label="Nome completo">
-                <input style={INPUT_STYLE} value={editData.nome} onChange={e => setEditData(d => ({ ...d, nome: e.target.value }))} placeholder="Nome" />
-              </CAMPO>
-              <CAMPO label="Função / Cargo">
-                <input style={INPUT_STYLE} value={editData.funcao} onChange={e => setEditData(d => ({ ...d, funcao: e.target.value }))} placeholder="Ex: Engenheiro" />
-              </CAMPO>
-              <CAMPO label="Data de nascimento">
-                <input style={INPUT_STYLE} type="date" value={editData.data_nascimento} onChange={e => setEditData(d => ({ ...d, data_nascimento: e.target.value }))} />
-              </CAMPO>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setEditUser(null)} disabled={salvando}>Cancelar</button>
-                <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
-                  {salvando ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             </form>
