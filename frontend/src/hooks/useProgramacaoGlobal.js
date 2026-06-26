@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 
-export function useProgramacaoGlobal() {
+export function useProgramacaoGlobal(empresaId) {
   const [alocacoes, setAlocacoes]       = useState([])
   const [projetos, setProjetos]         = useState([])
   const [indisponibilidades, setIndisp] = useState([])
@@ -30,7 +30,7 @@ export function useProgramacaoGlobal() {
       .select('previstos').eq('projeto_id', projeto_id).eq('data_semana', data_semana).maybeSingle()
     await supabase.from('efetivo_semana')
       .upsert(
-        { projeto_id, data_semana, previstos: ef?.previstos ?? 0, mobilizados: mob },
+        { projeto_id, data_semana, previstos: ef?.previstos ?? 0, mobilizados: mob, empresa_id: empresaId },
         { onConflict: 'projeto_id,data_semana' }
       )
   }
@@ -44,7 +44,7 @@ export function useProgramacaoGlobal() {
     } else {
       const { error } = await supabase.from('programacao_semanal')
         .upsert(
-          { funcionario_id, projeto_id, data_semana, dias: d },
+          { funcionario_id, projeto_id, data_semana, dias: d, empresa_id: empresaId },
           { onConflict: 'projeto_id,funcionario_id,data_semana' }
         )
       if (error) throw error
@@ -61,7 +61,7 @@ export function useProgramacaoGlobal() {
     if (!origem?.length) return
 
     const registros = origem.map(({ funcionario_id, projeto_id, dias }) => ({
-      funcionario_id, projeto_id, data_semana: semanaDestino, dias,
+      funcionario_id, projeto_id, data_semana: semanaDestino, dias, empresa_id: empresaId,
     }))
     await supabase.from('programacao_semanal')
       .upsert(registros, { onConflict: 'projeto_id,funcionario_id,data_semana', ignoreDuplicates: true })

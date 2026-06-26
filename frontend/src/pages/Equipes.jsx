@@ -122,7 +122,7 @@ function ModalHabilidades({ habilidades, onCriar, onExcluir, onFechar }) {
 export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeView }) {
   const { funcionarios, loading, usandoMock, criarFuncionario, editarFuncionario, excluirFuncionario } = useFuncionarios(empresaId)
   const { habilidades, criarHabilidade, excluirHabilidade } = useHabilidades(empresaId)
-  const { alocacoes, projetos, indisponibilidades, loading: loadingProg, alocar, copiarSemana, marcarIndisponivel, desmarcarIndisponivel } = useProgramacaoGlobal()
+  const { alocacoes, projetos, indisponibilidades, loading: loadingProg, alocar, copiarSemana, marcarIndisponivel, desmarcarIndisponivel } = useProgramacaoGlobal(empresaId)
 
   const [abaEquipe, setAbaEquipe]       = useState('equipe')
   const [form, setForm]                 = useState(null)
