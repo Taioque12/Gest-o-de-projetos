@@ -80,6 +80,7 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
           criarProjeto={criarProjeto}
           editarProjeto={editarProjeto}
           user={user}
+          empresaId={empresaId}
         />
       </>
     )

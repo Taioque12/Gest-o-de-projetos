@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 
-export function useAnexos(projetoId) {
+export function useAnexos(projetoId, empresaId) {
   const [anexos, setAnexos]   = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -26,6 +26,7 @@ export function useAnexos(projetoId) {
     const { data: { publicUrl } } = supabase.storage.from('anexos').getPublicUrl(path)
     const { error: dbErr } = await supabase.from('anexos').insert({
       projeto_id: projetoId,
+      empresa_id: empresaId,
       nome:       file.name,
       url:        publicUrl,
       tipo:       file.type,

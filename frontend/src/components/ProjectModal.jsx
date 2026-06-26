@@ -26,7 +26,7 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
   const desv = p.real - p.prev
   const curveOpts = projectCurveOpts(p)
   const [aba, setAba] = useState('Visão Geral')
-  const { anexos, loading: loadAnexos, uploadAnexo, excluirAnexo } = useAnexos(p.id)
+  const { anexos, loading: loadAnexos, uploadAnexo, excluirAnexo } = useAnexos(p.id, empresaId)
   const [uploading, setUploading] = useState(false)
   const [erroUpload, setErroUpload] = useState('')
 

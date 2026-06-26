@@ -120,7 +120,7 @@ Próximas 4 semanas — foco e meta de avanço semanal para voltar ao trilho.
 IMPORTANTE: Seja técnico, direto e acionável. Cada ação deve ter responsável, prazo e métrica de sucesso.`
 }
 
-export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto, user }) {
+export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto, user, empresaId }) {
   const [over, setOver]           = useState(false)
   const [resultado, setResultado] = useState(null)
   const [loading, setLoading]     = useState(false)
@@ -176,6 +176,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
         status:        'sucesso',
         processado_em: new Date().toISOString(),
         enviado_por:   user?.email ?? null,
+        empresa_id:    empresaId,
       }).then(() => {}).catch(() => {})
 
       setResultado({ ok: true, tarefas, nome: file.name, projeto })

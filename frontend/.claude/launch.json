@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gestao-projetos-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "C:\\Users\\LeonardoTaioqueMacha\\Documents\\Claude Code\\REV1\\frontend",
+      "port": 5173
+    }
+  ]
+}
