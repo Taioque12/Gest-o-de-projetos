@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Equipes from './pages/Equipes'
 import Acessos from './pages/Acessos'
+import Planos from './pages/Planos'
 import ClienteView from './pages/ClienteView'
 import OnboardingEmpresa from './pages/OnboardingEmpresa'
 
@@ -53,6 +54,19 @@ export default function App() {
         user={user}
         perfil={perfil}
         empresaId={empresaId}
+        onSignOut={signOut}
+        onChangeView={setView}
+      />
+    )
+  }
+
+  if (view === 'planos' && perfil === 'admin') {
+    return (
+      <Planos
+        user={user}
+        perfil={perfil}
+        empresaId={empresaId}
+        empresa={empresa}
         onSignOut={signOut}
         onChangeView={setView}
       />
