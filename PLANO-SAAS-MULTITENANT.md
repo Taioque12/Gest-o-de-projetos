@@ -548,6 +548,51 @@ async function validarLimitePlano(empresaId, recurso) {
 
 ---
 
+## 🛠️ Fase 10: Painel do Operador (Super-Admin)
+
+Painel administrativo **separado do app dos clientes**, para você operar o SaaS.
+Reaproveita a base já pronta: view `uso_por_empresa`, tabela `empresas`
+(com `plano`, `ativo`, limites) e acesso global via `service_role`.
+
+### 10.1 Gestão de clientes
+- Listar todas as empresas (CNPJ, plano, data de cadastro, ativo/inativo)
+- Ver uso vs limite por empresa (consumir `uso_por_empresa`)
+- Ativar / suspender empresa manualmente
+- Alterar plano de um cliente (free → pro → enterprise)
+
+### 10.2 Pagamentos
+- Status de pagamento por cliente (em dia / atrasado / cancelado)
+- Histórico de cobranças
+- Integração com Mercado Pago (webhook ativa/suspende automático)
+
+### 10.3 Status de operação
+- Nº de empresas ativas e MRR (receita recorrente mensal)
+- Empresas perto do limite (oportunidade de upgrade)
+- Saúde do sistema (erros, uploads falhando)
+
+### 10.4 Estrutura técnica a criar
+- Role/flag de **super-admin** (operador) que enxerga todas as empresas
+- Área/rota separada no app, restrita ao super-admin
+- Tabelas novas: `assinaturas`, `pagamentos`
+- Ordem sugerida: validar beta → Mercado Pago + `assinaturas` → painel consumindo tudo
+
+### 💰 Custos de operação (referência)
+Arquitetura multi-tenant compartilhada → custo marginal por cliente ~zero.
+
+| Item | Plano | Custo/mês aprox. |
+|------|-------|------------------|
+| Supabase | Free (validação) | R$ 0 |
+| Supabase | Pro (produção) | ~R$ 135 (US$ 25) |
+| Vercel | Hobby | R$ 0 |
+| Vercel | Pro | ~R$ 108 (US$ 20) |
+| Gemini API | pay-as-you-go | ~R$ 0–30 |
+
+- **Enxuto (free tier):** ~R$ 0/mês
+- **Profissional (Pro):** ~R$ 250/mês fixo, aguenta dezenas a centenas de clientes
+- Custo cresce com: storage de anexos, uso do Gemini, banda
+
+---
+
 ## 📋 Checklist de Implementação
 
 - [ ] Fase 1: Criar tabelas `empresas` e `usuarios_empresa`
@@ -564,6 +609,7 @@ async function validarLimitePlano(empresaId, recurso) {
 - [ ] Fase 7: Criar view de monitoramento
 - [ ] Fase 8: Implementar validação de limites por plano
 - [ ] Fase 9: Deploy
+- [ ] Fase 10: Painel do operador (gestão de clientes, pagamentos, status)
 
 ---
 
