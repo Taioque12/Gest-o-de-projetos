@@ -1,6 +1,6 @@
-# MA CONEGLIAN · Gestão de Projetos
+# MA CONEGLIAN · Gestão de Projetos (SaaS Multi-Tenant)
 
-Sistema integrado de **planejamento, acompanhamento e controle** de projetos de engenharia elétrica industrial.
+Plataforma **SaaS** de **planejamento, acompanhamento e controle** de projetos de engenharia elétrica industrial, com isolamento total de dados por empresa (CNPJ).
 
 **Engenharia Elétrica** · instalações, infraestrutura, SPDA, iluminação, SDAI, automação e comissionamento.
 
@@ -8,96 +8,93 @@ Sistema integrado de **planejamento, acompanhamento e controle** de projetos de 
 
 ## 📋 Status do Projeto
 
+Branch de produção atual: **`principal`** (em uso pelos clientes)
+Branch do SaaS: **`saas-multitenant`** (multi-tenancy + pagamento, em validação beta)
+
+Beta no ar: **https://frontend-beta-navy-63.vercel.app**
+
 | Fase | Status | Descrição |
 |---|---|---|
-| **1 — Dashboard Offline** | ✅ Concluída | HTML + dados fictícios, validação de layout |
-| **2 — Setup Supabase** | 🔄 Em andamento | Você executa SETUP-SUPABASE.md |
-| **3 — Frontend React** | ⏳ Bloqueado | Aguarda conclusão da Fase 2 |
-| **4 — Deploy Vercel** | ⏳ Bloqueado | Após Fase 3 |
-| **5 — Controle de Acessos** | ⏳ Bloqueado | Após Fase 4 |
+| 1 — Estrutura de Dados | ✅ | Tabelas `empresas`, `usuarios_empresa`, `empresa_id` em todas as tabelas |
+| 2 — Row Level Security | ✅ | RLS isolando dados por empresa em todas as tabelas |
+| 3 — Autenticação | ✅ | Login, onboarding de empresa, convite de usuários |
+| 4 — Frontend multi-tenant | ✅ | Hooks com `empresaId`, página de Onboarding |
+| 6 — Testes de isolamento | ✅ | 6/6 isolamento + limites de plano validados via SQL |
+| 7 — Observabilidade | ✅ | View `uso_por_empresa` (uso vs limites) com `security_invoker` |
+| 8 — Limites por plano | ✅ | Triggers no banco (free/pro/enterprise) |
+| 8 — Pagamento (Mercado Pago) | ✅ | Assinatura recorrente (cartão) + PIX avulso, webhook ativa/suspende |
+| 10 — Tela de Planos | ✅ | Checkout cartão/PIX no frontend |
+| 5 — Migração legado | ⏳ | Só na produção |
+| 9 — Deploy produção | ⏳ | Migrações 1→10 + frontend + Edge Functions |
+| 10 — Painel do operador | 📋 | Documentado (gestão de clientes/pagamentos/status) |
 
 ---
 
-## 🚀 Quick Start
+## 🏗️ Arquitetura Multi-Tenant
 
-### Versão Offline (Validação)
-Abra `index.html` com duplo-clique no navegador.
-- ✅ Dashboard completa com 6 projetos fictícios
-- ✅ Curva S semanal por projeto
-- ✅ Filtros por criticidade (🟢 🟡 🔴)
-- ✅ Mapa de alocação de equipes
-- ✅ Exportar PDF
-
-### Setup Online (Fase 2)
-Siga as instruções em **[SETUP-SUPABASE.md](SETUP-SUPABASE.md)** (16 minutos).
-
-1. Criar conta Supabase (gratuita)
-2. Executar schema SQL
-3. Copiar credenciais
-4. Criar usuário admin de teste
+- **Abordagem:** Tenant ID + Row Level Security (RLS) do PostgreSQL
+- **1 banco compartilhado**, isolamento automático por `empresa_id`
+- **Funções helper:** `get_empresa_id()` e `get_meu_perfil()` (resolvem a partir do `auth.uid()`)
+- **Cada tabela** carrega `empresa_id` (ou isola via JOIN com `projetos`/`funcionarios`)
 
 ---
 
-## 📁 Estrutura de Arquivos
+## 💳 Planos e Pagamento
+
+| Plano | Projetos | Funcionários | Habilidades | Preço/mês |
+|---|---|---|---|---|
+| Free | 2 | 5 | 5 | R$ 0 |
+| Pro | 15 | 30 | 20 | R$ 497 |
+| Enterprise | ∞ | ∞ | ∞ | R$ 1.497 |
+
+- Limites **aplicados no banco** via triggers (não burláveis pelo cliente)
+- **Mercado Pago:** cartão = assinatura recorrente (renova sozinho); PIX = cobrança mensal avulsa
+- **Webhook** (`mp-webhook`) ativa/suspende a empresa automaticamente conforme o pagamento
+
+---
+
+## 🛠️ Tech Stack
+
+| Camada | Tecnologia |
+|---|---|
+| Frontend | React 18 + Vite |
+| Backend | Supabase (PostgreSQL + Auth + RLS + Edge Functions) |
+| Pagamento | Mercado Pago (Preapproval + Checkout Preferences) |
+| Hospedagem | Vercel |
+| Parser | JavaScript (lê XML do MS Project) |
+
+---
+
+## 📁 Estrutura
 
 ```
-Gestão de projetos/
+REV1/
+├── README.md                              ← Este arquivo
+├── PLANO-SAAS-MULTITENANT.md              ← Plano detalhado das 10 fases
 │
-├── 📄 README.md                    ← Este arquivo
-├── 📄 ROADMAP.md                   ← Visão das 5 fases
-├── 📄 .gitignore                   ← Configuração Git
+├── migracao-fase1-estrutura.sql           ← Tabelas + empresa_id
+├── migracao-fase2-rls.sql                 ← Row Level Security
+├── migracao-fase3-onboarding.sql          ← Onboarding + convite
+├── migracao-fase7-observabilidade.sql     ← View uso_por_empresa
+├── migracao-fase8-limites-plano.sql       ← Triggers de limite por plano
+├── migracao-fase9-limpeza-rls.sql         ← Correção de vazamentos RLS
+├── migracao-fase9b-remove-usuarios-legado.sql
+├── migracao-fase10-assinaturas-pagamentos.sql ← Tabelas de pagamento
 │
-├── 🌐 index.html                   ← Dashboard offline (atual)
+├── supabase/functions/
+│   ├── admin-create-user/                 ← Convite de usuário (admin)
+│   ├── mp-criar-assinatura/               ← Gera checkout cartão/PIX
+│   └── mp-webhook/                        ← Recebe notificação MP, ativa empresa
 │
-├── 🗄️  Backend
-│   ├── schema-supabase.sql         ← Estrutura do banco (PostgreSQL)
-│   └── SETUP-SUPABASE.md           ← Guia de configuração
-│
-├── 🎨 Frontend (em andamento)
-│   ├── frontend-README.md          ← Setup React
-│   └── frontend/                   ← Pasta React (em breve)
-│       ├── package.json
-│       ├── vite.config.js
-│       ├── .env.local              ← Suas credenciais Supabase
-│       ├── src/
-│       │   ├── App.jsx
-│       │   ├── supabase.js
-│       │   ├── pages/
-│       │   │   ├── Login.jsx
-│       │   │   ├── Dashboard.jsx
-│       │   │   └── UploadXML.jsx
-│       │   └── components/
-│       │       ├── CurvaS.jsx
-│       │       ├── ProjectCard.jsx
-│       │       └── AlocacaoTable.jsx
-│       └── public/index.html
-│
-└── 📊 Backup
-    ├── GitHub (este repo)
-    └── Google Drive (pasta compartilhada)
+└── frontend/
+    └── src/
+        ├── App.jsx
+        ├── supabase.js
+        ├── hooks/                         ← useAuth, useProjetos, useFuncionarios...
+        ├── pages/                         ← Login, Dashboard, Equipes, Acessos,
+        │                                     Planos, Onboarding, ClienteView, UploadXML
+        └── components/
 ```
-
----
-
-## 🎯 Funcionalidades
-
-### Versão Offline (v1)
-- ✅ Dashboard com KPIs (projetos, valor, avanço, desvio)
-- ✅ Curva S do portfólio (média ponderada por valor)
-- ✅ Cards de projeto (nome, cliente, OS, responsável, valor, prazo, data-fim)
-- ✅ Filtros de criticidade (🟢 🟡 🔴)
-- ✅ Modal drill-down (Curva S individual + frentes de serviço)
-- ✅ Mapa de alocação de equipes com sinalização de gargalos
-- ✅ Exportar PDF
-
-### Versão Online (v2 — em breve)
-- 🔄 Login com email/senha (Supabase Auth)
-- 🔄 3 perfis de acesso: admin / equipe / cliente
-- 🔄 Banco de dados real (PostgreSQL + Supabase)
-- 🔄 Upload de exportação XML do MS Project
-- 🔄 Atualizações semanais de avanço físico
-- 🔄 Controle de acesso por projeto (clientes veem seus projetos)
-- 🔄 Hospedagem online (Vercel + Supabase)
 
 ---
 
@@ -105,96 +102,56 @@ Gestão de projetos/
 
 | Perfil | Acesso | Ações |
 |---|---|---|
-| **Admin** | Todos os projetos | Ver, editar, criar usuários, configurar acessos |
-| **Equipe** | Todos os projetos | Ver, atualizar avanço, fazer upload XML |
-| **Cliente** | Apenas seus projetos | Ver status, Curva S e frentes de serviço (leitura) |
+| Admin | Toda a empresa | Ver, editar, criar usuários, gerenciar planos/assinatura |
+| Equipe | Toda a empresa | Ver, atualizar avanço, upload XML |
+| Cliente | Apenas seus projetos | Leitura (status, Curva S, frentes) |
 
 ---
 
-## 📊 Critério de Criticidade
+## 🎯 Funcionalidades
 
-O sistema classifica desvios de avanço físico automaticamente:
+- Dashboard com KPIs (projetos, valor, avanço, desvio) e Curva S do portfólio
+- Cards de projeto com drill-down (Curva S individual, frentes, baselines, anexos)
+- Mapa de alocação de equipes com sinalização de gargalos
+- Upload de XML do MS Project
+- Atualizações semanais de avanço físico
+- Onboarding de empresa + convite de usuários
+- Assinatura e pagamento (cartão recorrente / PIX)
+- Exportar PDF
 
-| Cor | Desvio | Postura | Ação |
-|---|---|---|---|
-| 🟢 Verde | até −5% | Dentro da tolerância | Manter ritmo |
-| 🟡 Amarelo | −5% a −10% | Atenção | Plano de recuperação |
-| 🔴 Vermelho | acima de −10% | Crítico | Ação imediata e escalonamento |
+### Critério de criticidade
 
----
-
-## 📈 Curva S
-
-A Curva S é calculada com base em:
-- **Eixo X:** Tempo (semanal na Fase 2)
-- **Eixo Y:** Avanço físico (0–100%)
-- **Linha tracejada:** Previsto (linha de base)
-- **Linha sólida:** Realizado (execução)
-
-### Dashboard Portfólio
-- Média ponderada por valor de contrato
-- Eixo de calendário mensal
-- Sincroniza com todos os projetos
-
-### Modal do Projeto
-- Duração própria (1,5 a 8 meses)
-- Resolução semanal
-- Atualizado a cada semana
-
----
-
-## 🛠️ Tech Stack
-
-| Camada | Tecnologia | Propósito |
+| Cor | Desvio | Ação |
 |---|---|---|
-| **Frontend (v1)** | HTML 5 + CSS 3 + JavaScript Vanilla | Dashboard offline |
-| **Frontend (v2)** | React 18 + Vite | App reativa com estado |
-| **Backend** | Supabase (PostgreSQL + Auth) | Banco de dados + autenticação |
-| **Hospedagem** | Vercel | Deploy gratuito + CDN |
-| **Parser** | JavaScript / Node.js | Lê XML do MS Project |
+| 🟢 Verde | até −5% | Manter ritmo |
+| 🟡 Amarelo | −5% a −10% | Plano de recuperação |
+| 🔴 Vermelho | acima de −10% | Ação imediata e escalonamento |
 
 ---
 
-## 📝 Próximos Passos
+## 🚀 Setup local (frontend)
 
-### Você (Fase 2 — HOJE)
-1. Abra [SETUP-SUPABASE.md](SETUP-SUPABASE.md)
-2. Siga os 5 passos (16 min total)
-3. Me mande screenshot/confirmação quando terminar
+```bash
+cd frontend
+npm install
+# crie frontend/.env.local com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
+npm run dev
+```
 
-### Eu (Fase 3 — próxima sessão)
-1. Gero todo o frontend React
-2. Crio instrução de deploy Vercel
-3. Você faz `vercel` e pronto
-
-### Final (Fase 4+)
-- ✨ Sistema online com login
-- ✨ Múltiplos usuários
-- ✨ Upload de XML do MS Project
-- ✨ Banco de dados real
-- ✨ Acesso controlado por perfil
-
----
-
-## 📞 Suporte
-
-- **Dúvidas sobre Supabase?** → Veja [SETUP-SUPABASE.md](SETUP-SUPABASE.md)
-- **Dúvidas sobre React?** → Veja [frontend-README.md](frontend-README.md)
-- **Visão geral?** → Veja [ROADMAP.md](ROADMAP.md)
-- **Dashboard offline** → Abra `index.html`
+Deploy: `vercel --prod` (a partir de `frontend/`).
 
 ---
 
 ## 📅 Histórico
 
-| Data | Evento | Versão |
-|---|---|---|
-| 21/06/2026 | Dashboard offline criada (dados fictícios) | 1.0 |
-| 21/06/2026 | Schema Supabase + documentação | 1.0 |
-| (em breve) | Frontend React + Deploy Vercel | 2.0 |
+| Data | Evento |
+|---|---|
+| 21/06/2026 | Dashboard offline + schema Supabase |
+| 22/06/2026 | Frontend React + deploy Vercel (produção) |
+| 26/06/2026 | SaaS multi-tenant: fases 1–8 (RLS, onboarding, limites) |
+| 29/06/2026 | Correções de RLS, limpeza, pagamento Mercado Pago, tela de Planos |
 
 ---
 
 **MA CONEGLIAN · Gestão de Projetos de Engenharia Elétrica**
-
 Desenvolvido com ❤️ por Claude Code + usuário
