@@ -41,6 +41,7 @@ Deno.serve(async (req: Request) => {
     if (ue?.perfil !== 'admin') return json({ error: 'Sem permissão' }, 403)
 
     const empresaId: string = ue.empresa_id
+    const payerEmail: string = user.email ?? ''
     const { plano, metodo } = await req.json()
 
     if (!PLANOS[plano]) return json({ error: 'Plano inválido' }, 400)
@@ -58,9 +59,9 @@ Deno.serve(async (req: Request) => {
     let checkoutUrl: string
 
     if (metodo === 'cartao') {
-      checkoutUrl = await criarAssinaturaCartao(empresaId, plano, mpToken, admin)
+      checkoutUrl = await criarAssinaturaCartao(empresaId, plano, payerEmail, mpToken, admin)
     } else {
-      checkoutUrl = await criarCobrancaPix(empresaId, plano, mpToken, admin)
+      checkoutUrl = await criarCobrancaPix(empresaId, plano, payerEmail, mpToken, admin)
     }
 
     return json({ url: checkoutUrl }, 200)
@@ -74,7 +75,7 @@ Deno.serve(async (req: Request) => {
 // Cria assinatura recorrente no cartão (Preapproval do MP)
 // ─────────────────────────────────────────────────────────────
 async function criarAssinaturaCartao(
-  empresaId: string, plano: string, mpToken: string,
+  empresaId: string, plano: string, payerEmail: string, mpToken: string,
   admin: ReturnType<typeof createClient>
 ): Promise<string> {
   const info = PLANOS[plano]
@@ -82,6 +83,7 @@ async function criarAssinaturaCartao(
   const body = {
     reason:             info.nome,
     external_reference: empresaId,
+    payer_email:        payerEmail,
     auto_recurring: {
       frequency:          1,
       frequency_type:     'months',
@@ -119,7 +121,7 @@ async function criarAssinaturaCartao(
 // Cria cobrança avulsa PIX (Preference do MP)
 // ─────────────────────────────────────────────────────────────
 async function criarCobrancaPix(
-  empresaId: string, plano: string, mpToken: string,
+  empresaId: string, plano: string, payerEmail: string, mpToken: string,
   admin: ReturnType<typeof createClient>
 ): Promise<string> {
   const info = PLANOS[plano]
@@ -131,6 +133,7 @@ async function criarCobrancaPix(
       unit_price: info.valor,
       currency_id: 'BRL',
     }],
+    payer: { email: payerEmail },
     payment_methods: {
       excluded_payment_types: [
         { id: 'credit_card' }, { id: 'debit_card' },
