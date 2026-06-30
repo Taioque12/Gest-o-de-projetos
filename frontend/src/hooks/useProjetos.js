@@ -86,6 +86,8 @@ export function useProjetos(perfil, userId, userEmail) {
         valor_os:         projetoData.valor_os,
         equipes:          projetoData.equipes,
         acao_recomendada: projetoData.acao_recomendada,
+        ultima_analise_ia: projetoData.ultima_analise_ia ?? null,
+        analise_ia_em:     projetoData.ultima_analise_ia ? new Date().toISOString() : null,
       })
       .select()
       .single()
@@ -110,21 +112,27 @@ export function useProjetos(perfil, userId, userEmail) {
 
   async function editarProjeto(id, dados, origem = 'manual') {
     const { prev, real, ...projetoData } = dados
+    const update = {
+      nome:             projetoData.nome,
+      cliente:          projetoData.cliente,
+      escopo:           projetoData.escopo,
+      responsavel:      projetoData.responsavel,
+      data_inicio:      projetoData.data_inicio,
+      data_fim:         projetoData.data_fim,
+      prazo_meses:      projetoData.prazo_meses,
+      valor_os:         projetoData.valor_os,
+      equipes:          projetoData.equipes,
+      acao_recomendada: projetoData.acao_recomendada,
+      atualizado_em:    new Date().toISOString(),
+    }
+    // Só sobrescreve a análise IA cacheada quando o chamador explicitamente envia uma nova
+    if (projetoData.ultima_analise_ia !== undefined) {
+      update.ultima_analise_ia = projetoData.ultima_analise_ia
+      update.analise_ia_em     = projetoData.ultima_analise_ia ? new Date().toISOString() : null
+    }
     const { error } = await supabase
       .from('projetos')
-      .update({
-        nome:             projetoData.nome,
-        cliente:          projetoData.cliente,
-        escopo:           projetoData.escopo,
-        responsavel:      projetoData.responsavel,
-        data_inicio:      projetoData.data_inicio,
-        data_fim:         projetoData.data_fim,
-        prazo_meses:      projetoData.prazo_meses,
-        valor_os:         projetoData.valor_os,
-        equipes:          projetoData.equipes,
-        acao_recomendada: projetoData.acao_recomendada,
-        atualizado_em:    new Date().toISOString(),
-      })
+      .update(update)
       .eq('id', id)
     if (error) throw error
 

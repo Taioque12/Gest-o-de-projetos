@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
 import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
 import Header from '../components/Header'
@@ -8,11 +8,12 @@ import ProjectCard from '../components/ProjectCard'
 import ProjectModal from '../components/ProjectModal'
 import ProjetoForm from '../components/ProjetoForm'
 import AlocacaoTable from '../components/AlocacaoTable'
-import UploadXML from './UploadXML'
 import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
-import Relatorio from '../components/Relatorio'
 import Toast from '../components/Toast'
 import NotificacoesPrazo from '../components/NotificacoesPrazo'
+
+const UploadXML = lazy(() => import('./UploadXML'))
+const Relatorio = lazy(() => import('../components/Relatorio'))
 
 export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, user?.email)
@@ -66,21 +67,27 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   }
 
   if (showRelatorio) {
-    return <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
+    return (
+      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+        <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
+      </Suspense>
+    )
   }
 
   if (showUpload) {
     return (
       <>
         <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
-        <UploadXML
-          onBack={() => { setShowUpload(false); refetch() }}
-          onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
-          projetos={projetos}
-          criarProjeto={criarProjeto}
-          editarProjeto={editarProjeto}
-          user={user}
-        />
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <UploadXML
+            onBack={() => { setShowUpload(false); refetch() }}
+            onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
+            projetos={projetos}
+            criarProjeto={criarProjeto}
+            editarProjeto={editarProjeto}
+            user={user}
+          />
+        </Suspense>
       </>
     )
   }

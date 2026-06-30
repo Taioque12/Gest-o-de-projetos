@@ -238,7 +238,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   async function handleCriarProjeto(dados) {
     setSalvando(true)
     try {
-      await criarProjeto(dados)
+      await criarProjeto({ ...dados, ultima_analise_ia: analise || null })
       if (onCriado) onCriado(`Projeto "${dados.nome}" importado do XML e adicionado ao dashboard!`)
     } catch (err) {
       alert('Erro ao criar projeto: ' + err.message)
@@ -260,6 +260,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
         prazo_meses: proj.prazo ? parseFloat(proj.prazo) : null,
         valor_os: proj.valor || null, equipes: proj.equipes ?? [],
         acao_recomendada: proj.acao ?? '', prev, real: prev,
+        ultima_analise_ia: analise || undefined,
       }, 'xml')
       setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%.`)
       setAcao(null)
