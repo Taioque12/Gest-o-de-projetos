@@ -13,6 +13,33 @@ const GEMINI_KEY   = Deno.env.get('GEMINI_API_KEY') ?? ''
 const GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash'
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
+// Rate limit: no máx 3 chamadas por janela de 60s por usuário (1 análise
+// completa = 2 chamadas — diagnóstico + plano de ação — então 3 dá folga
+// pra 1 análise + 1 reanálise rápida, mas bloqueia clique em loop).
+const JANELA_MS    = 60_000
+const MAX_CHAMADAS = 3
+
+async function checarRateLimit(admin: ReturnType<typeof createClient>, userId: string) {
+  const { data: row } = await admin
+    .from('rate_limit_analise_ia')
+    .select('janela_inicio, chamadas')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  const agora = Date.now()
+  if (!row || agora - new Date(row.janela_inicio).getTime() > JANELA_MS) {
+    await admin.from('rate_limit_analise_ia')
+      .upsert({ user_id: userId, janela_inicio: new Date().toISOString(), chamadas: 1 })
+    return true
+  }
+  if (row.chamadas >= MAX_CHAMADAS) return false
+
+  await admin.from('rate_limit_analise_ia')
+    .update({ chamadas: row.chamadas + 1 })
+    .eq('user_id', userId)
+  return true
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -26,6 +53,14 @@ Deno.serve(async (req: Request) => {
     if (authErr || !user) return json({ error: 'Não autenticado' }, 401)
 
     if (!GEMINI_KEY) return json({ error: 'GEMINI_API_KEY não configurada no servidor (secrets da função).' }, 500)
+
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    const liberado = await checarRateLimit(admin, user.id)
+    if (!liberado) return json({ error: 'Muitas análises em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
 
     const { prompt, maxTokens } = await req.json()
     if (!prompt || typeof prompt !== 'string') return json({ error: 'prompt é obrigatório' }, 400)

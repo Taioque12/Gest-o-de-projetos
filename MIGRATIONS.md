@@ -24,6 +24,7 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `migracao-fase10-assinaturas-pagamentos.sql` | Tabelas `assinaturas`/`pagamentos` (Mercado Pago) | ✅ |
 | `migracao-fase11-niveis-acesso.sql` | `equipe` restrito aos projetos onde está alocado | ✅ |
 | `migracao-cache-analise-ia.sql` | `ultima_analise_ia`/`analise_ia_em` em `projetos` | ✅ (30/06/2026) |
+| `migracao-rate-limit-ia.sql` | Tabela `rate_limit_analise_ia` (rate limit do Gemini) | ✅ (30/06/2026) |
 
 > O branch `main` (produção atual) tem seu próprio schema e checklist — ver
 > `MIGRATIONS.md` daquele branch. Os dois schemas **não são intercambiáveis**
@@ -49,4 +50,6 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) |
 
 `analisar-ia` precisa do secret `GEMINI_API_KEY` e foi deployada com
-`--no-verify-jwt` (autenticação validada manualmente dentro da função).
+`--no-verify-jwt` (autenticação validada manualmente dentro da função). Também
+usa `SUPABASE_SERVICE_ROLE_KEY` pra gravar rate limit (máx. 3 chamadas/60s por
+usuário) na tabela `rate_limit_analise_ia`.
