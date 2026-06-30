@@ -146,6 +146,14 @@ npm run dev
 
 Deploy: `vercel --prod` (a partir de `frontend/`) — **manual**, sem auto-deploy do GitHub nesse branch/projeto.
 
+### Testes
+
+```bash
+npm test
+```
+
+Cobertura ainda enxuta — só `utils/helpers.js` (classificação de criticidade, formatação, priorização de tarefas do import XML/.mpp).
+
 ### Edge Function `analisar-ia`
 
 ```bash

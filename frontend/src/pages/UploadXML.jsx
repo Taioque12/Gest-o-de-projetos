@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
 import Toast from '../components/Toast'
 import { renderMarkdownLite } from '../utils/markdownLite'
+import { classificarTarefas, priorizarTarefas } from '../utils/helpers'
 
 const MPP_API_URL  = import.meta.env.VITE_MPP_API_URL ?? ''
 
@@ -25,12 +26,8 @@ function buildDados(projeto, tarefas) {
   const desvioTemporal = avancoPrevistoProporcional !== null
     ? (projeto.prev - avancoPrevistoProporcional).toFixed(1)
     : null
-  const naoIniciadas = tarefas.filter(t => t.previsto === 0)
-  const emAndamento  = tarefas.filter(t => t.previsto > 0 && t.previsto < 100 && !(t.fim && t.fim < hoje))
-  const concluidas   = tarefas.filter(t => t.previsto === 100)
-  const atrasadas    = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
-  const ordenadas    = [...atrasadas, ...emAndamento, ...naoIniciadas, ...concluidas]
-  const linhasTarefas = ordenadas.slice(0, MAX_TAREFAS).map(t => {
+  const { naoIniciadas, emAndamento, concluidas, atrasadas } = classificarTarefas(tarefas, hoje)
+  const linhasTarefas = priorizarTarefas(tarefas, hoje, MAX_TAREFAS).map(t => {
     const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠' : t.previsto > 0 ? '▶' : '○'
     return `${status} ${t.nome}: ${t.previsto}% ${t.inicio}→${t.fim}`
   }).join('\n')
