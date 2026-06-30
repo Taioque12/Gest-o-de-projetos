@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ClienteView from './pages/ClienteView'
 import OnboardingEmpresa from './pages/OnboardingEmpresa'
+import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
 const Equipes = lazy(() => import('./pages/Equipes'))
 const Acessos = lazy(() => import('./pages/Acessos'))
@@ -27,15 +28,17 @@ export default function App() {
 
   if (view === 'equipes') {
     return (
-      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-        <Equipes
-          user={user}
-          perfil={perfil}
-          empresaId={empresaId}
-          onSignOut={signOut}
-          onChangeView={setView}
-        />
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Equipes
+            user={user}
+            perfil={perfil}
+            empresaId={empresaId}
+            onSignOut={signOut}
+            onChangeView={setView}
+          />
+        </Suspense>
+      </ChunkErrorBoundary>
     )
   }
 
@@ -53,30 +56,34 @@ export default function App() {
 
   if (view === 'acessos' && perfil === 'admin') {
     return (
-      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-        <Acessos
-          user={user}
-          perfil={perfil}
-          empresaId={empresaId}
-          onSignOut={signOut}
-          onChangeView={setView}
-        />
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Acessos
+            user={user}
+            perfil={perfil}
+            empresaId={empresaId}
+            onSignOut={signOut}
+            onChangeView={setView}
+          />
+        </Suspense>
+      </ChunkErrorBoundary>
     )
   }
 
   if (view === 'planos' && perfil === 'admin') {
     return (
-      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-        <Planos
-          user={user}
-          perfil={perfil}
-          empresaId={empresaId}
-          empresa={empresa}
-          onSignOut={signOut}
-          onChangeView={setView}
-        />
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Planos
+            user={user}
+            perfil={perfil}
+            empresaId={empresaId}
+            empresa={empresa}
+            onSignOut={signOut}
+            onChangeView={setView}
+          />
+        </Suspense>
+      </ChunkErrorBoundary>
     )
   }
 
