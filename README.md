@@ -175,16 +175,26 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 | 29/06/2026 | Correções de RLS, limpeza, pagamento Mercado Pago, tela de Planos |
 | 30/06/2026 | Import XML p/ 150+ tarefas, Curva S adapta tema claro/escuro, RLS restringe equipe por projeto alocado (fase 11) |
 | 30/06/2026 | Import .mpp direto, code-split, cache de análise IA, PDF baixável, limpeza de qualidade (toasts, markdown compartilhado), chave Gemini movida pra Edge Function |
+| 30/06/2026 | Rate limit na análise IA (3/60s), Error Boundary nos chunks lazy, canal realtime com nome único, testes automatizados (Vitest) pra helpers.js |
 
 ---
 
-## ▶️ Próximos passos
+## ☑️ Pendências (testar / implementar)
 
-1. **Teste de pagamento real no sandbox MP** — criar conta de teste compradora no painel Mercado Pago, pagar PIX/cartão de teste, confirmar que `mp-webhook` ativa a empresa sozinha.
-2. **`uploads_xml` sem `projeto_id`** — pendência conhecida (fase 11 não cobriu); exigiria mudar `UploadXML.jsx` pra gravar o projeto no momento do upload.
-3. **Fase 5 — Migração de dados legados** (só relevante na produção, não no DEV).
-4. **Fase 9 — Deploy produção**: aplicar migrações 1→11 no projeto `uaooutzbxkkcyfuwijbi`, subir frontend e Edge Functions, trocar token MP de TEST para produção.
-5. **Fase 10 — Painel do operador (super-admin)**: gestão de clientes/pagamentos/status entre empresas — ainda só documentado, não implementado.
+### Testar
+- [ ] **Pagamento real no sandbox MP** — criar conta de teste compradora no painel Mercado Pago, pagar PIX/cartão de teste, confirmar que `mp-webhook` ativa a empresa sozinha. (Ainda não testado de ponta a ponta.)
+- [ ] **Fluxo completo pós-mudanças de 30/06** no beta: import `.mpp`, análise IA com rate limit, restrição de `equipe` por projeto alocado (fase 11), criar usuário em Acessos.
+- [ ] **Isolamento RLS com 2+ empresas reais** (não só via `SET LOCAL ROLE` em SQL) — testar com 2 contas de usuário de verdade logadas simultaneamente.
+
+### Implementar — Fases do plano
+- [ ] **Fase 5 — Migração de dados legados** (só relevante quando for pra produção, não se aplica ao DEV).
+- [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions, trocar token MP de TEST para produção.
+- [ ] **Fase 10 — Painel do operador (super-admin)**: gestão de clientes/pagamentos/status entre empresas — ainda só documentado em `PLANO-SAAS-MULTITENANT.md`, não implementado.
+
+### Dívida técnica conhecida
+- [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar `UploadXML.jsx` pra gravar o projeto no momento do upload.
+- [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks multi-tenant (`useProjetos`, `useUsuarios`, lógica de `empresa_id`) não têm teste nenhum — seriam os de maior risco se quebrarem.
+- [ ] **Deploy do beta é manual** (`vercel --prod`) — sem auto-deploy do GitHub. Fácil esquecer de redeployar depois de um push (já aconteceu nessa sessão).
 
 ---
 
