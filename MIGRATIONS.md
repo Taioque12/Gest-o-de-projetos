@@ -16,6 +16,8 @@ arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 | `migracao-programacao-semanal.sql` | `funcionarios` + `programacao_semanal` | ✅ |
 | `migracao-cache-analise-ia.sql` | `ultima_analise_ia`/`analise_ia_em` em `projetos` | ✅ (30/06/2026) |
 | `migracao-rate-limit-ia.sql` | Tabela `rate_limit_analise_ia` (rate limit do Gemini) | ⏳ pendente — rodar manual no painel |
+| `migracao-rate-limit-acoes.sql` | Tabela `rate_limit_acoes` (rate limit genérico, usado por `admin-create-user`) | ⏳ pendente — rodar manual no painel |
+| `migracao-buckets-storage.sql` | `file_size_limit` nos buckets `anexos`/`funcionarios` | ⏳ pendente — rodar manual no painel |
 
 > O branch `saas-multitenant` tem seu próprio conjunto de migrations
 > (`migracao-fase1` a `migracao-fase11` + `migracao-cache-analise-ia.sql`),
@@ -34,7 +36,7 @@ arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 
 | Função | O que faz | `main` (prod) | `saas-multitenant` (DEV) |
 |---|---|---|---|
-| `admin-create-user` | Convite de usuário pelo admin | ✅ | ✅ |
+| `admin-create-user` | Convite de usuário pelo admin (rate limit 5/60s) | ✅ (30/06/2026) | ✅ (30/06/2026) |
 | `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) | ✅ (30/06/2026) |
 
 `analisar-ia` precisa do secret `GEMINI_API_KEY` configurado e foi deployada com
@@ -50,3 +52,19 @@ em toda Edge Function) pra gravar o rate limit na tabela `rate_limit_analise_ia`
 > Deployei `admin-create-user` (nome correto) e corrigi a chamada no frontend.
 > `admin-create-use` (typo) ainda existe em prod, não removida ainda — pode ser
 > apagada com segurança quando sobrar tempo.
+
+## Endurecimento de segurança (30/06/2026)
+
+- **`useAnexos.js`**: limite de 20MB no upload de anexo (client-side) — sem isso
+  qualquer usuário podia subir arquivo de qualquer tamanho.
+- **Buckets Storage**: `file_size_limit` real no banco (`migracao-buckets-storage.sql`,
+  pendente em prod) — defesa de verdade, já que validação client-side é burlável.
+- **`backend-mpp`**: limite de 30MB por arquivo + rate-limit de 10 req/min por IP
+  (em memória, simples) — protege o serviço gratuito do Render de abuso, já que
+  `VITE_MPP_API_URL` fica exposta no bundle JS e qualquer um pode chamar `/parse`
+  direto sem passar pelo app.
+- **`admin-create-user`**: rate limit de 5 chamadas/60s por usuário (tabela
+  `rate_limit_acoes`, genérica) — evita spam de criação de contas.
+- **Fallback de `FRONTEND_URL`/`ALLOWED_ORIGINS`**: agora loga warning quando a
+  env var não está configurada e cai no fallback hardcoded, pra facilitar
+  detectar nos logs se a configuração sumir.

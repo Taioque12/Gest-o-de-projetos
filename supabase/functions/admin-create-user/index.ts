@@ -5,6 +5,31 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Rate limit genérico (tabela rate_limit_acoes): no máx N chamadas por
+// janela de tempo por usuário+ação — evita spam de criação de usuários.
+async function checarRateLimit(admin: ReturnType<typeof createClient>, userId: string, acao: string, janelaMs: number, maxChamadas: number) {
+  const { data: row } = await admin
+    .from('rate_limit_acoes')
+    .select('janela_inicio, chamadas')
+    .eq('user_id', userId)
+    .eq('acao', acao)
+    .maybeSingle()
+
+  const agora = Date.now()
+  if (!row || agora - new Date(row.janela_inicio).getTime() > janelaMs) {
+    await admin.from('rate_limit_acoes')
+      .upsert({ user_id: userId, acao, janela_inicio: new Date().toISOString(), chamadas: 1 })
+    return true
+  }
+  if (row.chamadas >= maxChamadas) return false
+
+  await admin.from('rate_limit_acoes')
+    .update({ chamadas: row.chamadas + 1 })
+    .eq('user_id', userId)
+    .eq('acao', acao)
+  return true
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -30,6 +55,9 @@ Deno.serve(async (req: Request) => {
 
     const { email, senha, nome, perfil, funcao, data_nascimento } = await req.json()
     if (!email || !senha) return json({ error: 'E-mail e senha são obrigatórios' }, 400)
+
+    const liberado = await checarRateLimit(admin, user.id, 'admin-create-user', 60_000, 5)
+    if (!liberado) return json({ error: 'Muitos convites em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
 
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
