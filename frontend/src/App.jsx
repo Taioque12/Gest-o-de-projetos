@@ -4,6 +4,7 @@ import { supabaseConfigurado } from './supabase'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ClienteView from './pages/ClienteView'
+import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
 const Equipes = lazy(() => import('./pages/Equipes'))
 const Acessos = lazy(() => import('./pages/Acessos'))
@@ -20,14 +21,16 @@ export default function App() {
 
   if (view === 'equipes') {
     return (
-      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-        <Equipes
-          user={user}
-          perfil={perfil}
-          onSignOut={signOut}
-          onChangeView={setView}
-        />
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Equipes
+            user={user}
+            perfil={perfil}
+            onSignOut={signOut}
+            onChangeView={setView}
+          />
+        </Suspense>
+      </ChunkErrorBoundary>
     )
   }
 
@@ -44,14 +47,16 @@ export default function App() {
 
   if (view === 'acessos' && perfil === 'admin') {
     return (
-      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-        <Acessos
-          user={user}
-          perfil={perfil}
-          onSignOut={signOut}
-          onChangeView={setView}
-        />
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Acessos
+            user={user}
+            perfil={perfil}
+            onSignOut={signOut}
+            onChangeView={setView}
+          />
+        </Suspense>
+      </ChunkErrorBoundary>
     )
   }
 

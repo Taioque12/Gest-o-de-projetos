@@ -11,6 +11,7 @@ import AlocacaoTable from '../components/AlocacaoTable'
 import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
 import Toast from '../components/Toast'
 import NotificacoesPrazo from '../components/NotificacoesPrazo'
+import ChunkErrorBoundary from '../components/ChunkErrorBoundary'
 
 const UploadXML = lazy(() => import('./UploadXML'))
 const Relatorio = lazy(() => import('../components/Relatorio'))
@@ -69,9 +70,11 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
 
   if (showRelatorio) {
     return (
-      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-        <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
+        </Suspense>
+      </ChunkErrorBoundary>
     )
   }
 
@@ -79,16 +82,18 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
     return (
       <>
         <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
-        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-          <UploadXML
-            onBack={() => { setShowUpload(false); refetch() }}
-            onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
-            projetos={projetos}
-            criarProjeto={criarProjeto}
-            editarProjeto={editarProjeto}
-            user={user}
-          />
-        </Suspense>
+        <ChunkErrorBoundary>
+          <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+            <UploadXML
+              onBack={() => { setShowUpload(false); refetch() }}
+              onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
+              projetos={projetos}
+              criarProjeto={criarProjeto}
+              editarProjeto={editarProjeto}
+              user={user}
+            />
+          </Suspense>
+        </ChunkErrorBoundary>
       </>
     )
   }
