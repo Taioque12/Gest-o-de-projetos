@@ -25,9 +25,9 @@ Beta no ar: **https://frontend-beta-navy-63.vercel.app**
 | 8 — Pagamento (Mercado Pago) | ✅ | Assinatura recorrente (cartão) + PIX avulso, webhook ativa/suspende |
 | 10 — Tela de Planos | ✅ | Checkout cartão/PIX no frontend |
 | 11 — Níveis de acesso refinados | ✅ | `equipe` restrito aos projetos onde está alocado (RLS) |
+| 10 — Painel do operador (MVP) | ✅ | Gestão de clientes (ativar/suspender, trocar plano) + pagamentos recentes — ver seção abaixo |
 | 5 — Migração legado | ⏳ | Só na produção |
 | 9 — Deploy produção | ⏳ | Migrações 1→11 + frontend + Edge Functions |
-| 10 — Painel do operador | 📋 | Documentado (gestão de clientes/pagamentos/status) |
 
 ---
 
@@ -113,6 +113,31 @@ REV1/
 
 ---
 
+## 🛂 Painel do Operador (super-admin)
+
+Painel separado, só visível pra quem tem `usuarios_empresa.super_admin = true` (flag direta na sua conta — sem tabela separada, sem RLS própria; acesso cross-empresa acontece só dentro da Edge Function `operador-painel`, via `service_role`).
+
+**Acesso:** tab "Operador" aparece no menu quando logado com a conta marcada. Rota `view === 'operador'`.
+
+**O que dá pra fazer:**
+- Ver todas as empresas cadastradas (CNPJ, plano, data de cadastro, uso vs limite)
+- Contagem de empresas ativas / total, e quebra por plano (free/pro/enterprise)
+- Ativar / suspender empresa manualmente
+- Trocar plano de uma empresa direto na lista (dropdown inline)
+- Histórico dos 50 pagamentos mais recentes (todas as empresas), com status, método e valor
+
+**Não incluído no MVP** (do plano original da Fase 10, ficou pra depois se precisar):
+- MRR (receita recorrente mensal) calculada automaticamente
+- Painel de "saúde do sistema" (erros, uploads falhando)
+- Edição de CNPJ/dados cadastrais da empresa pelo operador
+
+Marcar outro usuário como operador:
+```sql
+UPDATE usuarios_empresa SET super_admin = true WHERE auth_user_id = (SELECT id FROM auth.users WHERE email = 'email@exemplo.com');
+```
+
+---
+
 ## 🎯 Funcionalidades
 
 - Dashboard com KPIs (projetos, valor, avanço, desvio) e Curva S do portfólio
@@ -176,6 +201,7 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 | 30/06/2026 | Import XML p/ 150+ tarefas, Curva S adapta tema claro/escuro, RLS restringe equipe por projeto alocado (fase 11) |
 | 30/06/2026 | Import .mpp direto, code-split, cache de análise IA, PDF baixável, limpeza de qualidade (toasts, markdown compartilhado), chave Gemini movida pra Edge Function |
 | 30/06/2026 | Rate limit na análise IA (3/60s), Error Boundary nos chunks lazy, canal realtime com nome único, testes automatizados (Vitest) pra helpers.js |
+| 30/06/2026 | Fase 10 (MVP): Painel do Operador — gestão de clientes (ativar/suspender, trocar plano) e pagamentos recentes, flag super_admin |
 
 ---
 
@@ -188,8 +214,9 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 
 ### Implementar — Fases do plano
 - [ ] **Fase 5 — Migração de dados legados** (só relevante quando for pra produção, não se aplica ao DEV).
-- [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions, trocar token MP de TEST para produção.
-- [ ] **Fase 10 — Painel do operador (super-admin)**: gestão de clientes/pagamentos/status entre empresas — ainda só documentado em `PLANO-SAAS-MULTITENANT.md`, não implementado.
+- [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` + `migracao-fase10b-painel-operador.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions (incluindo `operador-painel`), trocar token MP de TEST para produção.
+- [ ] **Painel do operador — MRR e saúde do sistema** (parte da Fase 10 que ficou de fora do MVP — ver seção "Painel do Operador" acima).
+- [ ] **Testar painel do operador end-to-end**: ativar/suspender empresa, trocar plano, conferir que reflete no app da empresa (limites, bloqueio de login se suspensa).
 
 ### Dívida técnica conhecida
 - [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar `UploadXML.jsx` pra gravar o projeto no momento do upload.

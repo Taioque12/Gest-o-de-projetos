@@ -25,6 +25,7 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `migracao-fase11-niveis-acesso.sql` | `equipe` restrito aos projetos onde está alocado | ✅ |
 | `migracao-cache-analise-ia.sql` | `ultima_analise_ia`/`analise_ia_em` em `projetos` | ✅ (30/06/2026) |
 | `migracao-rate-limit-ia.sql` | Tabela `rate_limit_analise_ia` (rate limit do Gemini) | ✅ (30/06/2026) |
+| `migracao-fase10b-painel-operador.sql` | Flag `super_admin` em `usuarios_empresa` | ✅ (30/06/2026) |
 
 > O branch `main` (produção atual) tem seu próprio schema e checklist — ver
 > `MIGRATIONS.md` daquele branch. Os dois schemas **não são intercambiáveis**
@@ -48,8 +49,14 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `mp-criar-assinatura` | Gera checkout cartão/PIX (Mercado Pago) | ✅ |
 | `mp-webhook` | Recebe notificação MP, ativa/suspende empresa | ✅ |
 | `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) |
+| `operador-painel` | Painel super-admin: lista empresas/pagamentos, ativa/suspende, troca plano | ✅ (30/06/2026) |
 
 `analisar-ia` precisa do secret `GEMINI_API_KEY` e foi deployada com
 `--no-verify-jwt` (autenticação validada manualmente dentro da função). Também
 usa `SUPABASE_SERVICE_ROLE_KEY` pra gravar rate limit (máx. 3 chamadas/60s por
 usuário) na tabela `rate_limit_analise_ia`.
+
+`operador-painel` também usa `SUPABASE_SERVICE_ROLE_KEY` (acesso cross-empresa
+controlado): valida que o caller tem `usuarios_empresa.super_admin = true`
+antes de qualquer leitura/escrita. Deployada com `--no-verify-jwt` (mesmo motivo
+de `analisar-ia`).
