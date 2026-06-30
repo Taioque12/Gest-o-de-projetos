@@ -87,6 +87,15 @@ frontend/
 └── vite.config.js
 ```
 
+## ☑️ Pendências (testar / implementar)
+
+- [ ] **Testar fluxo completo após mudanças de 30/06**: import `.mpp`, análise IA (com rate limit), criar usuário em Acessos (bug `admin-create-use` corrigido), PDF.
+- [ ] **Apagar function órfã `admin-create-use`** (typo, sem uso) no painel do Supabase — não quebra nada deixada, mas é lixo.
+- [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar o fluxo de criação em `UploadXML.jsx`.
+- [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
+- [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu 2x nessa sessão).
+- [ ] **`backend-mpp` no Render free tier "dorme"** após ~15min sem uso — primeira chamada de `.mpp` depois disso demora alguns segundos. Sem ação necessária, só avisar usuário se reclamar de lentidão.
+
 ## 🗺 Roadmap — SaaS Multi-Tenant
 
 **Status atual:** `main` segue em testes operacionais (produção atual). O SaaS está em validação beta no branch `saas-multitenant`, com RLS, onboarding, limites por plano, pagamento (Mercado Pago) e níveis de acesso já implementados.
