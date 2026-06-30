@@ -1,5 +1,7 @@
 // Proxy server-side pra Gemini: mantém a API key fora do bundle do frontend.
-// Só usuários autenticados (qualquer perfil) podem chamar.
+// Só usuários autenticados (qualquer perfil) podem chamar. Autenticação
+// verificada manualmente abaixo (deploy com --no-verify-jwt pra evitar
+// rejeição no gateway antes de chegar aqui).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const cors = {
