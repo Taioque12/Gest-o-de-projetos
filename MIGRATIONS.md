@@ -15,6 +15,7 @@ arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 | `migracao-habilidades.sql` | Habilidades dinâmicas por empresa | ✅ |
 | `migracao-programacao-semanal.sql` | `funcionarios` + `programacao_semanal` | ✅ |
 | `migracao-cache-analise-ia.sql` | `ultima_analise_ia`/`analise_ia_em` em `projetos` | ✅ (30/06/2026) |
+| `migracao-rate-limit-ia.sql` | Tabela `rate_limit_analise_ia` (rate limit do Gemini) | ⏳ pendente — rodar manual no painel |
 
 > O branch `saas-multitenant` tem seu próprio conjunto de migrations
 > (`migracao-fase1` a `migracao-fase11` + `migracao-cache-analise-ia.sql`),
@@ -39,6 +40,9 @@ arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 `analisar-ia` precisa do secret `GEMINI_API_KEY` configurado e foi deployada com
 `--no-verify-jwt` (autenticação validada manualmente dentro da função — o
 `verify_jwt` da plataforma rejeitava a chamada no gateway antes do código rodar).
+Também usa `SUPABASE_SERVICE_ROLE_KEY` (secret padrão, já injetado automaticamente
+em toda Edge Function) pra gravar o rate limit na tabela `rate_limit_analise_ia`
+(máx. 3 chamadas/60s por usuário — ver `migracao-rate-limit-ia.sql`).
 
 > **Bug histórico corrigido (30/06/2026):** a function de convite de usuário
 > estava deployada em prod com o slug **`admin-create-use`** (faltava o "r"),
