@@ -86,7 +86,8 @@ REV1/
 ├── supabase/functions/
 │   ├── admin-create-user/                 ← Convite de usuário (admin)
 │   ├── mp-criar-assinatura/               ← Gera checkout cartão/PIX
-│   └── mp-webhook/                        ← Recebe notificação MP, ativa empresa
+│   ├── mp-webhook/                        ← Recebe notificação MP, ativa empresa
+│   └── analisar-ia/                       ← Proxy server-side pro Gemini (chave fora do client)
 │
 └── frontend/
     └── src/
@@ -121,7 +122,8 @@ REV1/
 - Atualizações semanais de avanço físico
 - Onboarding de empresa + convite de usuários
 - Assinatura e pagamento (cartão recorrente / PIX)
-- Exportar PDF
+- Exportar PDF (botão "Baixar PDF" via html2canvas+jsPDF)
+- Análise de IA (Gemini) cacheada por projeto, chamada via Edge Function — chave nunca exposta no client
 
 ### Critério de criticidade
 
@@ -142,7 +144,16 @@ npm install
 npm run dev
 ```
 
-Deploy: `vercel --prod` (a partir de `frontend/`).
+Deploy: `vercel --prod` (a partir de `frontend/`) — **manual**, sem auto-deploy do GitHub nesse branch/projeto.
+
+### Edge Function `analisar-ia`
+
+```bash
+supabase functions deploy analisar-ia --project-ref ndplkjgcogsmxvsyfunn --no-verify-jwt
+supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
+```
+
+`--no-verify-jwt`: a função valida o usuário manualmente via `auth.getUser()`; o `verify_jwt` da plataforma rejeitava a chamada no gateway antes do código rodar (sem log, erro genérico).
 
 ---
 
@@ -155,6 +166,7 @@ Deploy: `vercel --prod` (a partir de `frontend/`).
 | 26/06/2026 | SaaS multi-tenant: fases 1–8 (RLS, onboarding, limites) |
 | 29/06/2026 | Correções de RLS, limpeza, pagamento Mercado Pago, tela de Planos |
 | 30/06/2026 | Import XML p/ 150+ tarefas, Curva S adapta tema claro/escuro, RLS restringe equipe por projeto alocado (fase 11) |
+| 30/06/2026 | Import .mpp direto, code-split, cache de análise IA, PDF baixável, limpeza de qualidade (toasts, markdown compartilhado), chave Gemini movida pra Edge Function |
 
 ---
 

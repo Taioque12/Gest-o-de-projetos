@@ -38,3 +38,15 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 4. Antes de ir pra produção (Fase 9 do `PLANO-SAAS-MULTITENANT.md`), todas as
    linhas desta tabela precisam ser reaplicadas no projeto de produção
    (`uaooutzbxkkcyfuwijbi`), na ordem.
+
+## Edge Functions
+
+| Função | O que faz | DEV |
+|---|---|---|
+| `admin-create-user` | Convite de usuário pelo admin | ✅ |
+| `mp-criar-assinatura` | Gera checkout cartão/PIX (Mercado Pago) | ✅ |
+| `mp-webhook` | Recebe notificação MP, ativa/suspende empresa | ✅ |
+| `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) |
+
+`analisar-ia` precisa do secret `GEMINI_API_KEY` e foi deployada com
+`--no-verify-jwt` (autenticação validada manualmente dentro da função).
