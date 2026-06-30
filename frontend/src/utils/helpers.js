@@ -12,6 +12,23 @@ export const fmtPrazo = n => { const s=Number(n).toLocaleString('pt-BR'); return
 
 export const T = t => t<=0?0:t>=1?1:3*t*t-2*t*t*t
 
+// Classifica tarefas de um cronograma XML/.mpp por status (pra análise IA).
+// Recebe data de "hoje" como string YYYY-MM-DD pra ser determinístico em testes.
+export const classificarTarefas = (tarefas, hoje) => {
+  const naoIniciadas = tarefas.filter(t => t.previsto === 0)
+  const emAndamento  = tarefas.filter(t => t.previsto > 0 && t.previsto < 100 && !(t.fim && t.fim < hoje))
+  const concluidas   = tarefas.filter(t => t.previsto === 100)
+  const atrasadas    = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
+  return { naoIniciadas, emAndamento, concluidas, atrasadas }
+}
+
+// Prioriza tarefas pra caber no limite de tokens do prompt da IA:
+// atrasadas primeiro, depois em andamento, depois não iniciadas, concluídas por último.
+export const priorizarTarefas = (tarefas, hoje, max) => {
+  const { naoIniciadas, emAndamento, concluidas, atrasadas } = classificarTarefas(tarefas, hoje)
+  return [...atrasadas, ...emAndamento, ...naoIniciadas, ...concluidas].slice(0, max)
+}
+
 export const classify = (prev,real) => {
   const g = real - prev
   if (g >= -5)  return { k:'verde',   lbl:'Dentro da tolerância', emo:'🟢' }

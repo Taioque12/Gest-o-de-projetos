@@ -66,6 +66,15 @@ VITE_MPP_API_URL=          # serviço backend-mpp (Render) — leitura de .mpp/.
 
 `VITE_GEMINI_API_KEY` **não é mais usada no frontend** — a chave vive só como secret da Edge Function (acima). Não recriar essa env var no Vercel.
 
+## 🧪 Testes
+
+```bash
+cd frontend
+npm test
+```
+
+Cobertura ainda enxuta — só `utils/helpers.js` (funções puras: classificação de criticidade, formatação, e a priorização de tarefas do import XML/.mpp, que já causou um bug em produção uma vez).
+
 ## 📁 Estrutura do Projeto
 
 ```
