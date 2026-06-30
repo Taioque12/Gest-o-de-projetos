@@ -1,0 +1,56 @@
+// Proxy server-side pra Gemini: mantém a API key fora do bundle do frontend.
+// Só usuários autenticados (qualquer perfil) podem chamar.
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const GEMINI_KEY   = Deno.env.get('GEMINI_API_KEY') ?? ''
+const GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash'
+const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
+
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+
+  try {
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    )
+    const { data: { user }, error: authErr } = await userClient.auth.getUser()
+    if (authErr || !user) return json({ error: 'Não autenticado' }, 401)
+
+    if (!GEMINI_KEY) return json({ error: 'GEMINI_API_KEY não configurada no servidor (secrets da função).' }, 500)
+
+    const { prompt, maxTokens } = await req.json()
+    if (!prompt || typeof prompt !== 'string') return json({ error: 'prompt é obrigatório' }, 400)
+
+    const resp = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens ?? 6000, temperature: 0.2 },
+      }),
+    })
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}))
+      return json({ error: err.error?.message ?? `Erro ${resp.status} ao consultar Gemini` }, 502)
+    }
+    const data = await resp.json()
+    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta.'
+    return json({ texto }, 200)
+  } catch (err) {
+    return json({ error: String(err) }, 500)
+  }
+})
+
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors, 'Content-Type': 'application/json' },
+  })
+}

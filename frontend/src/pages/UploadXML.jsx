@@ -4,10 +4,6 @@ import ProjetoForm from '../components/ProjetoForm'
 import Toast from '../components/Toast'
 import { renderMarkdownLite } from '../utils/markdownLite'
 
-const GEMINI_KEY   = import.meta.env.VITE_GEMINI_API_KEY ?? ''
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL  ?? 'gemini-1.5-pro-latest'
-const GEMINI_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models'
-const GEMINI_URL   = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 const MPP_API_URL  = import.meta.env.VITE_MPP_API_URL ?? ''
 
 const MAX_TAREFAS = 150
@@ -233,28 +229,14 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   }
 
   async function chamarGemini(prompt, maxTokens = 6000) {
-    const resp = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
-      }),
-    })
-    if (!resp.ok) {
-      const err = await resp.json()
-      throw new Error(err.error?.message ?? `Erro ${resp.status}`)
-    }
-    const data = await resp.json()
-    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta.'
+    const { data, error } = await supabase.functions.invoke('analisar-ia', { body: { prompt, maxTokens } })
+    if (error) throw new Error(error.message ?? 'Erro ao consultar IA')
+    if (data?.error) throw new Error(data.error)
+    return data?.texto ?? 'Sem resposta.'
   }
 
   async function analisarComIA() {
     if (!resultado?.ok) return
-    if (!GEMINI_KEY) {
-      setErroIA('Chave da API do Gemini não configurada. Adicione VITE_GEMINI_API_KEY nas variáveis de ambiente do Vercel.')
-      return
-    }
     setAnalisando(true)
     setAnalise('')
     setErroIA('')
