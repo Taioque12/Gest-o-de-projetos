@@ -39,3 +39,10 @@ arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 `analisar-ia` precisa do secret `GEMINI_API_KEY` configurado e foi deployada com
 `--no-verify-jwt` (autenticação validada manualmente dentro da função — o
 `verify_jwt` da plataforma rejeitava a chamada no gateway antes do código rodar).
+
+> **Bug histórico corrigido (30/06/2026):** a function de convite de usuário
+> estava deployada em prod com o slug **`admin-create-use`** (faltava o "r"),
+> e o frontend chamava essa mesma rota errada — então funcionava por coincidência.
+> Deployei `admin-create-user` (nome correto) e corrigi a chamada no frontend.
+> `admin-create-use` (typo) ainda existe em prod, não removida ainda — pode ser
+> apagada com segurança quando sobrar tempo.
