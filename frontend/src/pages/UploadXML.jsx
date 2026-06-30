@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
+import Toast from '../components/Toast'
+import { renderMarkdownLite } from '../utils/markdownLite'
 
 const GEMINI_KEY   = import.meta.env.VITE_GEMINI_API_KEY ?? ''
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL  ?? 'gemini-1.5-pro-latest'
@@ -136,6 +138,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   const [analisando, setAnalisando] = useState(false)
   const [erroIA, setErroIA]       = useState('')
   const [tabelaExpandida, setTabelaExpandida] = useState(false)
+  const [toastErro, setToastErro] = useState('')
   const inputRef = useRef()
 
   function extrairProjeto(doc) {
@@ -277,7 +280,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
       await criarProjeto({ ...dados, ultima_analise_ia: analise || null })
       if (onCriado) onCriado(`Projeto "${dados.nome}" importado do XML e adicionado ao dashboard!`)
     } catch (err) {
-      alert('Erro ao criar projeto: ' + err.message)
+      setToastErro('Erro ao criar projeto: ' + err.message)
       setSalvando(false)
     }
   }
@@ -301,7 +304,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
       setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%.`)
       setAcao(null)
     } catch (err) {
-      alert('Erro ao atualizar: ' + err.message)
+      setToastErro('Erro ao atualizar: ' + err.message)
     }
     setSalvando(false)
   }
@@ -316,28 +319,6 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     const file = e.target.files[0]
     if (file) processarXML(file)
     e.target.value = ''
-  }
-
-  function inline(text) {
-    const parts = text.split(/(\*\*[^*]+\*\*)/g)
-    if (parts.length === 1) return text
-    return parts.map((p, i) =>
-      p.startsWith('**') && p.endsWith('**')
-        ? <strong key={i}>{p.slice(2, -2)}</strong>
-        : p
-    )
-  }
-
-  function renderAnalise(texto) {
-    return texto.split('\n').map((line, i) => {
-      if (line.startsWith('### ')) return <h4 key={i} className="ia-heading">{inline(line.slice(4))}</h4>
-      if (line.startsWith('## '))  return <h3 key={i} className="ia-heading">{inline(line.slice(3))}</h3>
-      if (line.startsWith('- '))   return <li key={i} className="ia-item">{inline(line.slice(2))}</li>
-      if (line.match(/^\d+\. /))   return <li key={i} className="ia-item">{inline(line.replace(/^\d+\. /, ''))}</li>
-      if (line.startsWith('|'))    return null
-      if (line.trim() === '' || line.startsWith('---') || line.startsWith('===')) return <br key={i} />
-      return <p key={i} className="ia-p">{inline(line)}</p>
-    })
   }
 
   if (acao === 'novo' && resultado?.projeto) {
@@ -441,7 +422,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
 
               {analise && !analisando && (
                 <div className="ia-resultado">
-                  {renderAnalise(analise)}
+                  {renderMarkdownLite(analise)}
                 </div>
               )}
 
@@ -500,6 +481,8 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
           </button>
         </div>
       </div>
+
+      {toastErro && <Toast mensagem={toastErro} tipo="erro" onClose={() => setToastErro('')} />}
     </div>
   )
 }

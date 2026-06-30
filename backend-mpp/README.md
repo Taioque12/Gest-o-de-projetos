@@ -51,8 +51,12 @@ Teste: abra http://localhost:8000 (deve responder `{"status":"ok"}`).
    - **Root Directory**: `backend-mpp`
    - **Runtime**: `Docker`
    - **Instance Type**: Free
-4. (Opcional) Variável de ambiente `ALLOWED_ORIGINS` com os domínios do frontend,
-   separados por vírgula. Default já inclui o localhost e a URL da Vercel.
+4. **Recomendado**: configure a variável de ambiente `ALLOWED_ORIGINS` no painel
+   Render (Settings → Environment) com os domínios do frontend separados por
+   vírgula, ex: `https://gest-o-de-projetos-eight.vercel.app,https://frontend-beta-navy-63.vercel.app`.
+   Sem essa variável, o serviço usa um fallback hardcoded em `main.py` — funciona,
+   mas exige editar e fazer redeploy do código toda vez que o domínio da Vercel mudar
+   (já aconteceu antes). Configurando no painel, basta atualizar a env var.
 5. Deploy. A URL final será algo como `https://mpp-reader.onrender.com`.
 
 > O free tier do Render "dorme" após ~15 min sem uso; a primeira chamada depois
