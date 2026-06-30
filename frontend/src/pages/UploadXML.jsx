@@ -28,9 +28,15 @@ function buildDados(projeto, tarefas) {
   const emAndamento   = tarefas.filter(t => t.previsto > 0 && t.previsto < 100)
   const concluidas    = tarefas.filter(t => t.previsto === 100)
   const atrasadas     = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
-  const linhasTarefas = tarefas.slice(0, 60).map(t => {
-    const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠ ATRASADA' : t.previsto > 0 ? '▶' : '○'
-    return `  ${status} ${t.nome}: ${t.previsto}% | ${t.inicio} → ${t.fim}`
+  const atrasadasL  = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
+  const andamentoL  = tarefas.filter(t => t.previsto > 0 && t.previsto < 100 && !(t.fim && t.fim < hoje))
+  const naoInicL    = tarefas.filter(t => t.previsto === 0)
+  const concluidasL = tarefas.filter(t => t.previsto === 100)
+  const ordenadas   = [...atrasadasL, ...andamentoL, ...naoInicL, ...concluidasL]
+  const MAX_TAREFAS = 150
+  const linhasTarefas = ordenadas.slice(0, MAX_TAREFAS).map(t => {
+    const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠' : t.previsto > 0 ? '▶' : '○'
+    return `${status} ${t.nome}: ${t.previsto}% ${t.inicio}→${t.fim}`
   }).join('\n')
   return { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas }
 }
@@ -48,7 +54,7 @@ Tarefas: ${concluidas.length} concluídas, ${emAndamento.length} em andamento, $
 
 CRONOGRAMA
 ${linhasTarefas}
-${tarefas.length > 60 ? `(+ ${tarefas.length - 60} tarefas não listadas)` : ''}
+${tarefas.length > MAX_TAREFAS ? `(+ ${tarefas.length - MAX_TAREFAS} tarefas omitidas — priorizadas atrasadas e em andamento)` : ''}
 
 INSTRUÇÕES — PARTE 1 (DIAGNÓSTICO RÁPIDO)
 
@@ -131,6 +137,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   const [analise, setAnalise]     = useState('')
   const [analisando, setAnalisando] = useState(false)
   const [erroIA, setErroIA]       = useState('')
+  const [tabelaExpandida, setTabelaExpandida] = useState(false)
   const inputRef = useRef()
 
   function extrairProjeto(doc) {
@@ -149,6 +156,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setAnalise('')
     setErroIA('')
     setFeedbackFinal('')
+    setTabelaExpandida(false)
     try {
       const texto = await file.text()
       const parser = new DOMParser()
@@ -351,20 +359,22 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
                     <tr><th>Tarefa</th><th>% Prev.</th><th>Início</th><th>Término</th></tr>
                   </thead>
                   <tbody>
-                    {resultado.tarefas.slice(0, 15).map((t, i) => (
+                    {(tabelaExpandida ? resultado.tarefas : resultado.tarefas.slice(0, 15)).map((t, i) => (
                       <tr key={i}>
                         <td>{t.nome}</td><td>{t.previsto}%</td><td>{t.inicio}</td><td>{t.fim}</td>
                       </tr>
                     ))}
-                    {resultado.tarefas.length > 15 && (
-                      <tr>
-                        <td colSpan={4} style={{ textAlign: 'center', color: 'var(--ink-3)', fontSize: 12 }}>
-                          + {resultado.tarefas.length - 15} tarefa(s) adicionais
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
+                {resultado.tarefas.length > 15 && (
+                  <button
+                    className="btn btn-ghost"
+                    style={{ marginTop: 8, fontSize: 12, color: 'var(--brand)', border: 'none', padding: '4px 0', cursor: 'pointer', background: 'none' }}
+                    onClick={() => setTabelaExpandida(v => !v)}
+                  >
+                    {tabelaExpandida ? `▲ Recolher` : `▼ Ver todas ${resultado.tarefas.length} tarefas`}
+                  </button>
+                )}
               </div>
             )}
 
