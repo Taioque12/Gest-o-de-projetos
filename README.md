@@ -24,8 +24,9 @@ Beta no ar: **https://frontend-beta-navy-63.vercel.app**
 | 8 — Limites por plano | ✅ | Triggers no banco (free/pro/enterprise) |
 | 8 — Pagamento (Mercado Pago) | ✅ | Assinatura recorrente (cartão) + PIX avulso, webhook ativa/suspende |
 | 10 — Tela de Planos | ✅ | Checkout cartão/PIX no frontend |
+| 11 — Níveis de acesso refinados | ✅ | `equipe` restrito aos projetos onde está alocado (RLS) |
 | 5 — Migração legado | ⏳ | Só na produção |
-| 9 — Deploy produção | ⏳ | Migrações 1→10 + frontend + Edge Functions |
+| 9 — Deploy produção | ⏳ | Migrações 1→11 + frontend + Edge Functions |
 | 10 — Painel do operador | 📋 | Documentado (gestão de clientes/pagamentos/status) |
 
 ---
@@ -80,6 +81,7 @@ REV1/
 ├── migracao-fase9-limpeza-rls.sql         ← Correção de vazamentos RLS
 ├── migracao-fase9b-remove-usuarios-legado.sql
 ├── migracao-fase10-assinaturas-pagamentos.sql ← Tabelas de pagamento
+├── migracao-fase11-niveis-acesso.sql      ← equipe restrita a projetos alocados (RLS)
 │
 ├── supabase/functions/
 │   ├── admin-create-user/                 ← Convite de usuário (admin)
@@ -103,8 +105,10 @@ REV1/
 | Perfil | Acesso | Ações |
 |---|---|---|
 | Admin | Toda a empresa | Ver, editar, criar usuários, gerenciar planos/assinatura |
-| Equipe | Toda a empresa | Ver, atualizar avanço, upload XML |
+| Equipe | Só projetos onde está alocado (`programacao_semanal`) | Ver, atualizar avanço, upload XML — vínculo via `funcionarios.usuario_empresa_id` |
 | Cliente | Apenas seus projetos | Leitura (status, Curva S, frentes) |
+
+> Funcionário sem login vinculado (`usuario_empresa_id` nulo) continua existindo só como cadastro de RH — não acessa o sistema.
 
 ---
 
@@ -113,7 +117,7 @@ REV1/
 - Dashboard com KPIs (projetos, valor, avanço, desvio) e Curva S do portfólio
 - Cards de projeto com drill-down (Curva S individual, frentes, baselines, anexos)
 - Mapa de alocação de equipes com sinalização de gargalos
-- Upload de XML do MS Project
+- Upload de XML do MS Project (até 150 tarefas analisadas pela IA, priorizando atrasadas; tabela expansível)
 - Atualizações semanais de avanço físico
 - Onboarding de empresa + convite de usuários
 - Assinatura e pagamento (cartão recorrente / PIX)
@@ -150,6 +154,17 @@ Deploy: `vercel --prod` (a partir de `frontend/`).
 | 22/06/2026 | Frontend React + deploy Vercel (produção) |
 | 26/06/2026 | SaaS multi-tenant: fases 1–8 (RLS, onboarding, limites) |
 | 29/06/2026 | Correções de RLS, limpeza, pagamento Mercado Pago, tela de Planos |
+| 30/06/2026 | Import XML p/ 150+ tarefas, Curva S adapta tema claro/escuro, RLS restringe equipe por projeto alocado (fase 11) |
+
+---
+
+## ▶️ Próximos passos
+
+1. **Teste de pagamento real no sandbox MP** — criar conta de teste compradora no painel Mercado Pago, pagar PIX/cartão de teste, confirmar que `mp-webhook` ativa a empresa sozinha.
+2. **`uploads_xml` sem `projeto_id`** — pendência conhecida (fase 11 não cobriu); exigiria mudar `UploadXML.jsx` pra gravar o projeto no momento do upload.
+3. **Fase 5 — Migração de dados legados** (só relevante na produção, não no DEV).
+4. **Fase 9 — Deploy produção**: aplicar migrações 1→11 no projeto `uaooutzbxkkcyfuwijbi`, subir frontend e Edge Functions, trocar token MP de TEST para produção.
+5. **Fase 10 — Painel do operador (super-admin)**: gestão de clientes/pagamentos/status entre empresas — ainda só documentado, não implementado.
 
 ---
 
