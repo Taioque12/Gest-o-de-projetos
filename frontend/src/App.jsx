@@ -7,12 +7,13 @@ import ClienteView from './pages/ClienteView'
 import OnboardingEmpresa from './pages/OnboardingEmpresa'
 import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
-const Equipes = lazy(() => import('./pages/Equipes'))
-const Acessos = lazy(() => import('./pages/Acessos'))
-const Planos  = lazy(() => import('./pages/Planos'))
+const Equipes  = lazy(() => import('./pages/Equipes'))
+const Acessos  = lazy(() => import('./pages/Acessos'))
+const Planos   = lazy(() => import('./pages/Planos'))
+const Operador = lazy(() => import('./pages/Operador'))
 
 export default function App() {
-  const { user, perfil, empresaId, empresa, loading, signIn, signOut, refreshEmpresa } = useAuth()
+  const { user, perfil, empresaId, empresa, superAdmin, loading, signIn, signOut, refreshEmpresa } = useAuth()
   const [view, setView] = useState('dashboard')
 
   if (loading) return <div className="loading-screen">Carregando...</div>
@@ -70,6 +71,20 @@ export default function App() {
     )
   }
 
+  if (view === 'operador' && superAdmin) {
+    return (
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Operador
+            perfil={perfil}
+            onSignOut={signOut}
+            onChangeView={setView}
+          />
+        </Suspense>
+      </ChunkErrorBoundary>
+    )
+  }
+
   if (view === 'planos' && perfil === 'admin') {
     return (
       <ChunkErrorBoundary>
@@ -93,6 +108,7 @@ export default function App() {
       perfil={perfil}
       empresaId={empresaId}
       empresa={empresa}
+      superAdmin={superAdmin}
       onSignOut={signOut}
       view={view}
       setView={setView}

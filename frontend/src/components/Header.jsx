@@ -10,7 +10,7 @@ function useTheme() {
   return [dark, setDark]
 }
 
-export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal, onRelatorio, view, onChangeView }) {
+export default function Header({ perfil, superAdmin, onSignOut, onUpload, onNovoProjeto, onAtualizarSemanal, onRelatorio, view, onChangeView }) {
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
   const [dark, setDark] = useTheme()
 
@@ -74,6 +74,17 @@ export default function Header({ perfil, onSignOut, onUpload, onNovoProjeto, onA
                   <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
                 </svg>
                 Planos
+              </button>
+            )}
+            {superAdmin && (
+              <button
+                className={`nav-tab${view === 'operador' ? ' active' : ''}`}
+                onClick={() => onChangeView('operador')}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M14 9h1"/><path d="M14 13h1"/>
+                </svg>
+                Operador
               </button>
             )}
           </div>

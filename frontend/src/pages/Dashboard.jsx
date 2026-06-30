@@ -16,7 +16,7 @@ import ChunkErrorBoundary from '../components/ChunkErrorBoundary'
 const UploadXML = lazy(() => import('./UploadXML'))
 const Relatorio = lazy(() => import('../components/Relatorio'))
 
-export default function Dashboard({ user, perfil, empresaId, onSignOut, onChangeView }) {
+export default function Dashboard({ user, perfil, empresaId, superAdmin, onSignOut, onChangeView }) {
   const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, user?.email, empresaId)
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
@@ -153,6 +153,7 @@ export default function Dashboard({ user, perfil, empresaId, onSignOut, onChange
     <>
       <Header
         perfil={perfil}
+        superAdmin={superAdmin}
         onSignOut={onSignOut}
         onUpload={() => setShowUpload(true)}
         onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}

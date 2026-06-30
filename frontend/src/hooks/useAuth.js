@@ -6,6 +6,7 @@ export function useAuth() {
   const [perfil, setPerfil]       = useState(null)
   const [empresaId, setEmpresaId] = useState(null)
   const [empresa, setEmpresa]     = useState(null)
+  const [superAdmin, setSuperAdmin] = useState(false)
   const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('usuarios_empresa')
-        .select('perfil, empresa_id, empresas(*)')
+        .select('perfil, empresa_id, empresas(*), super_admin')
         .eq('auth_user_id', authUid)
         .eq('ativo', true)
         .maybeSingle()
@@ -41,12 +42,14 @@ export function useAuth() {
         setPerfil(data.perfil)
         setEmpresaId(data.empresa_id)
         setEmpresa(data.empresas)
+        setSuperAdmin(!!data.super_admin)
         localStorage.setItem('empresa_id', data.empresa_id)
       } else {
         // Sem empresa — onboarding necessário
         setPerfil(null)
         setEmpresaId(null)
         setEmpresa(null)
+        setSuperAdmin(false)
         localStorage.removeItem('empresa_id')
       }
     } catch {
@@ -68,5 +71,5 @@ export function useAuth() {
     if (user) fetchEmpresa(user.id)
   }
 
-  return { user, perfil, empresaId, empresa, loading, signIn, signOut, refreshEmpresa }
+  return { user, perfil, empresaId, empresa, superAdmin, loading, signIn, signOut, refreshEmpresa }
 }
