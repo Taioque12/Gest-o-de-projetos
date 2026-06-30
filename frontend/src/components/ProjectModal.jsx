@@ -9,7 +9,25 @@ import CurvaS from './CurvaS'
 import Histograma from './Histograma'
 import ProgramacaoSemanal from './ProgramacaoSemanal'
 
-const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Histórico', 'Anexos']
+const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Histórico', 'Anexos', 'Análise IA']
+
+function inlineMd(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  if (parts.length === 1) return text
+  return parts.map((p, i) => p.startsWith('**') && p.endsWith('**') ? <strong key={i}>{p.slice(2, -2)}</strong> : p)
+}
+
+function renderAnaliseIA(texto) {
+  return texto.split('\n').map((line, i) => {
+    if (line.startsWith('### ')) return <h4 key={i} className="ia-heading">{inlineMd(line.slice(4))}</h4>
+    if (line.startsWith('## '))  return <h3 key={i} className="ia-heading">{inlineMd(line.slice(3))}</h3>
+    if (line.startsWith('- '))   return <li key={i} className="ia-item">{inlineMd(line.slice(2))}</li>
+    if (line.match(/^\d+\. /))   return <li key={i} className="ia-item">{inlineMd(line.replace(/^\d+\. /, ''))}</li>
+    if (line.startsWith('|'))    return null
+    if (line.trim() === '' || line.startsWith('---') || line.startsWith('===')) return <br key={i} />
+    return <p key={i} className="ia-p">{inlineMd(line)}</p>
+  })
+}
 
 const inp = { padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, marginTop: 2 }
 
@@ -504,6 +522,27 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {aba === 'Análise IA' && (
+            <div>
+              {p.ultimaAnaliseIA ? (
+                <>
+                  <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 14 }}>
+                    Gerada durante o último import de XML, em {p.analiseIAEm ? new Date(p.analiseIAEm).toLocaleString('pt-BR') : '—'}.
+                    Para reanalisar com o cronograma atualizado, importe o XML novamente.
+                  </div>
+                  <div className="ia-resultado">
+                    {renderAnaliseIA(p.ultimaAnaliseIA)}
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-3)' }}>
+                  <p>Nenhuma análise de IA gerada ainda para este projeto.</p>
+                  <p style={{ fontSize: 12, marginTop: 6 }}>Importe um XML do MS Project e use "Analisar cronograma" para gerar — fica salva aqui automaticamente.</p>
                 </div>
               )}
             </div>

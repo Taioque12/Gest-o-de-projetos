@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { supabaseConfigurado } from './supabase'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
-import Equipes from './pages/Equipes'
-import Acessos from './pages/Acessos'
-import Planos from './pages/Planos'
 import ClienteView from './pages/ClienteView'
 import OnboardingEmpresa from './pages/OnboardingEmpresa'
+
+const Equipes = lazy(() => import('./pages/Equipes'))
+const Acessos = lazy(() => import('./pages/Acessos'))
+const Planos  = lazy(() => import('./pages/Planos'))
 
 export default function App() {
   const { user, perfil, empresaId, empresa, loading, signIn, signOut, refreshEmpresa } = useAuth()
@@ -26,13 +27,15 @@ export default function App() {
 
   if (view === 'equipes') {
     return (
-      <Equipes
-        user={user}
-        perfil={perfil}
-        empresaId={empresaId}
-        onSignOut={signOut}
-        onChangeView={setView}
-      />
+      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+        <Equipes
+          user={user}
+          perfil={perfil}
+          empresaId={empresaId}
+          onSignOut={signOut}
+          onChangeView={setView}
+        />
+      </Suspense>
     )
   }
 
@@ -50,26 +53,30 @@ export default function App() {
 
   if (view === 'acessos' && perfil === 'admin') {
     return (
-      <Acessos
-        user={user}
-        perfil={perfil}
-        empresaId={empresaId}
-        onSignOut={signOut}
-        onChangeView={setView}
-      />
+      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+        <Acessos
+          user={user}
+          perfil={perfil}
+          empresaId={empresaId}
+          onSignOut={signOut}
+          onChangeView={setView}
+        />
+      </Suspense>
     )
   }
 
   if (view === 'planos' && perfil === 'admin') {
     return (
-      <Planos
-        user={user}
-        perfil={perfil}
-        empresaId={empresaId}
-        empresa={empresa}
-        onSignOut={signOut}
-        onChangeView={setView}
-      />
+      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+        <Planos
+          user={user}
+          perfil={perfil}
+          empresaId={empresaId}
+          empresa={empresa}
+          onSignOut={signOut}
+          onChangeView={setView}
+        />
+      </Suspense>
     )
   }
 

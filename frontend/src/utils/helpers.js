@@ -157,6 +157,8 @@ export const normalizarProjeto = (p, atualizacoes=[], frentes=[]) => {
     frentes:  frentes
       .filter(f=>f.projeto_id===p.id)
       .map(f=>[f.nome_frente, Number(f.avanco_previsto), Number(f.avanco_realizado)]),
+    ultimaAnaliseIA:  p.ultima_analise_ia ?? null,
+    analiseIAEm:      p.analise_ia_em ?? null,
   }
 }
 

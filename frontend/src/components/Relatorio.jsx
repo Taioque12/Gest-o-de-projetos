@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { classify, valorFmt, fmt } from '../utils/helpers'
 
 function statusLabel(k) {
@@ -15,6 +15,9 @@ function fmtData(d) {
 
 export default function Relatorio({ projetos, onFechar }) {
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const pageRef = useRef(null)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
+  const [erroPdf, setErroPdf] = useState('')
 
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onFechar() }
@@ -32,25 +35,61 @@ export default function Relatorio({ projetos, onFechar }) {
     window.print()
   }
 
+  async function baixarPdf() {
+    setGerandoPdf(true)
+    setErroPdf('')
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
+      const canvas = await html2canvas(pageRef.current, { scale: 2, backgroundColor: '#ffffff', useCORS: true })
+      const imgData = canvas.toDataURL('image/jpeg', 0.95)
+
+      const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
+      const pageW = pdf.internal.pageSize.getWidth()
+      const pageH = pdf.internal.pageSize.getHeight()
+      const imgW = pageW
+      const imgH = (canvas.height * imgW) / canvas.width
+
+      let restante = imgH
+      let posY = 0
+      pdf.addImage(imgData, 'JPEG', 0, posY, imgW, imgH)
+      restante -= pageH
+      while (restante > 0) {
+        posY = restante - imgH
+        pdf.addPage()
+        pdf.addImage(imgData, 'JPEG', 0, posY, imgW, imgH)
+        restante -= pageH
+      }
+
+      pdf.save(`relatorio-gestao-projetos-${new Date().toISOString().slice(0, 10)}.pdf`)
+    } catch (err) {
+      setErroPdf('Erro ao gerar PDF: ' + err.message)
+    }
+    setGerandoPdf(false)
+  }
+
   return (
     <>
       {/* Barra de controle — some na impressão */}
       <div className="rel-toolbar no-print">
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-login" style={{ width: 'auto', padding: '10px 24px', margin: 0 }} onClick={imprimir}>
-            🖨️ Gerar PDF / Imprimir
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button className="btn-login" style={{ width: 'auto', padding: '10px 24px', margin: 0 }} onClick={baixarPdf} disabled={gerandoPdf}>
+            {gerandoPdf ? '⏳ Gerando PDF...' : '⬇️ Baixar PDF'}
+          </button>
+          <button className="btn btn-ghost" style={{ color: 'var(--ink)', border: '1px solid var(--line)' }} onClick={imprimir}>
+            🖨️ Imprimir
           </button>
           <button className="btn btn-ghost" style={{ color: 'var(--ink)', border: '1px solid var(--line)' }} onClick={onFechar}>
             ← Voltar
           </button>
         </div>
-        <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>
-          Dica: no diálogo de impressão, selecione "Salvar como PDF" e ative "Gráficos em segundo plano".
-        </span>
+        {erroPdf && <span style={{ fontSize: 13, color: 'var(--vermelho)' }}>{erroPdf}</span>}
       </div>
 
       {/* Conteúdo do relatório */}
-      <div className="rel-page">
+      <div className="rel-page" ref={pageRef}>
 
         {/* Cabeçalho */}
         <div className="rel-header">
