@@ -37,15 +37,15 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
         </filter>
       </defs>
 
-      {/* Grid horizontal — linhas mais visíveis no escuro */}
+      {/* Grid horizontal */}
       {[0, 25, 50, 75, 100].map(v => (
         <g key={v}>
           <line
             x1={padL} y1={PY(v)} x2={W - padR} y2={PY(v)}
-            stroke="rgba(255,255,255,.12)"
+            stroke="var(--line)"
             strokeWidth={v === 0 || v === 100 ? 1.5 : 1}
           />
-          <text x={padL - 10} y={PY(v) + 4} textAnchor="end" fontSize="11" fill="rgba(255,255,255,.5)" fontFamily="Inter, sans-serif" fontWeight="500">
+          <text x={padL - 10} y={PY(v) + 4} textAnchor="end" fontSize="11" fill="var(--ink-2)" fontFamily="Inter, sans-serif" fontWeight="600">
             {v}%
           </text>
         </g>
@@ -54,8 +54,8 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
       {/* Ticks eixo X */}
       {ticks.map((t, i) => (
         <g key={i}>
-          <line x1={PX(t.x)} y1={y0} x2={PX(t.x)} y2={y0 + 4} stroke="rgba(255,255,255,.2)" strokeWidth="1" />
-          <text x={PX(t.x)} y={H - 12} textAnchor="middle" fontSize="10.5" fill="rgba(255,255,255,.45)" fontFamily="Inter, sans-serif">
+          <line x1={PX(t.x)} y1={y0} x2={PX(t.x)} y2={y0 + 4} stroke="var(--line)" strokeWidth="1" />
+          <text x={PX(t.x)} y={H - 12} textAnchor="middle" fontSize="10.5" fill="var(--ink-2)" fontFamily="Inter, sans-serif">
             {t.label}
           </text>
         </g>
@@ -75,8 +75,8 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
         )
       })()}
 
-      {/* Linha previsto — tracejado mais visível */}
-      <polyline points={pPath} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth="2" strokeDasharray="8 5" strokeLinejoin="round" />
+      {/* Linha previsto */}
+      <polyline points={pPath} fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeDasharray="8 5" strokeLinejoin="round" />
 
       {/* Área realizado */}
       <polygon points={areaPath} fill="url(#areaGrad)" />
@@ -93,7 +93,7 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
             cx={PX(p.x)} cy={PY(p.y)}
             r={isLast ? 6 : 3}
             fill="#22c55e"
-            stroke="rgba(0,0,0,.4)"
+            stroke="var(--surface)"
             strokeWidth={isLast ? 2.5 : 1.5}
             filter={isLast ? 'url(#dotGlow)' : undefined}
           />
@@ -106,17 +106,17 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
         {fmt(realToday, 0)}%
       </text>
 
-      {/* Linha HOJE — branca tracejada */}
-      <line x1={hx} y1={padT} x2={hx} y2={y0} stroke="rgba(255,255,255,.35)" strokeWidth="1.5" strokeDasharray="5 4" />
+      {/* Linha HOJE */}
+      <line x1={hx} y1={padT} x2={hx} y2={y0} stroke="var(--ink-2)" strokeWidth="1.5" strokeDasharray="5 4" />
 
       {/* Badge HOJE */}
-      <rect x={hx - 26} y={padT - 4} width="52" height="19" rx="5" fill="rgba(255,255,255,.15)" stroke="rgba(255,255,255,.3)" strokeWidth="1" />
-      <text x={hx} y={padT + 10} textAnchor="middle" fontSize="10" fontWeight="800" fill="#fff" fontFamily="Inter, sans-serif" letterSpacing="0.5">
+      <rect x={hx - 26} y={padT - 4} width="52" height="19" rx="5" fill="var(--ink)" stroke="var(--ink)" strokeWidth="1" />
+      <text x={hx} y={padT + 10} textAnchor="middle" fontSize="10" fontWeight="800" fill="var(--surface)" fontFamily="Inter, sans-serif" letterSpacing="0.5">
         HOJE
       </text>
 
-      {/* Label % previsto — branco visível */}
-      <text x={hx + 8} y={PY(prevToday) - 10} fontSize="11" fontWeight="700" fill="rgba(255,255,255,.75)" fontFamily="Inter, sans-serif" filter="url(#labelShadow)">
+      {/* Label % previsto */}
+      <text x={hx + 8} y={PY(prevToday) - 10} fontSize="11" fontWeight="700" fill="var(--ink)" fontFamily="Inter, sans-serif">
         {fmt(prevToday, 0)}%
       </text>
 
