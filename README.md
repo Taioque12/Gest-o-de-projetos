@@ -28,7 +28,7 @@ Sistema web para planejamento, acompanhamento e controle de projetos de engenhar
 - **Aba Equipes** — cadastro de funcionários com avaliação técnica 0–10 em 6 competências
 - **Aba Histograma** — barras SVG de mão de obra prevista × mobilizada + Curva S dual-axis
 - **Aba Programação** — matriz funcionário × semana com auto-save e sincronização ao histograma
-- **Upload de anexos** por projeto (Supabase Storage)
+- **Upload de anexos** por projeto (Supabase Storage, limite de 20MB)
 - **Controle de acesso por perfil** — admin, equipe e cliente (RLS no Supabase)
 - **Notificações de prazo** no dashboard
 - **Code-split** — páginas secundárias (Equipes, Acessos, UploadXML, Relatório) carregam sob demanda
@@ -55,6 +55,13 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref uaooutzbxkkcyfuwijbi
 ```
 
 > `--no-verify-jwt`: a função já valida o usuário manualmente via `auth.getUser()`; o `verify_jwt` da plataforma rejeitava a chamada no gateway antes de chegar no código (sem log, erro genérico "non-2xx status code").
+
+## 🛡 Endurecimento de Segurança
+
+- **Edge Functions com rate limit**: `analisar-ia` (3 chamadas/60s), `admin-create-user` (5/60s) — tabela genérica `rate_limit_acoes` (e `rate_limit_analise_ia` específica da IA).
+- **Limite de upload**: anexos 20MB, fotos de funcionário 5MB (só imagem) — validado no client *e* no bucket do Storage (`file_size_limit`), porque validação só no client é burlável.
+- **`backend-mpp` protegido**: limite de 30MB por arquivo + rate-limit de 10 req/min por IP, já que o serviço é chamado direto do browser (`VITE_MPP_API_URL` fica exposta no bundle) e não tem autenticação real.
+- **Chave do Gemini fora do client** — ver seção "Análise de IA" abaixo.
 
 ## 🔐 Variáveis de Ambiente
 
@@ -89,12 +96,12 @@ frontend/
 
 ## ☑️ Pendências (testar / implementar)
 
-- [ ] **Testar fluxo completo após mudanças de 30/06**: import `.mpp`, análise IA (com rate limit), criar usuário em Acessos (bug `admin-create-use` corrigido), PDF.
 - [ ] **Apagar function órfã `admin-create-use`** (typo, sem uso) no painel do Supabase — não quebra nada deixada, mas é lixo.
 - [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar o fluxo de criação em `UploadXML.jsx`.
 - [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
-- [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu 2x nessa sessão).
+- [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu algumas vezes nessa sessão).
 - [ ] **`backend-mpp` no Render free tier "dorme"** após ~15min sem uso — primeira chamada de `.mpp` depois disso demora alguns segundos. Sem ação necessária, só avisar usuário se reclamar de lentidão.
+- [ ] **Webhook do Mercado Pago sem validação de assinatura** (ainda não auditado — só relevante quando o `main` tiver pagamento; hoje só o `saas-multitenant` tem).
 
 ## 🗺 Roadmap — SaaS Multi-Tenant
 
