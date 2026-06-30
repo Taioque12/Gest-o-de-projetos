@@ -325,6 +325,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .upload-table tr:hover td{background:var(--surface-2)}
 /* ===== Toast ===== */
 .toast{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--verde);border-radius:14px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.14);font-size:14px;color:var(--ink);cursor:pointer;animation:toast-in .25s ease}
+.toast-erro{border-color:var(--vermelho)}
 @keyframes toast-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .toast-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-3);line-height:1;padding:0 0 0 4px}
 /* ===== Painel IA ===== */

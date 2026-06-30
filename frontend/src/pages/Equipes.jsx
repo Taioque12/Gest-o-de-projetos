@@ -10,7 +10,7 @@ import Header from '../components/Header'
 import Toast from '../components/Toast'
 
 // ── Modal CRUD de habilidades ────────────────────────────────
-function ModalHabilidades({ habilidades, onCriar, onExcluir, onFechar }) {
+function ModalHabilidades({ habilidades, onCriar, onExcluir, onFechar, onErro }) {
   const [novaHab, setNovaHab] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -37,7 +37,7 @@ function ModalHabilidades({ habilidades, onCriar, onExcluir, onFechar }) {
     try {
       await onExcluir(h.id)
     } catch (err) {
-      alert('Erro: ' + err.message)
+      onErro('Erro: ' + err.message)
     }
   }
 
@@ -129,6 +129,7 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
   const [salvando, setSalvando]         = useState(false)
   const [filtroEquipe, setFiltroEquipe] = useState('todas')
   const [toast, setToast]               = useState('')
+  const [toastErro, setToastErro]       = useState('')
   const [selecionados, setSelecionados] = useState([])
   const [modalHab, setModalHab]         = useState(false)
 
@@ -155,7 +156,7 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
       }
       setForm(null)
     } catch (err) {
-      alert('Erro: ' + err.message)
+      setToastErro('Erro: ' + err.message)
     }
     setSalvando(false)
   }
@@ -167,7 +168,7 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
       setSelecionados(s => s.filter(id => id !== f.id))
       setToast(`${f.nome} removido.`)
     } catch (err) {
-      alert('Erro: ' + err.message)
+      setToastErro('Erro: ' + err.message)
     }
   }
 
@@ -375,10 +376,12 @@ export default function Equipes({ user, perfil, onSignOut, onChangeView }) {
           onCriar={criarHabilidade}
           onExcluir={excluirHabilidade}
           onFechar={() => setModalHab(false)}
+          onErro={setToastErro}
         />
       )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
+      {toastErro && <Toast mensagem={toastErro} tipo="erro" onClose={() => setToastErro('')} />}
     </>
   )
 }

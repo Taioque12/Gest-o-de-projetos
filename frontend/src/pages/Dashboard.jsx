@@ -29,6 +29,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
   const [toast, setToast] = useState('')
+  const [toastErro, setToastErro] = useState('')
   const [ocultarValores, setOcultarValores] = useState(() => localStorage.getItem('ocultarValores') === '1')
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
       setShowSemanal(false)
       setToast(`Avanço de ${atualizacoes.length} projeto(s) atualizado para ${data}!`)
     } catch (err) {
-      alert('Erro ao salvar: ' + err.message)
+      setToastErro('Erro ao salvar: ' + err.message)
     }
     setSalvando(false)
   }
@@ -138,7 +139,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
     try {
       await excluirProjeto(projeto.id)
     } catch (err) {
-      alert('Erro ao excluir: ' + err.message)
+      setToastErro('Erro ao excluir: ' + err.message)
     }
   }
 
@@ -321,6 +322,7 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
       )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
+      {toastErro && <Toast mensagem={toastErro} tipo="erro" onClose={() => setToastErro('')} />}
 
       {showSemanal && (
         <AtualizacaoSemanal

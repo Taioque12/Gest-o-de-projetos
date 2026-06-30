@@ -30,6 +30,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
   const [nomeEdit, setNomeEdit]     = useState('')
   const [salvando, setSalvando]     = useState(false)
   const [toast, setToast]           = useState('')
+  const [toastErro, setToastErro]   = useState('')
   const [expandido, setExpandido]   = useState(null)
   const [showForm, setShowForm]     = useState(false)
   const [erroForm, setErroForm]     = useState('')
@@ -58,7 +59,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     try {
       await atualizarPerfil(id, novoPerfil)
       setToast('Perfil atualizado!')
-    } catch (err) { alert('Erro: ' + err.message) }
+    } catch (err) { setToastErro('Erro: ' + err.message) }
     setSalvando(false)
   }
 
@@ -69,7 +70,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
       await atualizarNome(id, nomeEdit.trim())
       setEditando(null)
       setToast('Nome atualizado!')
-    } catch (err) { alert('Erro: ' + err.message) }
+    } catch (err) { setToastErro('Erro: ' + err.message) }
     setSalvando(false)
   }
 
@@ -78,7 +79,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
     try {
       if (conceder) await concederAcesso(uid, pid)
       else          await revogarAcesso(uid, pid)
-    } catch (err) { alert('Erro: ' + err.message) }
+    } catch (err) { setToastErro('Erro: ' + err.message) }
     setSalvando(false)
   }
 
@@ -95,7 +96,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
       await refetch()
       setEditUser(null)
       setToast('Usuário atualizado!')
-    } catch (err) { alert('Erro: ' + err.message) }
+    } catch (err) { setToastErro('Erro: ' + err.message) }
     setSalvando(false)
   }
 
@@ -351,6 +352,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
       )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
+      {toastErro && <Toast mensagem={toastErro} tipo="erro" onClose={() => setToastErro('')} />}
     </>
   )
 }
