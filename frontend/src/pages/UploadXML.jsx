@@ -8,6 +8,8 @@ const GEMINI_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models'
 const GEMINI_URL   = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 const MPP_API_URL  = import.meta.env.VITE_MPP_API_URL ?? ''
 
+const MAX_TAREFAS = 150
+
 function buildDados(projeto, tarefas) {
   const hoje = new Date().toISOString().slice(0, 10)
   const diasRestantes = projeto.fim
@@ -25,16 +27,11 @@ function buildDados(projeto, tarefas) {
   const desvioTemporal = avancoPrevistoProporcional !== null
     ? (projeto.prev - avancoPrevistoProporcional).toFixed(1)
     : null
-  const naoIniciadas  = tarefas.filter(t => t.previsto === 0)
-  const emAndamento   = tarefas.filter(t => t.previsto > 0 && t.previsto < 100)
-  const concluidas    = tarefas.filter(t => t.previsto === 100)
-  const atrasadas     = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
-  const atrasadasL  = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
-  const andamentoL  = tarefas.filter(t => t.previsto > 0 && t.previsto < 100 && !(t.fim && t.fim < hoje))
-  const naoInicL    = tarefas.filter(t => t.previsto === 0)
-  const concluidasL = tarefas.filter(t => t.previsto === 100)
-  const ordenadas   = [...atrasadasL, ...andamentoL, ...naoInicL, ...concluidasL]
-  const MAX_TAREFAS = 150
+  const naoIniciadas = tarefas.filter(t => t.previsto === 0)
+  const emAndamento  = tarefas.filter(t => t.previsto > 0 && t.previsto < 100 && !(t.fim && t.fim < hoje))
+  const concluidas   = tarefas.filter(t => t.previsto === 100)
+  const atrasadas    = tarefas.filter(t => t.fim && t.fim < hoje && t.previsto < 100)
+  const ordenadas    = [...atrasadas, ...emAndamento, ...naoIniciadas, ...concluidas]
   const linhasTarefas = ordenadas.slice(0, MAX_TAREFAS).map(t => {
     const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠' : t.previsto > 0 ? '▶' : '○'
     return `${status} ${t.nome}: ${t.previsto}% ${t.inicio}→${t.fim}`
