@@ -131,6 +131,16 @@ Painel separado, só visível pra quem tem `usuarios_empresa.super_admin = true`
 - Painel de "saúde do sistema" (erros, uploads falhando)
 - Edição de CNPJ/dados cadastrais da empresa pelo operador
 
+**Privacidade dos clientes:** o operador (você) NÃO vê dado operacional de
+nenhuma empresa — nada de conteúdo de projeto, ficha de funcionário, cliente
+do cliente, etc. As contagens de uso (`num_projetos`, `num_funcionarios`)
+vêm de uma view (`painel_operador_resumo`) que só expõe números agregados,
+sem nenhuma coluna de conteúdo — defesa em profundidade: mesmo um erro
+futuro de código na função não vaza dado de negócio, porque a view
+fisicamente não tem essas colunas. O único dado "de fora" que o operador
+vê são pagamentos/assinaturas — que são receita do próprio SaaS, não
+informação das empresas clientes.
+
 Marcar outro usuário como operador:
 ```sql
 UPDATE usuarios_empresa SET super_admin = true WHERE auth_user_id = (SELECT id FROM auth.users WHERE email = 'email@exemplo.com');

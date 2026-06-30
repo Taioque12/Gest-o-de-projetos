@@ -2,6 +2,14 @@
 // pagamentos recentes e permite ativar/suspender ou trocar plano.
 // Acesso cross-empresa só acontece aqui, via service_role — nunca direto
 // do client (RLS normal bloqueia qualquer tabela por empresa_id).
+//
+// Defesa em profundidade: contagens de uso vêm da view
+// `painel_operador_resumo` (só agregados, sem coluna de conteúdo de
+// negócio). Esta função NUNCA deve fazer SELECT direto em projetos,
+// funcionarios, atualizacoes_semana ou qualquer tabela com dado
+// operacional das empresas — só empresas (cadastral), a view de
+// resumo, e pagamentos/assinaturas (que são dados do próprio SaaS,
+// não das empresas clientes).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const cors = {
@@ -44,32 +52,24 @@ Deno.serve(async (req: Request) => {
 
     if (action === 'listar') {
       const { data: empresas, error: e1 } = await admin
-        .from('empresas')
+        .from('painel_operador_resumo')
         .select('*')
         .order('data_criacao', { ascending: false })
       if (e1) throw e1
 
       const ids = empresas.map(e => e.id)
-      const [{ data: projetos }, { data: funcionarios }, { data: usuarios }, { data: pagamentos }, { data: assinaturas }] = await Promise.all([
-        admin.from('projetos').select('id, empresa_id'),
-        admin.from('funcionarios').select('id, empresa_id'),
-        admin.from('usuarios_empresa').select('id, empresa_id').eq('ativo', true),
+      const [{ data: pagamentos }, { data: assinaturas }] = await Promise.all([
         admin.from('pagamentos').select('*').in('empresa_id', ids).order('criado_em', { ascending: false }).limit(50),
         admin.from('assinaturas').select('*').in('empresa_id', ids),
       ])
 
-      const contar = (lista: any[], id: string) => (lista ?? []).filter(x => x.empresa_id === id).length
-
-      const empresasComUso = empresas.map(e => ({
+      const empresasComAssinatura = empresas.map(e => ({
         ...e,
-        num_projetos: contar(projetos, e.id),
-        num_funcionarios: contar(funcionarios, e.id),
-        num_usuarios: contar(usuarios, e.id),
         assinatura: (assinaturas ?? []).find(a => a.empresa_id === e.id) ?? null,
       }))
 
       return json({
-        empresas: empresasComUso,
+        empresas: empresasComAssinatura,
         pagamentos: pagamentos ?? [],
         resumo: {
           total_empresas: empresas.length,

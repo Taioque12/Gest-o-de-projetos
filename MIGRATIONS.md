@@ -26,6 +26,7 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `migracao-cache-analise-ia.sql` | `ultima_analise_ia`/`analise_ia_em` em `projetos` | ✅ (30/06/2026) |
 | `migracao-rate-limit-ia.sql` | Tabela `rate_limit_analise_ia` (rate limit do Gemini) | ✅ (30/06/2026) |
 | `migracao-fase10b-painel-operador.sql` | Flag `super_admin` em `usuarios_empresa` | ✅ (30/06/2026) |
+| `migracao-fase10c-view-operador.sql` | View `painel_operador_resumo` (só agregados, defesa em profundidade) | ✅ (30/06/2026) |
 
 > O branch `main` (produção atual) tem seu próprio schema e checklist — ver
 > `MIGRATIONS.md` daquele branch. Os dois schemas **não são intercambiáveis**
@@ -59,4 +60,8 @@ usuário) na tabela `rate_limit_analise_ia`.
 `operador-painel` também usa `SUPABASE_SERVICE_ROLE_KEY` (acesso cross-empresa
 controlado): valida que o caller tem `usuarios_empresa.super_admin = true`
 antes de qualquer leitura/escrita. Deployada com `--no-verify-jwt` (mesmo motivo
-de `analisar-ia`).
+de `analisar-ia`). Contagens de uso vêm da view `painel_operador_resumo`
+(só agregados — nenhuma coluna de conteúdo de projeto/funcionário/cliente),
+nunca consulta `projetos`/`funcionarios` direto — defesa em profundidade pra
+garantir que o operador nunca vê dado operacional das empresas clientes,
+só metadados de conta + pagamentos (que são receita do próprio SaaS).
