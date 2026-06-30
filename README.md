@@ -159,6 +159,14 @@ UPDATE usuarios_empresa SET super_admin = true WHERE auth_user_id = (SELECT id F
 - Assinatura e pagamento (cartão recorrente / PIX)
 - Exportar PDF (botão "Baixar PDF" via html2canvas+jsPDF)
 - Análise de IA (Gemini) cacheada por projeto, chamada via Edge Function — chave nunca exposta no client
+- Upload de anexos com limite de 20MB (5MB pra foto de funcionário)
+
+### 🛡 Endurecimento de Segurança
+
+- **Edge Functions com rate limit**: `analisar-ia` (3/60s), `admin-create-user` e `mp-criar-assinatura` (5/60s cada) — tabela genérica `rate_limit_acoes`.
+- **Limite de upload**: anexos 20MB, fotos de funcionário 5MB (só imagem) — validado no client *e* no bucket do Storage (`file_size_limit`), porque validação só no client é burlável.
+- **`backend-mpp` protegido**: limite de 30MB por arquivo + rate-limit de 10 req/min por IP, já que o serviço é chamado direto do browser e não tem autenticação real.
+- **`operador-painel`**: acesso cross-empresa só via view de agregados (`painel_operador_resumo`) — operador nunca vê conteúdo de projeto/funcionário das empresas.
 
 ### Critério de criticidade
 
@@ -212,6 +220,8 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 | 30/06/2026 | Import .mpp direto, code-split, cache de análise IA, PDF baixável, limpeza de qualidade (toasts, markdown compartilhado), chave Gemini movida pra Edge Function |
 | 30/06/2026 | Rate limit na análise IA (3/60s), Error Boundary nos chunks lazy, canal realtime com nome único, testes automatizados (Vitest) pra helpers.js |
 | 30/06/2026 | Fase 10 (MVP): Painel do Operador — gestão de clientes (ativar/suspender, trocar plano) e pagamentos recentes, flag super_admin |
+| 30/06/2026 | Defesa em profundidade no painel do operador (view de agregados, sem acesso a tabela de negócio) |
+| 30/06/2026 | Endurecimento: limite de upload (anexos/fotos), rate-limit no backend-mpp e nas Edge Functions de criação de usuário/checkout |
 
 ---
 
@@ -224,9 +234,10 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 
 ### Implementar — Fases do plano
 - [ ] **Fase 5 — Migração de dados legados** (só relevante quando for pra produção, não se aplica ao DEV).
-- [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` + `migracao-fase10b-painel-operador.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions (incluindo `operador-painel`), trocar token MP de TEST para produção.
+- [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` + `migracao-fase10b-painel-operador.sql` + `migracao-fase10c-view-operador.sql` + `migracao-rate-limit-acoes.sql` + `migracao-buckets-storage.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions (incluindo `operador-painel`), trocar token MP de TEST para produção.
 - [ ] **Painel do operador — MRR e saúde do sistema** (parte da Fase 10 que ficou de fora do MVP — ver seção "Painel do Operador" acima).
 - [ ] **Testar painel do operador end-to-end**: ativar/suspender empresa, trocar plano, conferir que reflete no app da empresa (limites, bloqueio de login se suspensa).
+- [ ] **Validar assinatura do webhook do Mercado Pago** (`mp-webhook`) — ainda não auditado se valida que a notificação realmente veio do MP.
 
 ### Dívida técnica conhecida
 - [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar `UploadXML.jsx` pra gravar o projeto no momento do upload.
