@@ -6,6 +6,7 @@ const GEMINI_KEY   = import.meta.env.VITE_GEMINI_API_KEY ?? ''
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL  ?? 'gemini-1.5-pro-latest'
 const GEMINI_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models'
 const GEMINI_URL   = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
+const MPP_API_URL  = import.meta.env.VITE_MPP_API_URL ?? ''
 
 function buildDados(projeto, tarefas) {
   const hoje = new Date().toISOString().slice(0, 10)
@@ -149,6 +150,61 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     return { nome, inicio, fim, prev }
   }
 
+  async function processarXMLLocal(file) {
+    const texto = await file.text()
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(texto, 'application/xml')
+    const parseErr = doc.querySelector('parsererror')
+    if (parseErr) throw new Error('Arquivo XML inválido ou corrompido.')
+
+    const projeto = extrairProjeto(doc)
+    const tarefas = [...doc.querySelectorAll('Task')]
+      .filter(t => {
+        const sumario = t.querySelector('Summary')?.textContent
+        const uid     = t.querySelector('UID')?.textContent
+        const nome    = t.querySelector('Name')?.textContent ?? ''
+        return sumario !== '1' && uid !== '0' && nome.trim() !== ''
+      })
+      .map(t => ({
+        nome:     t.querySelector('Name')?.textContent ?? '',
+        previsto: parseFloat(t.querySelector('PercentComplete')?.textContent ?? '0'),
+        inicio:   t.querySelector('Start')?.textContent?.slice(0, 10) ?? '',
+        fim:      t.querySelector('Finish')?.textContent?.slice(0, 10) ?? '',
+      }))
+    return { tarefas, projeto }
+  }
+
+  async function processarMpp(file) {
+    if (!MPP_API_URL) {
+      throw new Error('Serviço de leitura .mpp não configurado (VITE_MPP_API_URL ausente).')
+    }
+    const form = new FormData()
+    form.append('arquivo', file)
+    const resp = await fetch(`${MPP_API_URL}/parse`, { method: 'POST', body: form })
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}))
+      throw new Error(err.detail ?? `Erro ${resp.status} ao ler o arquivo .mpp`)
+    }
+    const data = await resp.json()
+
+    const tarefas = (data.tarefas ?? [])
+      .filter(t => !t.resumo && t.id !== '0' && (t.nome ?? '').trim() !== '')
+      .map(t => ({
+        nome:     t.nome ?? '',
+        previsto: t.pct ?? 0,
+        inicio:   t.inicio ? t.inicio.slice(0, 10) : '',
+        fim:      t.fim ? t.fim.slice(0, 10) : '',
+      }))
+
+    const projeto = {
+      nome:   data.projeto ?? file.name,
+      inicio: data.projeto_inicio ? data.projeto_inicio.slice(0, 10) : '',
+      fim:    data.projeto_fim ? data.projeto_fim.slice(0, 10) : '',
+      prev:   data.avanco_geral ?? 0,
+    }
+    return { tarefas, projeto }
+  }
+
   async function processarXML(file) {
     setLoading(true)
     setResultado(null)
@@ -158,26 +214,8 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setFeedbackFinal('')
     setTabelaExpandida(false)
     try {
-      const texto = await file.text()
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(texto, 'application/xml')
-      const parseErr = doc.querySelector('parsererror')
-      if (parseErr) throw new Error('Arquivo XML inválido ou corrompido.')
-
-      const projeto = extrairProjeto(doc)
-      const tarefas = [...doc.querySelectorAll('Task')]
-        .filter(t => {
-          const sumario = t.querySelector('Summary')?.textContent
-          const uid     = t.querySelector('UID')?.textContent
-          const nome    = t.querySelector('Name')?.textContent ?? ''
-          return sumario !== '1' && uid !== '0' && nome.trim() !== ''
-        })
-        .map(t => ({
-          nome:     t.querySelector('Name')?.textContent ?? '',
-          previsto: parseFloat(t.querySelector('PercentComplete')?.textContent ?? '0'),
-          inicio:   t.querySelector('Start')?.textContent?.slice(0, 10) ?? '',
-          fim:      t.querySelector('Finish')?.textContent?.slice(0, 10) ?? '',
-        }))
+      const ehMpp = /\.(mpp|mpx)$/i.test(file.name)
+      const { tarefas, projeto } = ehMpp ? await processarMpp(file) : await processarXMLLocal(file)
 
       supabase.from('uploads_xml').insert({
         nome_arquivo:  file.name,
@@ -320,8 +358,8 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   return (
     <div className="upload-page">
       <div className="upload-card">
-        <h2>📂 Importar XML do MS Project</h2>
-        <p>No MS Project: <b>Arquivo → Salvar Como → XML (*.xml)</b> e importe aqui.</p>
+        <h2>📂 Importar cronograma do MS Project</h2>
+        <p>Importe o arquivo <b>.mpp</b> direto, ou exporte como <b>Arquivo → Salvar Como → XML</b> no MS Project.</p>
 
         <div
           className={`drop-zone${over ? ' over' : ''}`}
@@ -331,8 +369,8 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
           onClick={() => inputRef.current.click()}
         >
           <div style={{ fontSize: 36 }}>📄</div>
-          <p>Arraste o arquivo <b>.xml</b> aqui ou <b>clique para selecionar</b></p>
-          <input ref={inputRef} type="file" accept=".xml" style={{ display: 'none' }} onChange={onFileChange} />
+          <p>Arraste o arquivo <b>.mpp</b>, <b>.mpx</b> ou <b>.xml</b> aqui ou <b>clique para selecionar</b></p>
+          <input ref={inputRef} type="file" accept=".mpp,.mpx,.xml" style={{ display: 'none' }} onChange={onFileChange} />
         </div>
 
         {loading && <p style={{ marginTop: 16, color: 'var(--ink-3)' }}>⏳ Processando...</p>}

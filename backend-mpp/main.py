@@ -42,7 +42,7 @@ app = FastAPI(title="MA CONEGLIAN · MPP Reader", lifespan=lifespan)
 # Sobrescreva com a variável de ambiente ALLOWED_ORIGINS (separada por vírgula).
 _origins = os.environ.get(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,https://gest-o-de-projetos-eoum.vercel.app",
+    "http://localhost:5173,https://gest-o-de-projetos-eoum.vercel.app,https://gest-o-de-projetos-eight.vercel.app",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -128,9 +128,11 @@ def parse(arquivo: UploadFile = File(...)):
             "ok": True,
             "arquivo": nome,
             "projeto": nome_proj,
+            "projeto_inicio": _s(props.getStartDate()),
+            "projeto_fim": _s(props.getFinishDate()),
             "total_tarefas": len(tarefas),
             "avanco_geral": avanco,
-            "tarefas": tarefas[:50],  # prévia
+            "tarefas": tarefas[:300],
         }
     finally:
         try:
