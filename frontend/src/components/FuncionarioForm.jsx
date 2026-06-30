@@ -7,7 +7,7 @@ function corNota(n) {
   return '#991b1b'
 }
 
-export default function FuncionarioForm({ funcionario, habilidades = [], onSalvar, onFechar, salvando }) {
+export default function FuncionarioForm({ funcionario, habilidades = [], usuariosDisponiveis = [], onSalvar, onFechar, salvando }) {
   const ed = !!funcionario
 
   const [form, setForm] = useState({
@@ -15,6 +15,7 @@ export default function FuncionarioForm({ funcionario, habilidades = [], onSalva
     cargo:     funcionario?.cargo     ?? '',
     equipe:    funcionario?.equipe    ?? '',
     custo_dia: funcionario?.custo_dia ?? '',
+    usuario_empresa_id: funcionario?.usuario_empresa_id ?? '',
     avaliacoes: funcionario?.avaliacoes ?? {},
   })
   const [fotoPreview, setFotoPreview] = useState(funcionario?.foto_url ?? null)
@@ -71,6 +72,7 @@ export default function FuncionarioForm({ funcionario, habilidades = [], onSalva
       cargo:     form.cargo.trim(),
       equipe:    form.equipe.trim(),
       custo_dia: form.custo_dia === '' ? null : Number(form.custo_dia),
+      usuario_empresa_id: form.usuario_empresa_id || null,
       avaliacoes: form.avaliacoes,
       foto_url,
     })
@@ -139,6 +141,18 @@ export default function FuncionarioForm({ funcionario, habilidades = [], onSalva
             <div className="field">
               <label>Custo/dia (R$)</label>
               <input type="number" min="0" step="0.01" value={form.custo_dia} onChange={e => set('custo_dia', e.target.value)} placeholder="ex: 450,00" />
+            </div>
+            <div className="field" style={{ gridColumn: 'span 2' }}>
+              <label>Login vinculado (acesso ao sistema)</label>
+              <select value={form.usuario_empresa_id} onChange={e => set('usuario_empresa_id', e.target.value)}>
+                <option value="">Sem login — apenas cadastro de RH</option>
+                {usuariosDisponiveis.map(u => (
+                  <option key={u.id} value={u.id}>{u.nome || u.email || u.id}</option>
+                ))}
+              </select>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
+                Quando vinculado, este colaborador (perfil "equipe") só vê os projetos onde está alocado na Programação.
+              </div>
             </div>
           </div>
 

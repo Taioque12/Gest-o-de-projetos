@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useFuncionarios } from '../hooks/useFuncionarios'
 import { useHabilidades } from '../hooks/useHabilidades'
 import { useProgramacaoGlobal } from '../hooks/useProgramacaoGlobal'
+import { useUsuarios } from '../hooks/useUsuarios'
 import FuncionarioCard from '../components/FuncionarioCard'
 import FuncionarioForm from '../components/FuncionarioForm'
 import PainelEquipe from '../components/PainelEquipe'
@@ -123,6 +124,8 @@ export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeVi
   const { funcionarios, loading, usandoMock, criarFuncionario, editarFuncionario, excluirFuncionario } = useFuncionarios(empresaId)
   const { habilidades, criarHabilidade, excluirHabilidade } = useHabilidades(empresaId)
   const { alocacoes, projetos, indisponibilidades, loading: loadingProg, alocar, copiarSemana, marcarIndisponivel, desmarcarIndisponivel } = useProgramacaoGlobal(empresaId)
+  const { membros } = useUsuarios(empresaId)
+  const membrosEquipe = membros.filter(m => m.perfil === 'equipe')
 
   const [abaEquipe, setAbaEquipe]       = useState('equipe')
   const [form, setForm]                 = useState(null)
@@ -363,6 +366,7 @@ export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeVi
         <FuncionarioForm
           funcionario={form === 'novo' ? null : form}
           habilidades={habilidades}
+          usuariosDisponiveis={membrosEquipe}
           onSalvar={handleSalvar}
           onFechar={() => setForm(null)}
           salvando={salvando}
