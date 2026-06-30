@@ -13,11 +13,33 @@ pequeno serviço (Docker com Java embutido).
 
 import os
 import tempfile
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 
 import jpype
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+
+# Limite de tamanho de arquivo e rate-limit simples por IP — sem auth real
+# (o serviço é chamado direto do browser, sem token: VITE_MPP_API_URL já fica
+# exposta no bundle JS, então qualquer "segredo" no header seria visível
+# também). Isso aqui só evita abuso grosseiro/acidental de um serviço
+# gratuito de recursos limitados (Render free tier).
+MAX_FILE_SIZE = 30 * 1024 * 1024  # 30MB
+RATE_LIMIT_REQUESTS = 10
+RATE_LIMIT_WINDOW_S = 60
+_rate_limit_hits: dict[str, deque] = defaultdict(deque)
+
+
+def _checar_rate_limit(ip: str):
+    agora = time.time()
+    hits = _rate_limit_hits[ip]
+    while hits and agora - hits[0] > RATE_LIMIT_WINDOW_S:
+        hits.popleft()
+    if len(hits) >= RATE_LIMIT_REQUESTS:
+        raise HTTPException(429, "Muitas requisições. Aguarde um minuto e tente de novo.")
+    hits.append(agora)
 
 # Classe Java carregada após a JVM iniciar (preenchida no lifespan).
 UniversalProjectReader = None
@@ -40,10 +62,11 @@ app = FastAPI(title="MA CONEGLIAN · MPP Reader", lifespan=lifespan)
 
 # CORS — domínios autorizados a chamar a API (frontend local + Vercel).
 # Sobrescreva com a variável de ambiente ALLOWED_ORIGINS (separada por vírgula).
-_origins = os.environ.get(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,https://gest-o-de-projetos-eoum.vercel.app,https://gest-o-de-projetos-eight.vercel.app,https://frontend-beta-navy-63.vercel.app",
-)
+_ALLOWED_ORIGINS_FALLBACK = "http://localhost:5173,https://gest-o-de-projetos-eoum.vercel.app,https://gest-o-de-projetos-eight.vercel.app,https://frontend-beta-navy-63.vercel.app"
+_origins_env = os.environ.get("ALLOWED_ORIGINS")
+if not _origins_env:
+    print(f"[startup] ALLOWED_ORIGINS não configurada — usando fallback: {_ALLOWED_ORIGINS_FALLBACK}")
+_origins = _origins_env or _ALLOWED_ORIGINS_FALLBACK
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in _origins.split(",") if o.strip()],
@@ -76,7 +99,10 @@ def health():
 
 
 @app.post("/parse")
-def parse(arquivo: UploadFile = File(...)):
+def parse(request: Request, arquivo: UploadFile = File(...)):
+    ip = request.client.host if request.client else "unknown"
+    _checar_rate_limit(ip)
+
     nome = arquivo.filename or "projeto.mpp"
     if not nome.lower().endswith((".mpp", ".mpx", ".xml")):
         raise HTTPException(400, "Envie um arquivo .mpp, .mpx ou .xml do MS Project.")
@@ -86,9 +112,13 @@ def parse(arquivo: UploadFile = File(...)):
     if not jpype.isThreadAttachedToJVM():
         jpype.attachThreadToJVM()
 
+    conteudo = arquivo.file.read(MAX_FILE_SIZE + 1)
+    if len(conteudo) > MAX_FILE_SIZE:
+        raise HTTPException(413, f"Arquivo muito grande. Limite: {MAX_FILE_SIZE // (1024*1024)}MB.")
+
     suffix = os.path.splitext(nome)[1] or ".mpp"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(arquivo.file.read())
+        tmp.write(conteudo)
         caminho = tmp.name
 
     try:

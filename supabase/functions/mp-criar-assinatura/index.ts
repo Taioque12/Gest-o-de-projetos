@@ -17,6 +17,38 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const FRONTEND_URL_FALLBACK = 'https://frontend-beta-navy-63.vercel.app'
+function frontendUrl() {
+  const v = Deno.env.get('FRONTEND_URL')
+  if (!v) console.warn('[mp-criar-assinatura] FRONTEND_URL não configurada — usando fallback', FRONTEND_URL_FALLBACK)
+  return v ?? FRONTEND_URL_FALLBACK
+}
+
+// Rate limit genérico (tabela rate_limit_acoes): evita spam de tentativas
+// de checkout (cada uma cria uma linha pending em assinaturas/pagamentos).
+async function checarRateLimit(admin: ReturnType<typeof createClient>, userId: string, acao: string, janelaMs: number, maxChamadas: number) {
+  const { data: row } = await admin
+    .from('rate_limit_acoes')
+    .select('janela_inicio, chamadas')
+    .eq('user_id', userId)
+    .eq('acao', acao)
+    .maybeSingle()
+
+  const agora = Date.now()
+  if (!row || agora - new Date(row.janela_inicio).getTime() > janelaMs) {
+    await admin.from('rate_limit_acoes')
+      .upsert({ user_id: userId, acao, janela_inicio: new Date().toISOString(), chamadas: 1 })
+    return true
+  }
+  if (row.chamadas >= maxChamadas) return false
+
+  await admin.from('rate_limit_acoes')
+    .update({ chamadas: row.chamadas + 1 })
+    .eq('user_id', userId)
+    .eq('acao', acao)
+  return true
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405)
@@ -56,6 +88,9 @@ Deno.serve(async (req: Request) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
+    const liberado = await checarRateLimit(admin, user.id, 'mp-criar-assinatura', 60_000, 5)
+    if (!liberado) return json({ error: 'Muitas tentativas em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
+
     let checkoutUrl: string
 
     if (metodo === 'cartao') {
@@ -90,7 +125,7 @@ async function criarAssinaturaCartao(
       transaction_amount: info.valor,
       currency_id:        'BRL',
     },
-    back_url: Deno.env.get('FRONTEND_URL') ?? 'https://frontend-beta-navy-63.vercel.app',
+    back_url: frontendUrl(),
   }
 
   const resp = await fetch('https://api.mercadopago.com/preapproval', {
@@ -142,8 +177,8 @@ async function criarCobrancaPix(
     },
     external_reference: empresaId,
     back_urls: {
-      success: `${Deno.env.get('FRONTEND_URL') ?? 'https://frontend-beta-navy-63.vercel.app'}?pagamento=ok`,
-      failure: `${Deno.env.get('FRONTEND_URL') ?? 'https://frontend-beta-navy-63.vercel.app'}?pagamento=erro`,
+      success: `${frontendUrl()}?pagamento=ok`,
+      failure: `${frontendUrl()}?pagamento=erro`,
     },
     auto_return: 'approved',
   }

@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
 
+const TAMANHO_MAX_MB = 20
+const TAMANHO_MAX_BYTES = TAMANHO_MAX_MB * 1024 * 1024
+
 export function useAnexos(projetoId, empresaId) {
   const [anexos, setAnexos]   = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,6 +22,9 @@ export function useAnexos(projetoId, empresaId) {
   useEffect(() => { fetch() }, [fetch])
 
   async function uploadAnexo(file) {
+    if (file.size > TAMANHO_MAX_BYTES) {
+      throw new Error(`Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Limite: ${TAMANHO_MAX_MB}MB.`)
+    }
     const ext  = file.name.split('.').pop()
     const path = `${projetoId}/${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage.from('anexos').upload(path, file)

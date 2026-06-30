@@ -27,6 +27,8 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `migracao-rate-limit-ia.sql` | Tabela `rate_limit_analise_ia` (rate limit do Gemini) | ✅ (30/06/2026) |
 | `migracao-fase10b-painel-operador.sql` | Flag `super_admin` em `usuarios_empresa` | ✅ (30/06/2026) |
 | `migracao-fase10c-view-operador.sql` | View `painel_operador_resumo` (só agregados, defesa em profundidade) | ✅ (30/06/2026) |
+| `migracao-rate-limit-acoes.sql` | Tabela `rate_limit_acoes` (rate limit genérico — `admin-create-user`, `mp-criar-assinatura`) | ✅ (30/06/2026) |
+| `migracao-buckets-storage.sql` | `file_size_limit` nos buckets `anexos`/`funcionarios` | ✅ (30/06/2026) |
 
 > O branch `main` (produção atual) tem seu próprio schema e checklist — ver
 > `MIGRATIONS.md` daquele branch. Os dois schemas **não são intercambiáveis**
@@ -46,8 +48,8 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 
 | Função | O que faz | DEV |
 |---|---|---|
-| `admin-create-user` | Convite de usuário pelo admin | ✅ |
-| `mp-criar-assinatura` | Gera checkout cartão/PIX (Mercado Pago) | ✅ |
+| `admin-create-user` | Convite de usuário pelo admin (rate limit 5/60s) | ✅ (30/06/2026) |
+| `mp-criar-assinatura` | Gera checkout cartão/PIX (Mercado Pago) (rate limit 5/60s) | ✅ (30/06/2026) |
 | `mp-webhook` | Recebe notificação MP, ativa/suspende empresa | ✅ |
 | `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) |
 | `operador-painel` | Painel super-admin: lista empresas/pagamentos, ativa/suspende, troca plano | ✅ (30/06/2026) |
@@ -65,3 +67,18 @@ de `analisar-ia`). Contagens de uso vêm da view `painel_operador_resumo`
 nunca consulta `projetos`/`funcionarios` direto — defesa em profundidade pra
 garantir que o operador nunca vê dado operacional das empresas clientes,
 só metadados de conta + pagamentos (que são receita do próprio SaaS).
+
+## Endurecimento de segurança (30/06/2026)
+
+- **`useAnexos.js`**: limite de 20MB no upload de anexo (client-side).
+- **Buckets Storage**: `file_size_limit` real no banco (`migracao-buckets-storage.sql`)
+  — defesa de verdade, já que validação client-side é burlável.
+- **`backend-mpp`**: limite de 30MB por arquivo + rate-limit de 10 req/min por IP
+  (em memória, simples) — protege o serviço gratuito do Render de abuso, já que
+  `VITE_MPP_API_URL` fica exposta no bundle JS e qualquer um pode chamar `/parse`
+  direto sem passar pelo app.
+- **`admin-create-user` / `mp-criar-assinatura`**: rate limit de 5 chamadas/60s
+  por usuário (tabela genérica `rate_limit_acoes`, compartilhada entre as duas
+  funções e reutilizável por outras no futuro).
+- **Fallback de `FRONTEND_URL`/`ALLOWED_ORIGINS`**: agora loga warning quando a
+  env var não está configurada e cai no fallback hardcoded.
