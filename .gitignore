@@ -30,3 +30,4 @@ out/
 
 # Misc
 *.log
+supabase/.temp/
