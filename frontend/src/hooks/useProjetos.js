@@ -61,8 +61,10 @@ export function useProjetos(perfil, userId, userEmail, empresaId) {
   // Realtime: re-fetch quando qualquer outro usuário alterar projetos ou avanços
   useEffect(() => {
     if (!supabaseConfigurado) return
+    // Nome único por instância — evita conflito se o hook montar mais de
+    // uma vez ao mesmo tempo (ex: StrictMode, troca rápida de view).
     const channel = supabase
-      .channel('db-changes')
+      .channel(`db-changes-${crypto.randomUUID()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projetos' }, fetchProjetos)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'atualizacoes_semana' }, fetchProjetos)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'efetivo_semana' }, fetchProjetos)
