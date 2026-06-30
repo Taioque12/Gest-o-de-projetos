@@ -14,7 +14,7 @@ Sistema web para planejamento, acompanhamento e controle de projetos de engenhar
 | Frontend | React 18 + Vite |
 | Banco de dados | Supabase (PostgreSQL) |
 | Auth | Supabase Auth |
-| IA | Google Gemini 2.5 Flash |
+| IA | Google Gemini 2.5 Flash (via Edge Function — chave não exposta no client) |
 | Hospedagem | Vercel |
 
 ## ✅ Funcionalidades Implementadas
@@ -45,15 +45,26 @@ Row Level Security (RLS) ativo em todas as tabelas.
 
 `backend-mpp/` é um serviço FastAPI + MPXJ que lê `.mpp`/`.mpx` nativo do MS Project (formato binário, não dá pra ler só com JS no navegador). Deploy gratuito no Render — ver `backend-mpp/README.md`. Sem essa env var configurada, o import continua funcionando normalmente via XML.
 
+## 🤖 Análise de IA — Edge Function
+
+A chamada ao Gemini **não** acontece no client (evita expor a API key no bundle JS). O frontend chama a Edge Function `analisar-ia` (`supabase/functions/analisar-ia`), que valida o usuário autenticado e guarda a chave como secret no servidor:
+
+```bash
+supabase functions deploy analisar-ia --project-ref uaooutzbxkkcyfuwijbi --no-verify-jwt
+supabase secrets set GEMINI_API_KEY=sua_chave --project-ref uaooutzbxkkcyfuwijbi
+```
+
+> `--no-verify-jwt`: a função já valida o usuário manualmente via `auth.getUser()`; o `verify_jwt` da plataforma rejeitava a chamada no gateway antes de chegar no código (sem log, erro genérico "non-2xx status code").
+
 ## 🔐 Variáveis de Ambiente
 
 ```env
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
-VITE_GEMINI_API_KEY=
-VITE_GEMINI_MODEL=gemini-2.5-flash
 VITE_MPP_API_URL=          # serviço backend-mpp (Render) — leitura de .mpp/.mpx
 ```
+
+`VITE_GEMINI_API_KEY` **não é mais usada no frontend** — a chave vive só como secret da Edge Function (acima). Não recriar essa env var no Vercel.
 
 ## 📁 Estrutura do Projeto
 

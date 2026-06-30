@@ -28,3 +28,14 @@ arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 2. Rode no SQL Editor do Supabase do ambiente certo.
 3. Adicione uma linha nesta tabela marcando ✅ e a data.
 4. Se a mudança também se aplica ao SaaS, replique lá e marque no README daquele branch.
+
+## Edge Functions
+
+| Função | O que faz | `main` (prod) | `saas-multitenant` (DEV) |
+|---|---|---|---|
+| `admin-create-user` | Convite de usuário pelo admin | ✅ | ✅ |
+| `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) | ✅ (30/06/2026) |
+
+`analisar-ia` precisa do secret `GEMINI_API_KEY` configurado e foi deployada com
+`--no-verify-jwt` (autenticação validada manualmente dentro da função — o
+`verify_jwt` da plataforma rejeitava a chamada no gateway antes do código rodar).
