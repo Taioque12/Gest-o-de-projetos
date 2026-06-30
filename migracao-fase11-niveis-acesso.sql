@@ -63,9 +63,107 @@ CREATE POLICY "projetos_update" ON projetos
   )
   WITH CHECK (empresa_id = get_empresa_id());
 
--- NOTA: atualizacoes_semana, frentes_servico, efetivo_semana e uploads_xml
--- ainda usam "equipe vê/edita tudo da empresa" (não restrito por projeto).
--- O frontend só lista esses dados a partir da tela de projeto, então na
--- prática a UI já não expõe projetos não-alocados — mas para reforço total
--- de RLS, aplicar o mesmo padrão de meu_funcionario_id() nessas tabelas
--- depois, se necessário.
+-- ─────────────────────────────────────────────────────────────
+-- 3. Helper: projeto está liberado pro usuário logado?
+-- admin: sempre. equipe: só se alocado via programacao_semanal.
+-- ─────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION projeto_permitido(p_projeto_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT
+    get_meu_perfil() = 'admin'
+    OR (
+      get_meu_perfil() = 'equipe'
+      AND EXISTS (
+        SELECT 1 FROM programacao_semanal
+        WHERE projeto_id = p_projeto_id AND funcionario_id = meu_funcionario_id()
+      )
+    );
+$$ LANGUAGE SQL STABLE SECURITY DEFINER;
+
+-- ─────────────────────────────────────────────────────────────
+-- 4. atualizacoes_semana — restringe equipe ao projeto alocado
+-- ─────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "atualiz_select" ON atualizacoes_semana;
+DROP POLICY IF EXISTS "atualiz_insert" ON atualizacoes_semana;
+DROP POLICY IF EXISTS "atualiz_update" ON atualizacoes_semana;
+DROP POLICY IF EXISTS "atualiz_delete" ON atualizacoes_semana;
+
+CREATE POLICY "atualiz_select" ON atualizacoes_semana
+  FOR SELECT TO authenticated
+  USING (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND projeto_permitido(projeto_id)
+  );
+
+CREATE POLICY "atualiz_insert" ON atualizacoes_semana
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND projeto_permitido(projeto_id)
+  );
+
+CREATE POLICY "atualiz_update" ON atualizacoes_semana
+  FOR UPDATE TO authenticated
+  USING (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND projeto_permitido(projeto_id)
+  );
+
+CREATE POLICY "atualiz_delete" ON atualizacoes_semana
+  FOR DELETE TO authenticated
+  USING (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND get_meu_perfil() = 'admin'
+  );
+
+-- ─────────────────────────────────────────────────────────────
+-- 5. frentes_servico — restringe equipe ao projeto alocado
+-- ─────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "frentes_select" ON frentes_servico;
+DROP POLICY IF EXISTS "frentes_modify" ON frentes_servico;
+
+CREATE POLICY "frentes_select" ON frentes_servico
+  FOR SELECT TO authenticated
+  USING (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND projeto_permitido(projeto_id)
+  );
+
+CREATE POLICY "frentes_modify" ON frentes_servico
+  FOR ALL TO authenticated
+  USING (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND projeto_permitido(projeto_id)
+  )
+  WITH CHECK (
+    projeto_id IN (SELECT id FROM projetos WHERE empresa_id = get_empresa_id())
+    AND projeto_permitido(projeto_id)
+  );
+
+-- ─────────────────────────────────────────────────────────────
+-- 6. efetivo_semana — restringe equipe ao projeto alocado
+-- ─────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "efetivo_select" ON efetivo_semana;
+DROP POLICY IF EXISTS "efetivo_modify" ON efetivo_semana;
+
+CREATE POLICY "efetivo_select" ON efetivo_semana
+  FOR SELECT TO authenticated
+  USING (
+    empresa_id = get_empresa_id()
+    AND projeto_permitido(projeto_id)
+  );
+
+CREATE POLICY "efetivo_modify" ON efetivo_semana
+  FOR ALL TO authenticated
+  USING (
+    empresa_id = get_empresa_id()
+    AND projeto_permitido(projeto_id)
+  )
+  WITH CHECK (
+    empresa_id = get_empresa_id()
+    AND projeto_permitido(projeto_id)
+  );
+
+-- NOTA: uploads_xml ficou de fora — projeto_id é nullable lá e o fluxo de
+-- import (UploadXML.jsx) nem preenche essa coluna hoje (é só log do upload,
+-- não dado do projeto em si). Restringir exigiria mudar a lógica de upload.
