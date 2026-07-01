@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Toast from '../components/Toast'
 import { supabase } from '../supabase'
@@ -16,7 +17,8 @@ function fmtMoeda(v) {
   return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-export default function Operador({ perfil, superAdmin, onSignOut, onChangeView }) {
+export default function Operador({ perfil, superAdmin, onSignOut }) {
+  const navigate = useNavigate()
   const [empresas, setEmpresas] = useState([])
   const [pagamentos, setPagamentos] = useState([])
   const [resumo, setResumo] = useState(null)
@@ -70,11 +72,11 @@ export default function Operador({ perfil, superAdmin, onSignOut, onChangeView }
 
   return (
     <>
-      <Header perfil={perfil} superAdmin={superAdmin} onSignOut={onSignOut} onChangeView={onChangeView} view="operador" />
+      <Header perfil={perfil} superAdmin={superAdmin} onSignOut={onSignOut} />
 
       <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
         <div style={{ marginBottom: 8 }}>
-          <button className="btn btn-ghost" onClick={() => onChangeView('dashboard')}>← Voltar</button>
+          <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>← Voltar</button>
         </div>
 
         <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>Painel do Operador</h2>

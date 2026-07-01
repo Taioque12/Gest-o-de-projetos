@@ -120,7 +120,7 @@ function ModalHabilidades({ habilidades, onCriar, onExcluir, onFechar, onErro })
 }
 
 // ── Página principal ─────────────────────────────────────────
-export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeView }) {
+export default function Equipes({ user, perfil, empresaId, onSignOut }) {
   const { funcionarios, loading, usandoMock, criarFuncionario, editarFuncionario, excluirFuncionario } = useFuncionarios(empresaId)
   const { habilidades, criarHabilidade, excluirHabilidade } = useHabilidades(empresaId)
   const { alocacoes, projetos, indisponibilidades, loading: loadingProg, alocar, copiarSemana, marcarIndisponivel, desmarcarIndisponivel } = useProgramacaoGlobal(empresaId)
@@ -188,7 +188,7 @@ export default function Equipes({ user, perfil, empresaId, onSignOut, onChangeVi
 
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} view="equipes" onChangeView={onChangeView} />
+      <Header perfil={perfil} onSignOut={onSignOut} />
 
       <div style={{ borderBottom: '1px solid var(--line)', background: 'var(--surface-2)', marginBottom: 0 }}>
         <div className="wrap" style={{ display: 'flex', gap: 0, paddingTop: 0, paddingBottom: 0 }}>

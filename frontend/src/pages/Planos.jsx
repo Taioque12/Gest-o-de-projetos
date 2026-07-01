@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Toast from '../components/Toast'
 import { supabase } from '../supabase'
@@ -30,7 +31,8 @@ const PLANOS = [
   },
 ]
 
-export default function Planos({ user, perfil, empresaId, empresa, onSignOut, onChangeView }) {
+export default function Planos({ user, perfil, empresaId, empresa, onSignOut }) {
+  const navigate = useNavigate()
   const planoAtual = empresa?.plano ?? 'free'
   const [carregando, setCarregando] = useState(null) // `${planoId}-${metodo}`
   const [toast, setToast] = useState('')
@@ -56,12 +58,12 @@ export default function Planos({ user, perfil, empresaId, empresa, onSignOut, on
 
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} onChangeView={onChangeView} view="planos" />
+      <Header perfil={perfil} onSignOut={onSignOut} />
       {toast && <Toast msg={toast} onClose={() => setToast('')} />}
 
       <main className="container" style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ marginBottom: 8 }}>
-          <button className="btn btn-ghost" onClick={() => onChangeView('dashboard')}>← Voltar</button>
+          <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>← Voltar</button>
         </div>
 
         <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>Planos e Assinatura</h2>
