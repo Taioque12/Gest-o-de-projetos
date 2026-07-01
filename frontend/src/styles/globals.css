@@ -225,15 +225,24 @@ footer b{color:var(--ink-2)}
   .nav-tabs{ order:10; width:100%; }
 }
 
+/* Faixa de transição antes do wrap de 980px: head-right pode quebrar
+   pra segunda linha se não couber, em vez de ser cortado pelo
+   overflow-x:hidden (que só deveria valer pra mobile). */
+@media (max-width:1180px){
+  .head-inner{ flex-wrap:wrap; }
+  .head-right{ flex-wrap:wrap; justify-content:flex-end; }
+}
+
 /* ═══════════════════════════════════════════════
    RESPONSIVIDADE MOBILE (≤ 640px)
    ═══════════════════════════════════════════════ */
 
-/* Previne overflow horizontal global */
-html, body { overflow-x: hidden; max-width: 100%; }
-*, *::before, *::after { max-width: 100%; }
-
 @media (max-width:640px){
+  /* Previne overflow horizontal (só no mobile — escopado aqui pra não
+     cortar conteúdo do header em telas médias que não quebram linha). */
+  html, body { overflow-x: hidden; max-width: 100%; }
+  *, *::before, *::after { max-width: 100%; }
+
 
   /* ── Header ── */
   .head-inner{
