@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { classify, clamp, fmt, valorFmt, parse, priorizarTarefas, classificarTarefas } from './helpers'
+import {
+  classify, clamp, fmt, valorFmt, parse, priorizarTarefas, classificarTarefas,
+  T, prepararProjeto, plannedPct, realizadoPct, projectCurveOpts, portfolioCurveOpts,
+} from './helpers'
+
+// Formata um Date pra string YYYY-MM-DD local (mesmo formato que `parse` espera),
+// pra montar fixtures de projeto relativos a "hoje" sem depender da data real do teste.
+function toISODateLocal(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function addDays(date, days) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d
+}
 
 describe('classify', () => {
   it('verde quando desvio até -5pp', () => {
@@ -89,5 +107,143 @@ describe('classificarTarefas / priorizarTarefas', () => {
     const atrasadasNoResultado = resultado.filter(t => t.fim < hoje && t.previsto < 100)
     const atrasadasTotais = muitas.filter(t => t.fim < hoje && t.previsto < 100)
     expect(atrasadasNoResultado).toHaveLength(atrasadasTotais.length) // nenhuma atrasada foi cortada
+  })
+})
+
+describe('T (smoothstep — curva S)', () => {
+  it('vale 0 no início e 1 no fim', () => {
+    expect(T(0)).toBe(0)
+    expect(T(1)).toBe(1)
+  })
+  it('satura fora do intervalo [0,1]', () => {
+    expect(T(-0.5)).toBe(0)
+    expect(T(1.5)).toBe(1)
+  })
+  it('é simétrica em torno de 0.5 (T(0.5) = 0.5)', () => {
+    expect(T(0.5)).toBeCloseTo(0.5, 10)
+  })
+  it('é monotonicamente crescente entre 0 e 1', () => {
+    const pontos = [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1]
+    for (let i = 1; i < pontos.length; i++) {
+      expect(T(pontos[i])).toBeGreaterThanOrEqual(T(pontos[i - 1]))
+    }
+  })
+})
+
+describe('prepararProjeto', () => {
+  it('calcula _tau ≈ 0.5 pra um projeto na metade do prazo', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 50, real: 45 })
+    expect(p._tau).toBeCloseTo(0.5, 1)
+    expect(p._Tc).toBeCloseTo(T(p._tau), 5)
+  })
+
+  it('satura _tau em 1 quando o projeto já terminou', () => {
+    const inicio = addDays(new Date(), -60)
+    const fim = addDays(new Date(), -10)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 100, real: 90 })
+    expect(p._tau).toBe(1)
+  })
+
+  it('satura _tau em 0 quando o projeto ainda não começou', () => {
+    const inicio = addDays(new Date(), 10)
+    const fim = addDays(new Date(), 60)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 0, real: 0 })
+    expect(p._tau).toBe(0)
+  })
+})
+
+describe('plannedPct / realizadoPct', () => {
+  it('planejado chega a 100% exatamente no fim do projeto', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 50, real: 40 })
+    expect(plannedPct(p, p._e)).toBeCloseTo(100, 5)
+  })
+
+  it('planejado é 0% no início do projeto', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 50, real: 40 })
+    expect(plannedPct(p, p._s)).toBeCloseTo(0, 5)
+  })
+
+  it('planejado em "hoje" bate com o avanço previsto do projeto (p.prev)', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 50, real: 40 })
+    expect(plannedPct(p, Date.now())).toBeCloseTo(p.prev, 0)
+  })
+
+  it('realizado nunca ultrapassa 100%, mesmo com avanço real alto perto do início', () => {
+    const inicio = addDays(new Date(), -5)
+    const fim = addDays(new Date(), 55)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 90, real: 95 })
+    expect(realizadoPct(p, Date.now())).toBeLessThanOrEqual(100)
+  })
+
+  it('realizado é 0 antes do projeto começar (_Tc <= 0)', () => {
+    const inicio = addDays(new Date(), 10)
+    const fim = addDays(new Date(), 60)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 0, real: 0 })
+    expect(realizadoPct(p, p._s)).toBe(0)
+  })
+})
+
+describe('projectCurveOpts', () => {
+  it('a curva planejada termina em 100% e a realizada bate com p.real no ponto de hoje', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 55, real: 48 })
+    const opts = projectCurveOpts(p)
+
+    const ultimoPlanejado = opts.plannedPts[opts.plannedPts.length - 1]
+    expect(ultimoPlanejado.x).toBe(1)
+    expect(ultimoPlanejado.y).toBeCloseTo(100, 5)
+
+    const ultimoReal = opts.actualPts[opts.actualPts.length - 1]
+    expect(ultimoReal.y).toBe(p.real)
+    expect(opts.todayX).toBeCloseTo(p._tau, 5)
+    expect(opts.prevToday).toBe(p.prev)
+    expect(opts.realToday).toBe(p.real)
+  })
+
+  it('inclui pelo menos um tick e o último tick fecha em x=1', () => {
+    const inicio = addDays(new Date(), -60)
+    const fim = addDays(new Date(), 60)
+    const p = prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 50, real: 50 })
+    const opts = projectCurveOpts(p)
+    expect(opts.ticks.length).toBeGreaterThan(0)
+    expect(opts.ticks[opts.ticks.length - 1].x).toBe(1)
+  })
+})
+
+describe('portfolioCurveOpts', () => {
+  it('calcula a média ponderada por valor corretamente', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const projetos = [
+      prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 80, real: 70, valor: 100 }),
+      prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 20, real: 10, valor: 300 }),
+    ]
+    const opts = portfolioCurveOpts(projetos)
+
+    // Média ponderada: (80*100 + 20*300) / 400 = 35 | (70*100 + 10*300) / 400 = 25
+    expect(opts.wAvgPrev).toBeCloseTo(35, 5)
+    expect(opts.wAvgReal).toBeCloseTo(25, 5)
+    expect(opts.VTOT).toBe(400)
+  })
+
+  it('a curva planejada do portfólio também termina em 100%', () => {
+    const inicio = addDays(new Date(), -30)
+    const fim = addDays(new Date(), 30)
+    const projetos = [
+      prepararProjeto({ inicio: toISODateLocal(inicio), fim: toISODateLocal(fim), prev: 60, real: 55, valor: 100 }),
+    ]
+    const opts = portfolioCurveOpts(projetos)
+    const ultimoPlanejado = opts.plannedPts[opts.plannedPts.length - 1]
+    expect(ultimoPlanejado.x).toBe(1)
+    expect(ultimoPlanejado.y).toBeCloseTo(100, 5)
   })
 })
