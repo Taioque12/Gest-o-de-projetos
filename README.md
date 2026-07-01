@@ -117,7 +117,7 @@ REV1/
 
 Painel separado, só visível pra quem tem `usuarios_empresa.super_admin = true` (flag direta na sua conta — sem tabela separada, sem RLS própria; acesso cross-empresa acontece só dentro da Edge Function `operador-painel`, via `service_role`).
 
-**Acesso:** tab "Operador" aparece no menu quando logado com a conta marcada. Rota `view === 'operador'`.
+**Acesso:** tab "Operador" aparece no menu quando logado com a conta marcada. Rota `/operador` (react-router-dom).
 
 **O que dá pra fazer:**
 - Ver todas as empresas cadastradas (CNPJ, plano, data de cadastro, uso vs limite)
@@ -222,6 +222,9 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 | 30/06/2026 | Fase 10 (MVP): Painel do Operador — gestão de clientes (ativar/suspender, trocar plano) e pagamentos recentes, flag super_admin |
 | 30/06/2026 | Defesa em profundidade no painel do operador (view de agregados, sem acesso a tabela de negócio) |
 | 30/06/2026 | Endurecimento: limite de upload (anexos/fotos), rate-limit no backend-mpp e nas Edge Functions de criação de usuário/checkout |
+| 01/07/2026 | Limpeza de function órfã + rastreabilidade `uploads_xml.projeto_id`; `ProjectModal.jsx` dividido em módulos menores; testes Vitest da matemática da Curva S (27 testes no total) |
+| 01/07/2026 | Migração pra rotas reais com react-router-dom (`/dashboard`, `/equipes`, `/acessos`, `/planos`, `/operador`) — corrige de brinde um bug de acesso do cliente à aba Equipes; `vercel.json` com rewrite SPA |
+| 01/07/2026 | Header: `max-width` aumentado (1320px → 1800px) — em telas largas (~1900px) o conteúdo quebrava em duas linhas apertadas mesmo sobrando espaço vazio nas laterais |
 
 ---
 
@@ -241,7 +244,9 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 
 ### Dívida técnica conhecida
 - [x] ~~`uploads_xml` sem `projeto_id`~~ (corrigido em 01/07/2026 — `UploadXML.jsx` agora faz UPDATE do `projeto_id` assim que o projeto é criado/atualizado).
-- [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks multi-tenant (`useProjetos`, `useUsuarios`, lógica de `empresa_id`) não têm teste nenhum — seriam os de maior risco se quebrarem.
+- [x] ~~`ProjectModal.jsx` monolítico (538 linhas)~~ (dividido em 01/07/2026 em `components/project-modal/Aba*.jsx`).
+- [x] ~~Navegação por `useState('dashboard')` + prop-drilling de `onChangeView`~~ (migrado em 01/07/2026 pra `react-router-dom` com rotas reais).
+- [ ] **Cobertura de testes ainda enxuta** — `helpers.js` tem 27 testes (incluindo matemática da Curva S). Hooks multi-tenant (`useProjetos`, `useUsuarios`, lógica de `empresa_id`) não têm teste nenhum — seriam os de maior risco se quebrarem.
 - [ ] **Deploy do beta é manual** (`vercel --prod`) — sem auto-deploy do GitHub. Fácil esquecer de redeployar depois de um push (já aconteceu nessa sessão).
 
 ---
