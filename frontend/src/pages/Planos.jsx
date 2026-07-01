@@ -31,9 +31,19 @@ const PLANOS = [
   },
 ]
 
+// Pro/Enterprise ficam ocultos da tela até os preços serem definidos —
+// o plano continua existindo no banco (operador ainda consegue setar uma
+// empresa como pro/enterprise manualmente), só não aparece pra assinatura
+// pública ainda.
+const PLANOS_VISIVEIS = PLANOS.filter(p => p.id === 'free')
+
 export default function Planos({ user, perfil, empresaId, empresa, onSignOut }) {
   const navigate = useNavigate()
   const planoAtual = empresa?.plano ?? 'free'
+  // Mesmo com Pro/Enterprise ocultos da vitrine, se a empresa já estiver
+  // num desses planos (setado manualmente pelo operador), o card continua
+  // aparecendo — senão o admin perde a confirmação visual do próprio plano.
+  const planosExibidos = PLANOS.filter(p => PLANOS_VISIVEIS.includes(p) || p.id === planoAtual)
   const [carregando, setCarregando] = useState(null) // `${planoId}-${metodo}`
   const [toast, setToast] = useState('')
   const [erro, setErro] = useState('')
@@ -78,7 +88,7 @@ export default function Planos({ user, perfil, empresaId, empresa, onSignOut }) 
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, marginTop: 16 }}>
-          {PLANOS.map(p => {
+          {planosExibidos.map(p => {
             const ehAtual = p.id === planoAtual
             return (
               <div key={p.id} style={{
