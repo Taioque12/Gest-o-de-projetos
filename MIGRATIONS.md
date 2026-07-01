@@ -77,6 +77,24 @@ só metadados de conta + pagamentos (que são receita do próprio SaaS).
   (em memória, simples) — protege o serviço gratuito do Render de abuso, já que
   `VITE_MPP_API_URL` fica exposta no bundle JS e qualquer um pode chamar `/parse`
   direto sem passar pelo app.
+
+## Rotas reais com react-router-dom (30/06/2026 → 01/07/2026)
+
+Trocado o `useState('dashboard')` + prop-drilling de `onChangeView` por
+`react-router-dom` (`BrowserRouter` + `Routes`). Rotas: `/dashboard`, `/equipes`,
+`/acessos` (admin), `/planos` (admin), `/operador` (super admin). Prepara
+terreno pra rota de retorno do checkout do Mercado Pago.
+
+Corrigido de quebra um bug de acesso: no `App.jsx` antigo, o gate `view ===
+'equipes'` era checado antes do gate `perfil === 'cliente'`, então em teoria um
+cliente que soubesse manipular o estado interno de `view` conseguia renderizar
+a página real de Equipes. Agora `ClienteView` é retornado fora de `<Routes>`,
+antes de qualquer rota administrativa existir.
+
+Adicionado `frontend/vercel.json` com rewrite `/(.*) → /index.html` —
+obrigatório pro `BrowserRouter`: sem isso, dar F5 em qualquer rota que não seja
+`/` (ex: `/equipes`) retorna 404 na Vercel, porque ela tenta servir um arquivo
+estático inexistente em vez de deixar o React Router cuidar da rota client-side.
 - **`admin-create-user` / `mp-criar-assinatura`**: rate limit de 5 chamadas/60s
   por usuário (tabela genérica `rate_limit_acoes`, compartilhada entre as duas
   funções e reutilizável por outras no futuro).
