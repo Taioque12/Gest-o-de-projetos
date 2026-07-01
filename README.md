@@ -228,6 +228,30 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 
 ---
 
+## 🔀 Unificação `main` + `saas-multitenant` (decidido em 01/07/2026, não priorizado ainda)
+
+Combinado com o usuário: unificar os dois repos faz sentido, mas **não agora**
+— exige migrar os dados reais de clientes pagantes do `main` (schema sem
+`empresa_id`) pro schema multi-tenant, e isso não deve ser feito em cima de
+partes do SaaS ainda não validadas com dinheiro de verdade.
+
+**Pré-requisitos antes de começar a migração** (nessa ordem):
+1. [ ] `MP_WEBHOOK_SECRET` configurada (em andamento — usuário vai colar a
+   chave do painel do MP pra eu configurar via `supabase secrets set`).
+2. [ ] Pagamento real testado ponta a ponta no sandbox do Mercado Pago
+   (PIX + cartão), confirmando que `mp-webhook` ativa a empresa sozinha.
+3. [ ] Deploy de produção do saas estável por um tempo (Fase 9 do
+   `PLANO-SAAS-MULTITENANT.md`) — migrações 1→12 aplicadas em
+   `uaooutzbxkkcyfuwijbi`, token MP trocado de TEST pra produção.
+4. [ ] Só então: Fase 5 (migração de dados legados do `main` pro schema
+   multi-tenant) + descomissionar o repo `GestaoProjetosMain`.
+
+Fazer isso combinado com "juntar os repos" ao mesmo tempo dobraria o risco
+numa operação só, em cima de dado de cliente pagante — por isso a ordem
+acima existe.
+
+---
+
 ## 🔮 Plano futuro (não priorizado ainda)
 
 Ideias levantadas em 01/07/2026, registradas pra decidir depois. Ordem sugerida
