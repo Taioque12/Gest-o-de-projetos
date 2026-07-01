@@ -210,15 +210,18 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
       const ehMpp = /\.(mpp|mpx)$/i.test(file.name)
       const { tarefas, projeto } = ehMpp ? await processarMpp(file) : await processarXMLLocal(file)
 
-      supabase.from('uploads_xml').insert({
+      // Guarda o id do registro pra depois vincular ao projeto (criado ou
+      // atualizado), quando o usuário decidir — no momento do parse ainda
+      // não se sabe qual projeto esse upload vai afetar.
+      const { data: uploadRow } = await supabase.from('uploads_xml').insert({
         nome_arquivo:  file.name,
         status:        'sucesso',
         processado_em: new Date().toISOString(),
         enviado_por:   user?.email ?? null,
         empresa_id:    empresaId,
-      }).then(() => {}).catch(() => {})
+      }).select('id').single()
 
-      setResultado({ ok: true, tarefas, nome: file.name, projeto })
+      setResultado({ ok: true, tarefas, nome: file.name, projeto, uploadId: uploadRow?.id ?? null })
     } catch (err) {
       setResultado({ ok: false, erro: err.message })
     }
@@ -256,7 +259,11 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   async function handleCriarProjeto(dados) {
     setSalvando(true)
     try {
-      await criarProjeto({ ...dados, ultima_analise_ia: analise || null })
+      const novoProjeto = await criarProjeto({ ...dados, ultima_analise_ia: analise || null })
+      if (resultado?.uploadId && novoProjeto?.id) {
+        supabase.from('uploads_xml').update({ projeto_id: novoProjeto.id }).eq('id', resultado.uploadId)
+          .then(() => {}).catch(() => {})
+      }
       if (onCriado) onCriado(`Projeto "${dados.nome}" importado do XML e adicionado ao dashboard!`)
     } catch (err) {
       setToastErro('Erro ao criar projeto: ' + err.message)
@@ -280,6 +287,10 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
         acao_recomendada: proj.acao ?? '', prev, real: prev,
         ultima_analise_ia: analise || undefined,
       }, 'xml')
+      if (resultado?.uploadId) {
+        supabase.from('uploads_xml').update({ projeto_id: proj.id }).eq('id', resultado.uploadId)
+          .then(() => {}).catch(() => {})
+      }
       setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%.`)
       setAcao(null)
     } catch (err) {
