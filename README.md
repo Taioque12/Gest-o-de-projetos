@@ -240,7 +240,7 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref ndplkjgcogsmxvsyfunn
 - [ ] **Validar assinatura do webhook do Mercado Pago** (`mp-webhook`) — ainda não auditado se valida que a notificação realmente veio do MP.
 
 ### Dívida técnica conhecida
-- [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar `UploadXML.jsx` pra gravar o projeto no momento do upload.
+- [x] ~~`uploads_xml` sem `projeto_id`~~ (corrigido em 01/07/2026 — `UploadXML.jsx` agora faz UPDATE do `projeto_id` assim que o projeto é criado/atualizado).
 - [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks multi-tenant (`useProjetos`, `useUsuarios`, lógica de `empresa_id`) não têm teste nenhum — seriam os de maior risco se quebrarem.
 - [ ] **Deploy do beta é manual** (`vercel --prod`) — sem auto-deploy do GitHub. Fácil esquecer de redeployar depois de um push (já aconteceu nessa sessão).
 
