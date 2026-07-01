@@ -7,6 +7,8 @@ create extension if not exists "uuid-ossp";
 
 -- ========== TABELA: Usuários e Perfis ==========
 create table if not exists usuarios (
+  -- ATENÇÃO: Em produção, descomente a restrição "references auth.users(id)" 
+  -- e remova o "default gen_random_uuid()" para garantir a integridade com o Supabase Auth.
   id uuid primary key default gen_random_uuid(),
   email text unique not null,
   nome text not null,
@@ -14,6 +16,30 @@ create table if not exists usuarios (
   criado_em timestamp default now(),
   ativo boolean default true
 );
+
+-- ========== TRIGGER: Sincronizar Supabase Auth -> usuarios ==========
+-- Copia automaticamente os novos usuários registrados na tela de login para esta tabela
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.usuarios (id, email, nome, perfil)
+  values (
+    new.id, 
+    new.email, 
+    coalesce(new.raw_user_meta_data->>'nome', 'Usuário'), 
+    coalesce(new.raw_user_meta_data->>'perfil', 'cliente')
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
 
 -- ========== TABELA: Projetos (OS) ==========
 create table if not exists projetos (

@@ -14,11 +14,14 @@ pequeno serviço (Docker com Java embutido).
 import os
 import tempfile
 import time
+import threading
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 
 import jpype
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+import jwt
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile, Depends, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 
 # Limite de tamanho de arquivo e rate-limit simples por IP — sem auth real
@@ -30,16 +33,18 @@ MAX_FILE_SIZE = 30 * 1024 * 1024  # 30MB
 RATE_LIMIT_REQUESTS = 10
 RATE_LIMIT_WINDOW_S = 60
 _rate_limit_hits: dict[str, deque] = defaultdict(deque)
+_rate_limit_lock = threading.Lock()
 
 
 def _checar_rate_limit(ip: str):
     agora = time.time()
-    hits = _rate_limit_hits[ip]
-    while hits and agora - hits[0] > RATE_LIMIT_WINDOW_S:
-        hits.popleft()
-    if len(hits) >= RATE_LIMIT_REQUESTS:
-        raise HTTPException(429, "Muitas requisições. Aguarde um minuto e tente de novo.")
-    hits.append(agora)
+    with _rate_limit_lock:
+        hits = _rate_limit_hits[ip]
+        while hits and agora - hits[0] > RATE_LIMIT_WINDOW_S:
+            hits.popleft()
+        if len(hits) >= RATE_LIMIT_REQUESTS:
+            raise HTTPException(429, "Muitas requisições. Aguarde um minuto e tente de novo.")
+        hits.append(agora)
 
 # Classe Java carregada após a JVM iniciar (preenchida no lifespan).
 UniversalProjectReader = None
@@ -98,9 +103,33 @@ def health():
     return {"status": "ok", "service": "mpp-reader"}
 
 
+SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+security = HTTPBearer()
+
+def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
+    if not SUPABASE_JWT_SECRET:
+        raise HTTPException(status_code=500, detail="SUPABASE_JWT_SECRET não configurado no servidor.")
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            options={"verify_aud": False}
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido.")
+
+
 @app.post("/parse")
-def parse(request: Request, arquivo: UploadFile = File(...)):
-    ip = request.client.host if request.client else "unknown"
+def parse(request: Request, arquivo: UploadFile = File(...), token_payload: dict = Depends(verify_jwt)):
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        ip = forwarded_for.split(",")[0].strip()
+    else:
+        ip = request.client.host if request.client else "unknown"
     _checar_rate_limit(ip)
 
     nome = arquivo.filename or "projeto.mpp"

@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION public.get_my_perfil()
 RETURNS text
 LANGUAGE sql
 STABLE
-SECURITY DEFINER
+SECURITY DEFINER SET search_path = public
 AS $$
   SELECT perfil FROM public.usuarios WHERE id = auth.uid() LIMIT 1;
 $$;

@@ -3,120 +3,9 @@ import { supabase } from '../supabase'
 import ProjetoForm from '../components/ProjetoForm'
 import Toast from '../components/Toast'
 import { renderMarkdownLite } from '../utils/markdownLite'
-import { classificarTarefas, priorizarTarefas } from '../utils/helpers'
 const MPP_API_URL  = import.meta.env.VITE_MPP_API_URL ?? ''
 
 const MAX_TAREFAS = 150
-
-function buildDados(projeto, tarefas) {
-  const hoje = new Date().toISOString().slice(0, 10)
-  const diasRestantes = projeto.fim
-    ? Math.round((new Date(projeto.fim) - new Date(hoje)) / 86400000)
-    : null
-  const diasTotais = projeto.inicio && projeto.fim
-    ? Math.round((new Date(projeto.fim) - new Date(projeto.inicio)) / 86400000)
-    : null
-  const diasDecorridos = projeto.inicio
-    ? Math.round((new Date(hoje) - new Date(projeto.inicio)) / 86400000)
-    : null
-  const avancoPrevistoProporcional = diasTotais && diasDecorridos
-    ? Math.min(100, Math.round((diasDecorridos / diasTotais) * 100))
-    : null
-  const desvioTemporal = avancoPrevistoProporcional !== null
-    ? (projeto.prev - avancoPrevistoProporcional).toFixed(1)
-    : null
-  const { naoIniciadas, emAndamento, concluidas, atrasadas } = classificarTarefas(tarefas, hoje)
-  const linhasTarefas = priorizarTarefas(tarefas, hoje, MAX_TAREFAS).map(t => {
-    const status = t.previsto === 100 ? '✓' : t.fim && t.fim < hoje && t.previsto < 100 ? '⚠' : t.previsto > 0 ? '▶' : '○'
-    return `${status} ${t.nome}: ${t.previsto}% ${t.inicio}→${t.fim}`
-  }).join('\n')
-  return { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas }
-}
-
-function buildPromptParte1(projeto, tarefas) {
-  const { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas } = buildDados(projeto, tarefas)
-
-  return `Você é um engenheiro sênior de planejamento e controle de projetos (PCP), especialista em engenharia elétrica industrial. Analise RAPIDAMENTE (conciso mas completo) o cronograma do projeto. Baseie-se APENAS nos dados fornecidos — não invente.
-
-DADOS DO PROJETO
-Nome: ${projeto.nome || '(não informado)'}
-Data de término: ${projeto.fim || '(não informada)'}
-Avanço atual: ${projeto.prev}% | Esperado: ${avancoPrevistoProporcional ?? 'N/D'}% | Desvio: ${desvioTemporal ?? 'N/D'} p.p.
-Tarefas: ${concluidas.length} concluídas, ${emAndamento.length} em andamento, ${atrasadas.length} atrasadas
-
-CRONOGRAMA
-${linhasTarefas}
-${tarefas.length > MAX_TAREFAS ? `(+ ${tarefas.length - MAX_TAREFAS} tarefas omitidas — priorizadas atrasadas e em andamento)` : ''}
-
-INSTRUÇÕES — PARTE 1 (DIAGNÓSTICO RÁPIDO)
-
-### 🔴🟡🟢 Veredito Executivo
-Uma frase: (CRÍTICO / ATENÇÃO / CONTROLADO) + desvio + risco ao prazo.
-
-### 📐 EVM Essencial
-- SPI (avanço real ÷ esperado): estime
-- Dias de atraso estimados se ritmo mantido
-- Data de término estimada
-
-### ⚠️ Tarefas Críticas (máx 5)
-Para cada uma: nome, status, impacto em dias, causa provável
-
-### 🔧 Disciplinas em Risco
-Quais disciplinas (elétrica, automação, etc) estão comprometendo o prazo?
-
-### 📊 Painel de Indicadores
-| Indicador | Valor | Status |
-| Avanço atual | ${projeto.prev}% | - |
-| SPI estimado | (calcule) | - |
-| Tarefas atrasadas | ${atrasadas.length}/${tarefas.length} | - |
-| Risco ao prazo | Baixo/Médio/Alto/Crítico | - |
-
-Complete com 🟢 / 🟡 / 🔴
-
-IMPORTANTE: Seja técnico, direto e baseado nos dados. Cite nomes reais de tarefas.`
-}
-
-function buildPromptParte2(projeto, tarefas) {
-  const { hoje, diasRestantes, diasTotais, diasDecorridos, avancoPrevistoProporcional, desvioTemporal, naoIniciadas, emAndamento, concluidas, atrasadas, linhasTarefas } = buildDados(projeto, tarefas)
-
-  return `Você é um engenheiro sênior PCP em engenharia elétrica industrial. PARTE 2 — PLANO DE AÇÃO DETALHADO baseado no cronograma a seguir.
-
-DADOS RESUMIDOS
-Nome: ${projeto.nome || '(não informado)'}
-Avanço: ${projeto.prev}% (esperado: ${avancoPrevistoProporcional ?? 'N/D'}% | desvio: ${desvioTemporal ?? 'N/D'} p.p.)
-Prazo: ${projeto.fim || '(não informado)'} (${diasRestantes} dias restantes)
-Tarefas: ${concluidas.length}✓ / ${emAndamento.length}▶ / ${atrasadas.length}⚠
-
-CRONOGRAMA
-${linhasTarefas}
-
-INSTRUÇÕES — PARTE 2 (PLANO DE AÇÃO)
-
-### 🚀 Top 3 Ações Imediatas (Esta Semana)
-As 3 ações de maior impacto para HOJE/ESTA SEMANA. Para cada uma:
-- **Ação**: objetivo específico (1–2 linhas)
-- **Quem**: Gestor / Eng. Campo / Equipe / Escritório
-- **Como**: 3–5 passos concretos
-- **Meta**: resultado mensurável (ex: ganho de 5% em avanço)
-
-### 🎯 Plano de Ação Corretivo (6–10 ações)
-Priorizadas por impacto. Estrutura:
-1. **Prioridade**: 🔴 Alta / 🟡 Média / 🟢 Baixa
-2. **Ação**: específica, cite tarefas reais do cronograma
-3. **Responsável**: Gestor / Eng. / Equipe / Escritório
-4. **Prazo**: Imediato / Curto (este mês) / Médio (próximo mês)
-5. **Esforço**: Baixo / Médio / Alto
-6. **Impacto**: % avanço ou dias recuperados
-7. **Indicador de sucesso**: métrica para validar (ex: ✓ Tarefa X em 80%)
-
-### 📅 Cronograma de Recuperação (Se Atrasado)
-Próximas 4 semanas — foco e meta de avanço semanal para voltar ao trilho.
-
-### 💡 Recomendações Estratégicas (Médio/Longo Prazo)
-2–3 dicas para melhorar gestão de cronograma em projetos similares.
-
-IMPORTANTE: Seja técnico, direto e acionável. Cada ação deve ter responsável, prazo e métrica de sucesso.`
-}
 
 export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto, user }) {
   const [over, setOver]           = useState(false)
@@ -172,7 +61,14 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     }
     const form = new FormData()
     form.append('arquivo', file)
-    const resp = await fetch(`${MPP_API_URL}/parse`, { method: 'POST', body: form })
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const headers = {}
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`
+    }
+
+    const resp = await fetch(`${MPP_API_URL}/parse`, { method: 'POST', headers, body: form })
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}))
       throw new Error(err.detail ?? `Erro ${resp.status} ao ler o arquivo .mpp`)
@@ -226,8 +122,14 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setLoading(false)
   }
 
-  async function chamarGemini(prompt, maxTokens = 6000) {
-    const { data, error } = await supabase.functions.invoke('analisar-ia', { body: { prompt, maxTokens } })
+  async function chamarGemini(parte, maxTokens = 6000) {
+    const body = {
+      projeto: resultado.projeto,
+      tarefas: resultado.tarefas,
+      parte,
+      maxTokens
+    }
+    const { data, error } = await supabase.functions.invoke('analisar-ia', { body })
     if (error) throw new Error(error.message ?? 'Erro ao consultar IA')
     if (data?.error) throw new Error(data.error)
     return data?.texto ?? 'Sem resposta.'
@@ -240,13 +142,11 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
     setErroIA('')
     try {
       // Parte 1: diagnóstico rápido (renderiza logo)
-      const prompt1 = buildPromptParte1(resultado.projeto, resultado.tarefas)
-      const texto1 = await chamarGemini(prompt1, 5000)
+      const texto1 = await chamarGemini(1, 5000)
       setAnalise(texto1)
 
       // Parte 2: plano de ação detalhado (concatena depois)
-      const prompt2 = buildPromptParte2(resultado.projeto, resultado.tarefas)
-      const texto2 = await chamarGemini(prompt2, 7000)
+      const texto2 = await chamarGemini(2, 7000)
       setAnalise(texto1 + '\n\n' + texto2)
     } catch (err) {
       setErroIA('Erro ao consultar Gemini: ' + err.message)
