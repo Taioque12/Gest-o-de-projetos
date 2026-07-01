@@ -96,8 +96,8 @@ frontend/
 
 ## ☑️ Pendências (testar / implementar)
 
-- [ ] **Apagar function órfã `admin-create-use`** (typo, sem uso) no painel do Supabase — não quebra nada deixada, mas é lixo.
-- [ ] **`uploads_xml` sem `projeto_id`** — log de upload não associa ao projeto criado; baixa prioridade, exigiria mudar o fluxo de criação em `UploadXML.jsx`.
+- [x] ~~Apagar function órfã `admin-create-use`~~ (removida em 01/07/2026).
+- [x] ~~`uploads_xml` sem `projeto_id`~~ (corrigido em 01/07/2026 — `UploadXML.jsx` agora faz UPDATE do `projeto_id` assim que o projeto é criado/atualizado).
 - [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
 - [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu algumas vezes nessa sessão).
 - [ ] **`backend-mpp` no Render free tier "dorme"** após ~15min sem uso — primeira chamada de `.mpp` depois disso demora alguns segundos. Sem ação necessária, só avisar usuário se reclamar de lentidão.
