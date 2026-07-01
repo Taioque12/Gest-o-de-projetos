@@ -32,6 +32,7 @@ Sistema web para planejamento, acompanhamento e controle de projetos de engenhar
 - **Controle de acesso por perfil** — admin, equipe e cliente (RLS no Supabase)
 - **Notificações de prazo** no dashboard
 - **Code-split** — páginas secundárias (Equipes, Acessos, UploadXML, Relatório) carregam sob demanda
+- **Rotas reais** (`react-router-dom`) — `/dashboard`, `/equipes`, `/acessos` (admin), com deep-link e F5 funcionando (rewrite SPA no `vercel.json`)
 
 ## 🗄 Banco de Dados (Supabase)
 
@@ -98,7 +99,9 @@ frontend/
 
 - [x] ~~Apagar function órfã `admin-create-use`~~ (removida em 01/07/2026).
 - [x] ~~`uploads_xml` sem `projeto_id`~~ (corrigido em 01/07/2026 — `UploadXML.jsx` agora faz UPDATE do `projeto_id` assim que o projeto é criado/atualizado).
-- [ ] **Cobertura de testes ainda enxuta** — só `helpers.js`. Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
+- [x] ~~`ProjectModal.jsx` monolítico~~ (dividido em 01/07/2026 em `components/project-modal/Aba*.jsx`).
+- [x] ~~Navegação por `useState('dashboard')` + prop-drilling de `onChangeView`~~ (migrado em 01/07/2026 pra `react-router-dom` com rotas reais).
+- [ ] **Cobertura de testes ainda enxuta** — `helpers.js` tem 27 testes (incluindo matemática da Curva S). Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
 - [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu algumas vezes nessa sessão).
 - [ ] **`backend-mpp` no Render free tier "dorme"** após ~15min sem uso — primeira chamada de `.mpp` depois disso demora alguns segundos. Sem ação necessária, só avisar usuário se reclamar de lentidão.
 - [ ] **Webhook do Mercado Pago sem validação de assinatura** (ainda não auditado — só relevante quando o `main` tiver pagamento; hoje só o `saas-multitenant` tem).
