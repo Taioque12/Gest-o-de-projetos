@@ -265,15 +265,15 @@ de codar):
 ## ☑️ Pendências (testar / implementar)
 
 ### Testar
-- [ ] **Pagamento real no sandbox MP** — criar conta de teste compradora no painel Mercado Pago, pagar PIX/cartão de teste, confirmar que `mp-webhook` ativa a empresa sozinha. (Ainda não testado de ponta a ponta.)
+- [ ] **Pagamento real no sandbox MP** — criar conta de teste compradora no painel Mercado Pago, pagar PIX/cartão de teste, confirmar que `mp-webhook` ativa a empresa sozinha. (Ainda não testado de ponta a ponta — depende de acesso à conta MP, não testável sem o usuário.)
 - [ ] **Fluxo completo pós-mudanças de 30/06** no beta: import `.mpp`, análise IA com rate limit, restrição de `equipe` por projeto alocado (fase 11), criar usuário em Acessos.
-- [ ] **Isolamento RLS com 2+ empresas reais** (não só via `SET LOCAL ROLE` em SQL) — testar com 2 contas de usuário de verdade logadas simultaneamente.
+- [x] ~~Isolamento RLS com 2+ empresas reais~~ (testado em 01/07/2026: criada uma 2ª empresa/usuário reais via onboarding, confirmado que cada uma só enxerga os próprios dados — no app e simulando o JWT direto no Postgres).
 
 ### Implementar — Fases do plano
 - [ ] **Fase 5 — Migração de dados legados** (só relevante quando for pra produção, não se aplica ao DEV).
 - [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` + `migracao-fase10b-painel-operador.sql` + `migracao-fase10c-view-operador.sql` + `migracao-rate-limit-acoes.sql` + `migracao-buckets-storage.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions (incluindo `operador-painel`), trocar token MP de TEST para produção.
 - [ ] **Painel do operador — MRR e saúde do sistema** (parte da Fase 10 que ficou de fora do MVP — ver seção "Painel do Operador" acima).
-- [ ] **Testar painel do operador end-to-end**: ativar/suspender empresa, trocar plano, conferir que reflete no app da empresa (limites, bloqueio de login se suspensa).
+- [x] ~~Testar painel do operador end-to-end~~ (testado em 01/07/2026: **achado e corrigido bug real** — suspender empresa não bloqueava nada, ver "Bloqueio real de empresa suspensa" no `MIGRATIONS.md`. Ativar/suspender e trocar plano validados após o fix).
 - [ ] **Validar assinatura do webhook do Mercado Pago** (`mp-webhook`) — ainda não auditado se valida que a notificação realmente veio do MP.
 
 ### Dívida técnica conhecida

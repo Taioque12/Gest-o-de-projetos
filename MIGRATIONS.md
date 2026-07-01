@@ -29,6 +29,7 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 | `migracao-fase10c-view-operador.sql` | View `painel_operador_resumo` (só agregados, defesa em profundidade) | ✅ (30/06/2026) |
 | `migracao-rate-limit-acoes.sql` | Tabela `rate_limit_acoes` (rate limit genérico — `admin-create-user`, `mp-criar-assinatura`) | ✅ (30/06/2026) |
 | `migracao-buckets-storage.sql` | `file_size_limit` nos buckets `anexos`/`funcionarios` | ✅ (30/06/2026) |
+| `migracao-fase12-bloqueio-empresa-suspensa.sql` | `get_empresa_id()`/`get_meu_perfil()` passam a checar `empresas.ativo`; policies extra pra ler a própria linha mesmo suspensa | ✅ (01/07/2026) |
 
 > O branch `main` (produção atual) tem seu próprio schema e checklist — ver
 > `MIGRATIONS.md` daquele branch. Os dois schemas **não são intercambiáveis**
@@ -100,3 +101,37 @@ estático inexistente em vez de deixar o React Router cuidar da rota client-side
   funções e reutilizável por outras no futuro).
 - **Fallback de `FRONTEND_URL`/`ALLOWED_ORIGINS`**: agora loga warning quando a
   env var não está configurada e cai no fallback hardcoded.
+
+## Bloqueio real de empresa suspensa (01/07/2026)
+
+**Bug encontrado durante teste manual do painel do operador**: suspender uma
+empresa (`empresas.ativo = false`) não bloqueava nada — nem o frontend
+(`useAuth.js` só filtrava `usuarios_empresa.ativo`, o vínculo da pessoa, não
+o status da empresa) nem nenhuma RLS policy (só existia checagem de `ativo`
+em `habilidades`, sem relação). O cliente suspenso continuava usando o
+sistema normalmente.
+
+**Fix** (`migracao-fase12-bloqueio-empresa-suspensa.sql`): `get_empresa_id()`
+e `get_meu_perfil()` — os dois pontos únicos usados por praticamente toda
+RLS policy do sistema — agora fazem JOIN com `empresas` e checam
+`e.ativo = true`. Com empresa suspensa, essas funções retornam `NULL` pro
+usuário, e toda tabela protegida por RLS (`projetos`, `funcionarios` etc.)
+para de retornar dado pra ele automaticamente — sem precisar editar cada
+policy individualmente.
+
+**Efeito colateral corrigido na mesma migração**: como as policies de SELECT
+em `usuarios_empresa` e `empresas` também dependiam de `get_empresa_id()`,
+o próprio usuário suspenso ficava impedido de ler seu vínculo/empresa — o
+frontend caía na tela de onboarding em vez de mostrar "conta suspensa".
+Adicionadas 2 policies extras (permissivas, somam via OR com as existentes)
+que liberam a leitura da própria linha em `usuarios_empresa`/`empresas`
+independente do status — não abrem acesso a dado de outras empresas nem de
+outras tabelas.
+
+**Frontend**: `useAuth.js` expõe `empresaSuspensa`; `App.jsx` mostra uma tela
+de bloqueio com botão "Sair" antes de qualquer rota (super admin passa direto,
+pra poder reverter via `/operador` se a suspensão foi engano).
+
+Testado ponta a ponta com conta real (criar empresa de teste → suspender via
+Edge Function → confirmar bloqueio → reativar → confirmar acesso normal →
+dados de teste removidos).

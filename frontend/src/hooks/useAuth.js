@@ -7,6 +7,7 @@ export function useAuth() {
   const [empresaId, setEmpresaId] = useState(null)
   const [empresa, setEmpresa]     = useState(null)
   const [superAdmin, setSuperAdmin] = useState(false)
+  const [empresaSuspensa, setEmpresaSuspensa] = useState(false)
   const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
@@ -43,6 +44,9 @@ export function useAuth() {
         setEmpresaId(data.empresa_id)
         setEmpresa(data.empresas)
         setSuperAdmin(!!data.super_admin)
+        // usuarios_empresa.ativo (vínculo da pessoa) já é filtrado acima —
+        // aqui checamos empresas.ativo (status da empresa no plano/pagamento).
+        setEmpresaSuspensa(data.empresas?.ativo === false)
         localStorage.setItem('empresa_id', data.empresa_id)
       } else {
         // Sem empresa — onboarding necessário
@@ -50,6 +54,7 @@ export function useAuth() {
         setEmpresaId(null)
         setEmpresa(null)
         setSuperAdmin(false)
+        setEmpresaSuspensa(false)
         localStorage.removeItem('empresa_id')
       }
     } catch {
@@ -71,5 +76,5 @@ export function useAuth() {
     if (user) fetchEmpresa(user.id)
   }
 
-  return { user, perfil, empresaId, empresa, superAdmin, loading, signIn, signOut, refreshEmpresa }
+  return { user, perfil, empresaId, empresa, superAdmin, empresaSuspensa, loading, signIn, signOut, refreshEmpresa }
 }

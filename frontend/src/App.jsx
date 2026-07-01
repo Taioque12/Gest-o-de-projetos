@@ -24,7 +24,7 @@ function LazyPage({ children }) {
 }
 
 function AppInner() {
-  const { user, perfil, empresaId, empresa, superAdmin, loading, signIn, signOut, refreshEmpresa } = useAuth()
+  const { user, perfil, empresaId, empresa, superAdmin, empresaSuspensa, loading, signIn, signOut, refreshEmpresa } = useAuth()
 
   if (loading) return <div className="loading-screen">Carregando...</div>
 
@@ -35,6 +35,24 @@ function AppInner() {
   // Usuário autenticado mas sem empresa — precisa criar ou aguardar convite
   if (supabaseConfigurado && user && !empresaId) {
     return <OnboardingEmpresa user={user} onEmpresaCriada={refreshEmpresa} onSignOut={signOut} />
+  }
+
+  // Empresa suspensa (inadimplência, decisão do operador) — bloqueia o
+  // acesso operacional. Super admin passa direto pro /operador pra poder
+  // reverter, se for o caso.
+  if (empresaSuspensa && !superAdmin) {
+    return (
+      <div className="loading-screen">
+        <div style={{ maxWidth: 420, textAlign: 'center' }}>
+          <h2 style={{ marginBottom: 8 }}>Conta suspensa</h2>
+          <p style={{ color: 'var(--ink-2)', marginBottom: 20 }}>
+            O acesso da sua empresa está temporariamente suspenso. Entre em
+            contato com o suporte ou regularize o pagamento para reativar.
+          </p>
+          <button className="btn btn-danger" onClick={signOut}>Sair</button>
+        </div>
+      </div>
+    )
   }
 
   // Cliente tem visão própria, sem acesso às rotas administrativas —
