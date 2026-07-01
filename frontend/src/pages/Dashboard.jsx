@@ -16,7 +16,7 @@ import ChunkErrorBoundary from '../components/ChunkErrorBoundary'
 const UploadXML = lazy(() => import('./UploadXML'))
 const Relatorio = lazy(() => import('../components/Relatorio'))
 
-export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
+export default function Dashboard({ user, perfil, onSignOut }) {
   const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, user?.email)
   const [filtro, setFiltro] = useState('todos')
   const [filtroResp, setFiltroResp] = useState('todos')
@@ -157,8 +157,6 @@ export default function Dashboard({ user, perfil, onSignOut, onChangeView }) {
         onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}
         onAtualizarSemanal={podeEditar ? () => setShowSemanal(true) : null}
         onRelatorio={() => setShowRelatorio(true)}
-        view="dashboard"
-        onChangeView={onChangeView}
       />
 
       <div className="wrap">

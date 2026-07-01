@@ -1,4 +1,5 @@
-import { useState, lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { supabaseConfigurado } from './supabase'
 import Login from './pages/Login'
@@ -9,9 +10,18 @@ import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 const Equipes = lazy(() => import('./pages/Equipes'))
 const Acessos = lazy(() => import('./pages/Acessos'))
 
-export default function App() {
+function LazyPage({ children }) {
+  return (
+    <ChunkErrorBoundary>
+      <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+        {children}
+      </Suspense>
+    </ChunkErrorBoundary>
+  )
+}
+
+function AppInner() {
   const { user, perfil, loading, signIn, signOut } = useAuth()
-  const [view, setView] = useState('dashboard')
 
   if (loading) return <div className="loading-screen">Carregando...</div>
 
@@ -19,55 +29,45 @@ export default function App() {
     return <Login onSignIn={signIn} />
   }
 
-  if (view === 'equipes') {
-    return (
-      <ChunkErrorBoundary>
-        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-          <Equipes
-            user={user}
-            perfil={perfil}
-            onSignOut={signOut}
-            onChangeView={setView}
-          />
-        </Suspense>
-      </ChunkErrorBoundary>
-    )
-  }
-
+  // Cliente tem visão própria, sem acesso às rotas administrativas —
+  // renderizado fora de <Routes> pra nunca expor Equipes/Acessos por URL
+  // direta, independente do que estiver na barra de endereço.
   if (perfil === 'cliente') {
-    return (
-      <ClienteView
-        user={user}
-        perfil={perfil}
-        onSignOut={signOut}
-        onChangeView={setView}
-      />
-    )
-  }
-
-  if (view === 'acessos' && perfil === 'admin') {
-    return (
-      <ChunkErrorBoundary>
-        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-          <Acessos
-            user={user}
-            perfil={perfil}
-            onSignOut={signOut}
-            onChangeView={setView}
-          />
-        </Suspense>
-      </ChunkErrorBoundary>
-    )
+    return <ClienteView user={user} perfil={perfil} onSignOut={signOut} />
   }
 
   return (
-    <Dashboard
-      user={user}
-      perfil={perfil}
-      onSignOut={signOut}
-      view={view}
-      setView={setView}
-      onChangeView={setView}
-    />
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route
+        path="/dashboard"
+        element={<Dashboard user={user} perfil={perfil} onSignOut={signOut} />}
+      />
+      <Route
+        path="/equipes"
+        element={
+          <LazyPage>
+            <Equipes user={user} perfil={perfil} onSignOut={signOut} />
+          </LazyPage>
+        }
+      />
+      <Route
+        path="/acessos"
+        element={
+          perfil === 'admin'
+            ? <LazyPage><Acessos user={user} perfil={perfil} onSignOut={signOut} /></LazyPage>
+            : <Navigate to="/dashboard" replace />
+        }
+      />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppInner />
+    </BrowserRouter>
   )
 }

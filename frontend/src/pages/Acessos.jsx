@@ -22,7 +22,7 @@ const CAMPO = ({ label, children }) => (
 
 const INPUT_STYLE = { fontSize: 13, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', fontFamily: 'inherit', background: 'var(--surface)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' }
 
-export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
+export default function Acessos({ user, perfil, onSignOut }) {
   const { usuarios, acessos, loading, atualizarPerfil, atualizarNome, concederAcesso, revogarAcesso, refetch } = useUsuarios()
   const { projetos } = useProjetos(perfil, user?.id)
 
@@ -142,7 +142,7 @@ export default function Acessos({ user, perfil, onSignOut, onChangeView }) {
 
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} view="acessos" onChangeView={onChangeView} />
+      <Header perfil={perfil} onSignOut={onSignOut} />
 
       <div className="wrap">
 

@@ -4,7 +4,7 @@ import { classify, valorFmt, fmtFull } from '../utils/helpers'
 import Header from '../components/Header'
 import ProjectModal from '../components/ProjectModal'
 
-export default function ClienteView({ user, perfil, onSignOut, onChangeView }) {
+export default function ClienteView({ user, perfil, onSignOut }) {
   const { projetos, atualizacoes, loading } = useProjetos(perfil, user?.id)
   const [modal, setModal] = useState(null)
 
@@ -12,7 +12,7 @@ export default function ClienteView({ user, perfil, onSignOut, onChangeView }) {
 
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} view="dashboard" onChangeView={onChangeView} />
+      <Header perfil={perfil} onSignOut={onSignOut} />
 
       <div className="wrap">
         <div className="panel">
