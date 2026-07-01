@@ -48,7 +48,7 @@ svg{overflow:visible}
 
 /* ===== Header ===== */
 header{background:linear-gradient(120deg,#0a5c2e 0%,#0f7a3d 60%,#138a45 100%);color:#fff;padding:0;margin-bottom:28px;box-shadow:0 4px 20px rgba(0,0,0,.18)}
-.head-inner{max-width:1320px;margin:0 auto;padding:0 28px;display:flex;flex-wrap:wrap;align-items:center;gap:20px;min-height:68px}
+.head-inner{max-width:1800px;margin:0 auto;padding:0 28px;display:flex;flex-wrap:wrap;align-items:center;gap:20px;min-height:68px}
 .brand{display:flex;align-items:center;gap:14px;flex-shrink:0}
 .logo{width:44px;height:44px;border-radius:11px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#0f7a3d;letter-spacing:-.5px;box-shadow:0 3px 12px rgba(0,0,0,.22)}
 .brand h1{font-size:17px;font-weight:700;letter-spacing:-.2px;white-space:nowrap}
