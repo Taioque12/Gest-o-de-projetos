@@ -269,7 +269,7 @@ de codar):
 - [x] ~~Restrição de `equipe` por projeto alocado (fase 11)~~ (testado em 01/07/2026: criado funcionário/usuário "equipe" real, alocado só num de dois projetos via `programacao_semanal` — confirmado que só enxerga o projeto alocado, nem o outro nem os demais da empresa).
 - [x] ~~Criar usuário em Acessos~~ (testado em 01/07/2026: chamada real à Edge Function `admin-create-user` como admin — usuário criado com perfil/vínculo corretos e login funcionando).
 - [ ] **Análise IA com rate limit** — lógica revisada por leitura de código (janela de 60s / máx. 3 chamadas, correta), mas não testável ponta a ponta no DEV: `GEMINI_API_KEY` não está configurada nesse ambiente hoje, então a Edge Function retorna erro antes de chegar no rate limit.
-- [ ] **Import `.mpp`** — não testável sem um arquivo `.mpp` real de amostra.
+- [x] ~~Import `.mpp`~~ (testado em 01/07/2026 com arquivo real de projeto do usuário via `https://gest-o-de-projetos-4tks.onrender.com/parse`: 199 tarefas extraídas corretamente, datas/percentuais batendo com o esperado, mapeamento do `UploadXML.jsx` confirmado compatível campo a campo com a resposta do backend-mpp. `VITE_MPP_API_URL` já está configurada na Vercel do beta — não precisou de ação; teste em si foi direto no endpoint `/parse`, sem passar pela UI, porque o backend só libera CORS pra `localhost:5173`/domínios Vercel, não pra `localhost:5174` do dev local desta sessão).
 - [x] ~~Isolamento RLS com 2+ empresas reais~~ (testado em 01/07/2026: criada uma 2ª empresa/usuário reais via onboarding, confirmado que cada uma só enxerga os próprios dados — no app e simulando o JWT direto no Postgres).
 
 ### Implementar — Fases do plano
