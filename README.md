@@ -95,6 +95,40 @@ frontend/
 └── vite.config.js
 ```
 
+## 🔮 Plano futuro (não priorizado ainda)
+
+Ideias levantadas em 01/07/2026, registradas pra decidir depois. Ordem sugerida
+por risco/esforço (do mais simples ao que exige mais decisão de negócio antes
+de codar):
+
+1. **Tooltips na Curva S** — hover nas "bolinhas" (página principal e dentro do
+   projeto) mostrando Data, Avanço (%) e Valor Financeiro Agregado (R$) daquele
+   ponto. Baixo risco — só UI sobre dado que já existe.
+2. **PDF Executivo do Modal** — botão "🖨️ Exportar PDF Executivo" que usa
+   `@media print` dedicado (limpa o site em volta, formata como papel
+   timbrado A4) em vez do fluxo atual (html2canvas + jsPDF). Baixo risco.
+3. **Diário de Obra no Modal** — coluna/lista de "Últimos Status" (histórico de
+   `atualizacoes_semana` já existente) dentro do Modal do projeto. Baixo risco,
+   dado já existe.
+4. **Visão de Cronograma (Gantt)** — na aba "Projetos do Portfólio", alternar
+   entre "Cartões" e "Cronograma": todos os projetos plotados numa timeline
+   horizontal por mês. Esforço médio — cuidado com legibilidade quando tiver
+   muitos projetos simultâneos e com adaptação mobile.
+5. **Taxa de Ocupação de Equipe (Utilization Rate)** — trocar a contagem simples
+   de OS por barra de "Capacidade × Carga" por equipe/funcionário, com alerta
+   ⚠️ quando passar de 100%. **Precisa antes**: decidir a regra de negócio de
+   "Capacidade" (fixa? por especialidade? configurável pelo admin?) — sem isso
+   o alerta de sobrecarga fica arbitrário.
+6. **EVM completo — Burn Rate + SPI/CPI** — adicionar "Orçamento" e "Custo
+   Realizado" por OS, barra de "Orçamento Consumido" nos cards, alerta quando
+   o burn rate ultrapassa o avanço físico real, e índices SPI/CPI no Modal e
+   card (🟢 > 1, 🔴 < 1). **Maior escopo da lista**: exige schema novo
+   (campos de orçamento/custo), UI de input, e os cálculos financeiros vão
+   virar base de decisão de negócio pro cliente — bug aqui custa caro. Fazer
+   por último e com mais cuidado que o resto.
+
+---
+
 ## ☑️ Pendências (testar / implementar)
 
 - [x] ~~Apagar function órfã `admin-create-use`~~ (removida em 01/07/2026).
