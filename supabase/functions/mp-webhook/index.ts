@@ -4,12 +4,49 @@
 //
 // URL pra configurar no MP: https://<projeto>.supabase.co/functions/v1/mp-webhook
 // Secrets necessários (supabase secrets set):
-//   MP_ACCESS_TOKEN  — Access Token do MP (TEST-... ou APP_USR-...)
-//   MP_WEBHOOK_SECRET — secret do MP pra validar assinatura (opcional mas recomendado)
+//   MP_ACCESS_TOKEN   — Access Token do MP (TEST-... ou APP_USR-...)
+//   MP_WEBHOOK_SECRET — "Chave secreta" da notificação webhook, copiada do
+//                       painel do MP (Suas integrações > app > Webhooks).
+//                       Sem essa secret configurada, a validação de
+//                       assinatura é pulada (com warning no log) — mas
+//                       é fortemente recomendado configurar antes de produção.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const PLANO_VALORES: Record<string, number> = { pro: 497, enterprise: 1497 }
+
+// Valida o header x-signature que o MP envia, conforme
+// https://www.mercadopago.com.br/developers/pt/docs/checkout-api/additional-content/your-integrations/notifications/webhooks#editor_11
+// Formato: "ts=<timestamp>,v1=<hmac-sha256 hex>"
+// Manifest assinado: "id:{data.id};request-id:{x-request-id};ts:{ts};"
+async function assinaturaValida(req: Request, secret: string): Promise<boolean> {
+  const xSignature = req.headers.get('x-signature')
+  const xRequestId = req.headers.get('x-request-id')
+  if (!xSignature || !xRequestId) return false
+
+  const partes = Object.fromEntries(
+    xSignature.split(',').map(p => p.trim().split('=').map(s => s.trim()))
+  )
+  const ts = partes['ts']
+  const v1 = partes['v1']
+  if (!ts || !v1) return false
+
+  const url = new URL(req.url)
+  const dataId = (url.searchParams.get('data.id') ?? '').toLowerCase()
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`
+
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(manifest))
+  const hex = Array.from(new Uint8Array(sigBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
+
+  // Comparação em tempo constante — evita timing attack pra descobrir a assinatura byte a byte.
+  if (hex.length !== v1.length) return false
+  let diff = 0
+  for (let i = 0; i < hex.length; i++) diff |= hex.charCodeAt(i) ^ v1.charCodeAt(i)
+  return diff === 0
+}
 
 Deno.serve(async (req: Request) => {
   // MP envia GET pra validar a URL na configuração
@@ -22,6 +59,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const webhookSecret = Deno.env.get('MP_WEBHOOK_SECRET')
+    if (webhookSecret) {
+      if (!(await assinaturaValida(req, webhookSecret))) {
+        console.warn('[mp-webhook] assinatura inválida — requisição rejeitada')
+        return new Response('invalid signature', { status: 401 })
+      }
+    } else {
+      console.warn('[mp-webhook] MP_WEBHOOK_SECRET não configurada — pulando validação de assinatura (inseguro em produção)')
+    }
+
     const body = await req.json()
     const { type, data } = body
 

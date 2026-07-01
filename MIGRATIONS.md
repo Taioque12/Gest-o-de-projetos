@@ -51,7 +51,7 @@ Projeto DEV: `ndplkjgcogsmxvsyfunn` (sa-east-1).
 |---|---|---|
 | `admin-create-user` | Convite de usuário pelo admin (rate limit 5/60s) | ✅ (30/06/2026) |
 | `mp-criar-assinatura` | Gera checkout cartão/PIX (Mercado Pago) (rate limit 5/60s) | ✅ (30/06/2026) |
-| `mp-webhook` | Recebe notificação MP, ativa/suspende empresa | ✅ |
+| `mp-webhook` | Recebe notificação MP, ativa/suspende empresa (valida assinatura se `MP_WEBHOOK_SECRET` estiver configurada) | ✅ (01/07/2026) |
 | `analisar-ia` | Proxy server-side pro Gemini (chave fora do client) | ✅ (30/06/2026) |
 | `operador-painel` | Painel super-admin: lista empresas/pagamentos, ativa/suspende, troca plano | ✅ (30/06/2026) |
 
@@ -135,3 +135,26 @@ pra poder reverter via `/operador` se a suspensão foi engano).
 Testado ponta a ponta com conta real (criar empresa de teste → suspender via
 Edge Function → confirmar bloqueio → reativar → confirmar acesso normal →
 dados de teste removidos).
+
+## Assinatura do webhook do Mercado Pago (01/07/2026)
+
+**Gap encontrado na auditoria**: `mp-webhook` comentava `MP_WEBHOOK_SECRET`
+como "opcional mas recomendado", mas nunca lia essa env var nem validava
+os headers `x-signature`/`x-request-id` que o MP envia — qualquer um que
+descobrisse a URL podia chamar o endpoint com um `payment_id`/`preapproval_id`
+válido e forçar reprocessamento (não dava pra forjar um pagamento aprovado
+falso, já que o status vem de uma consulta real à API do MP, não do corpo
+da requisição — mas ainda assim, sem checagem de origem).
+
+**Fix**: implementada validação HMAC-SHA256 do `x-signature` conforme a
+[doc oficial do MP](https://www.mercadopago.com.br/developers/pt/docs/checkout-api/additional-content/your-integrations/notifications/webhooks),
+com comparação em tempo constante. Se `MP_WEBHOOK_SECRET` não estiver
+configurada, a função loga um warning e segue sem validar (mesmo padrão de
+fallback com warning já usado em `frontendUrl()`) — não quebra o fluxo
+atual, mas fica visível no log que está inseguro.
+
+**Pendente**: configurar `MP_WEBHOOK_SECRET` no DEV/produção com o valor
+real copiado do painel do Mercado Pago (Suas integrações → app → Webhooks)
+via `supabase secrets set MP_WEBHOOK_SECRET=... --project-ref <projeto>` —
+não testável via MCP (sem ferramenta de secrets), e o valor real só existe
+no painel do MP.
