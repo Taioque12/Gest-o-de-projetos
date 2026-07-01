@@ -5,9 +5,10 @@ yarn-error.log
 dist/
 build/
 
-# Environment variables
-.env.local
-.env.*.local
+# Environment variables (nunca commitar segredos)
+.env
+.env.*
+!.env.example
 
 # IDE
 .vscode/

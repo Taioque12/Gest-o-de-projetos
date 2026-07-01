@@ -15,7 +15,15 @@ export function useAnexos(projetoId) {
       .select('*')
       .eq('projeto_id', projetoId)
       .order('criado_em', { ascending: false })
-    setAnexos(data ?? [])
+    // Bucket privado: gera signed URLs (1h) a partir do storage_path
+    const rows = data ?? []
+    const paths = rows.filter(a => a.storage_path).map(a => a.storage_path)
+    const signedMap = {}
+    if (paths.length) {
+      const { data: signed } = await supabase.storage.from('anexos').createSignedUrls(paths, 3600)
+      signed?.forEach(s => { if (s.signedUrl) signedMap[s.path] = s.signedUrl })
+    }
+    setAnexos(rows.map(a => signedMap[a.storage_path] ? { ...a, url: signedMap[a.storage_path] } : a))
     setLoading(false)
   }, [projetoId])
 
@@ -29,6 +37,8 @@ export function useAnexos(projetoId) {
     const path = `${projetoId}/${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage.from('anexos').upload(path, file)
     if (upErr) throw upErr
+    // url gravada só como referência legada — o download real usa
+    // signed URL gerada no fetch a partir do storage_path
     const { data: { publicUrl } } = supabase.storage.from('anexos').getPublicUrl(path)
     const { error: dbErr } = await supabase.from('anexos').insert({
       projeto_id: projetoId,

@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "teste:isolamento": "node scripts/teste-isolamento.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

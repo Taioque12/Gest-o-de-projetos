@@ -3,11 +3,12 @@ import { supabase, supabaseConfigurado } from '../supabase'
 
 export function useAuth() {
   const [user, setUser] = useState(null)
-  const [perfil, setPerfil] = useState('admin')
+  const [perfil, setPerfil] = useState('cliente')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabaseConfigurado) { setLoading(false); return }
+    // Modo demo (sem Supabase): mantém UI completa de admin
+    if (!supabaseConfigurado) { setPerfil('admin'); setLoading(false); return }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -18,7 +19,7 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_ev, session) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchPerfil(session.user.id)
-      else { setPerfil('admin'); setLoading(false) }
+      else { setPerfil('cliente'); setLoading(false) }
     })
 
     return () => subscription.unsubscribe()
@@ -35,16 +36,12 @@ export function useAuth() {
 
       if (error) throw error
 
-      if (!data) {
-        // Usuário existe no Auth mas não na tabela usuarios — cria com perfil padrão
-        await supabase.from('usuarios').insert({ id: authUid, perfil: 'equipe' })
-        setPerfil('equipe')
-      } else {
-        setPerfil(data.perfil ?? 'equipe')
-      }
+      // Linha em usuarios é criada pelo trigger on_auth_user_created;
+      // se ainda não existir, assume o menor privilégio em vez de inserir daqui
+      setPerfil(data?.perfil ?? 'cliente')
     } catch {
-      // Se RLS bloquear (ex: policy ainda não criada), assume equipe como fallback seguro
-      setPerfil('equipe')
+      // Se RLS bloquear, assume o menor privilégio como fallback seguro
+      setPerfil('cliente')
     }
     setLoading(false)
   }

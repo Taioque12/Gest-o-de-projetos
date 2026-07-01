@@ -56,6 +56,15 @@ Deno.serve(async (req: Request) => {
     const { email, senha, nome, perfil, funcao, data_nascimento } = await req.json()
     if (!email || !senha) return json({ error: 'E-mail e senha são obrigatórios' }, 400)
 
+    // Política de senha: mínimo 10 caracteres com letra e número
+    if (typeof senha !== 'string' || senha.length < 10)
+      return json({ error: 'Senha deve ter no mínimo 10 caracteres.' }, 400)
+    if (!/[a-zA-Z]/.test(senha) || !/[0-9]/.test(senha))
+      return json({ error: 'Senha deve conter letras e números.' }, 400)
+
+    if (perfil && !['admin', 'equipe', 'cliente'].includes(perfil))
+      return json({ error: 'Perfil inválido.' }, 400)
+
     const liberado = await checarRateLimit(admin, user.id, 'admin-create-user', 60_000, 5)
     if (!liberado) return json({ error: 'Muitos convites em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
 
