@@ -266,7 +266,10 @@ de codar):
 
 ### Testar
 - [ ] **Pagamento real no sandbox MP** — criar conta de teste compradora no painel Mercado Pago, pagar PIX/cartão de teste, confirmar que `mp-webhook` ativa a empresa sozinha. (Ainda não testado de ponta a ponta — depende de acesso à conta MP, não testável sem o usuário.)
-- [ ] **Fluxo completo pós-mudanças de 30/06** no beta: import `.mpp`, análise IA com rate limit, restrição de `equipe` por projeto alocado (fase 11), criar usuário em Acessos.
+- [x] ~~Restrição de `equipe` por projeto alocado (fase 11)~~ (testado em 01/07/2026: criado funcionário/usuário "equipe" real, alocado só num de dois projetos via `programacao_semanal` — confirmado que só enxerga o projeto alocado, nem o outro nem os demais da empresa).
+- [x] ~~Criar usuário em Acessos~~ (testado em 01/07/2026: chamada real à Edge Function `admin-create-user` como admin — usuário criado com perfil/vínculo corretos e login funcionando).
+- [ ] **Análise IA com rate limit** — lógica revisada por leitura de código (janela de 60s / máx. 3 chamadas, correta), mas não testável ponta a ponta no DEV: `GEMINI_API_KEY` não está configurada nesse ambiente hoje, então a Edge Function retorna erro antes de chegar no rate limit.
+- [ ] **Import `.mpp`** — não testável sem um arquivo `.mpp` real de amostra.
 - [x] ~~Isolamento RLS com 2+ empresas reais~~ (testado em 01/07/2026: criada uma 2ª empresa/usuário reais via onboarding, confirmado que cada uma só enxerga os próprios dados — no app e simulando o JWT direto no Postgres).
 
 ### Implementar — Fases do plano
@@ -274,7 +277,7 @@ de codar):
 - [ ] **Fase 9 — Deploy produção**: aplicar migrações 1→11 + `migracao-cache-analise-ia.sql` + `migracao-rate-limit-ia.sql` + `migracao-fase10b-painel-operador.sql` + `migracao-fase10c-view-operador.sql` + `migracao-rate-limit-acoes.sql` + `migracao-buckets-storage.sql` no projeto `uaooutzbxkkcyfuwijbi`, subir frontend (trocar de deploy manual pra produção oficial) e todas as Edge Functions (incluindo `operador-painel`), trocar token MP de TEST para produção.
 - [ ] **Painel do operador — MRR e saúde do sistema** (parte da Fase 10 que ficou de fora do MVP — ver seção "Painel do Operador" acima).
 - [x] ~~Testar painel do operador end-to-end~~ (testado em 01/07/2026: **achado e corrigido bug real** — suspender empresa não bloqueava nada, ver "Bloqueio real de empresa suspensa" no `MIGRATIONS.md`. Ativar/suspender e trocar plano validados após o fix).
-- [ ] **Validar assinatura do webhook do Mercado Pago** (`mp-webhook`) — ainda não auditado se valida que a notificação realmente veio do MP.
+- [ ] **Validar assinatura do webhook do Mercado Pago** (`mp-webhook`) — **auditado em 01/07/2026, confirmado o gap**: o código comenta `MP_WEBHOOK_SECRET` como "opcional mas recomendado", mas nunca lê essa env var nem valida os headers `x-signature`/`x-request-id` que o MP envia — qualquer um que descubra a URL pode chamar o endpoint com um `payment_id`/`preapproval_id` válido (não forjável, já que o status vem de uma consulta real à API do MP, não do corpo da requisição) e forçar reprocessamento. Risco moderado (não dá pra forjar um pagamento aprovado falso), mas é boa prática implementar a validação de assinatura do MP antes de produção.
 
 ### Dívida técnica conhecida
 - [x] ~~`uploads_xml` sem `projeto_id`~~ (corrigido em 01/07/2026 — `UploadXML.jsx` agora faz UPDATE do `projeto_id` assim que o projeto é criado/atualizado).
