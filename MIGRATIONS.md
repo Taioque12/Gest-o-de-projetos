@@ -68,3 +68,21 @@ em toda Edge Function) pra gravar o rate limit na tabela `rate_limit_analise_ia`
 - **Fallback de `FRONTEND_URL`/`ALLOWED_ORIGINS`**: agora loga warning quando a
   env var não está configurada e cai no fallback hardcoded, pra facilitar
   detectar nos logs se a configuração sumir.
+
+## Rotas reais com react-router-dom (01/07/2026)
+
+Trocado o `useState('dashboard')` + prop-drilling de `onChangeView` por
+`react-router-dom` (`BrowserRouter` + `Routes`). Rotas: `/dashboard`,
+`/equipes`, `/acessos` (admin). Replicado do `saas-multitenant` (lá também
+inclui `/planos` e `/operador`, que não existem neste branch). Prepara terreno
+pra uma futura rota de checkout de pagamento.
+
+Corrigido de quebra um bug de acesso: no `App.jsx` antigo, o gate `view ===
+'equipes'` era checado antes do gate `perfil === 'cliente'`, então em teoria um
+cliente que soubesse manipular o estado interno de `view` conseguia renderizar
+a página real de Equipes. Agora `ClienteView` é retornado fora de `<Routes>`,
+antes de qualquer rota administrativa existir.
+
+Adicionado `frontend/vercel.json` com rewrite `/(.*) → /index.html` —
+obrigatório pro `BrowserRouter`: sem isso, dar F5 em qualquer rota que não seja
+`/` (ex: `/equipes`) retorna 404 na Vercel.
