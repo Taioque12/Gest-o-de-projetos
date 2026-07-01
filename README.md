@@ -236,8 +236,10 @@ Combinado com o usuário: unificar os dois repos faz sentido, mas **não agora**
 partes do SaaS ainda não validadas com dinheiro de verdade.
 
 **Pré-requisitos antes de começar a migração** (nessa ordem):
-1. [ ] `MP_WEBHOOK_SECRET` configurada (em andamento — usuário vai colar a
-   chave do painel do MP pra eu configurar via `supabase secrets set`).
+1. [x] ~~`MP_WEBHOOK_SECRET` configurada~~ (feito em 01/07/2026 — usuário
+   configurou direto no painel do Supabase; confirmado ativo: uma chamada
+   sem assinatura válida agora retorna `401 invalid signature`, antes
+   retornava `200` sem checar nada).
 2. [ ] Pagamento real testado ponta a ponta no sandbox do Mercado Pago
    (PIX + cartão), confirmando que `mp-webhook` ativa a empresa sozinha.
 3. [ ] Deploy de produção do saas estável por um tempo (Fase 9 do
