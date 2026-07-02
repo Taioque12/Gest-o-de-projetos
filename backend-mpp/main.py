@@ -104,7 +104,9 @@ def health():
 # Validação do JWT do Supabase. Preferência: chave assimétrica nova (ES256,
 # baixada do endpoint JWKS do projeto — SUPABASE_URL). Se SUPABASE_URL não
 # estiver configurada, usa o secret legacy HS256 (SUPABASE_JWT_SECRET).
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+if SUPABASE_URL and not SUPABASE_URL.startswith(("http://", "https://")):
+    SUPABASE_URL = f"https://{SUPABASE_URL}"
 SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
 _jwks_client = (
     jwt.PyJWKClient(
