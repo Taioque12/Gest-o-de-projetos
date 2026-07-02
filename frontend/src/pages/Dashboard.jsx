@@ -272,7 +272,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
                 CSV
               </button>
               {podeEditar && (
-                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
+                <button className="btn btn-primary"
                   onClick={() => setFormProjeto('novo')}>
                   + Nova OS
                 </button>

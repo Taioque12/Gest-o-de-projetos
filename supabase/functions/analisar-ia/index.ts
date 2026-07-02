@@ -4,9 +4,13 @@
 // rejeição no gateway antes de chegar aqui).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') || '';
+  const isAllowed = origin.endsWith('.vercel.app') || origin.startsWith('http://localhost:');
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : '',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
 }
 
 const GEMINI_KEY   = Deno.env.get('GEMINI_API_KEY') ?? ''
@@ -160,7 +164,7 @@ IMPORTANTE: Seja técnico, direto e acionável. Cada ação deve ter responsáve
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: getCorsHeaders(req) })
 
   try {
     const userClient = createClient(
@@ -169,9 +173,9 @@ Deno.serve(async (req: Request) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
     const { data: { user }, error: authErr } = await userClient.auth.getUser()
-    if (authErr || !user) return json({ error: 'Não autenticado' }, 401)
+    if (authErr || !user) return json(req, { error: 'Não autenticado' }, 401)
 
-    if (!GEMINI_KEY) return json({ error: 'GEMINI_API_KEY não configurada no servidor (secrets da função).' }, 500)
+    if (!GEMINI_KEY) return json(req, { error: 'GEMINI_API_KEY não configurada no servidor (secrets da função).' }, 500)
 
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -179,10 +183,10 @@ Deno.serve(async (req: Request) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
     const liberado = await checarRateLimit(admin, user.id)
-    if (!liberado) return json({ error: 'Muitas análises em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
+    if (!liberado) return json(req, { error: 'Muitas análises em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
 
     const { projeto, tarefas, parte, maxTokens } = await req.json()
-    if (!projeto || !tarefas || !parte) return json({ error: 'projeto, tarefas e parte são obrigatórios' }, 400)
+    if (!projeto || !tarefas || !parte) return json(req, { error: 'projeto, tarefas e parte são obrigatórios' }, 400)
 
     const prompt = parte === 1 ? buildPromptParte1(projeto, tarefas) : buildPromptParte2(projeto, tarefas);
 
@@ -196,19 +200,19 @@ Deno.serve(async (req: Request) => {
     })
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}))
-      return json({ error: err.error?.message ?? `Erro ${resp.status} ao consultar Gemini` }, 502)
+      return json(req, { error: err.error?.message ?? `Erro ${resp.status} ao consultar Gemini` }, 502)
     }
     const data = await resp.json()
     const texto = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta.'
-    return json({ texto }, 200)
+    return json(req, { texto }, 200)
   } catch (err) {
-    return json({ error: String(err) }, 500)
+    return json(req, { error: String(err) }, 500)
   }
 })
 
-function json(body: unknown, status: number) {
+function json(req: Request, body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
   })
 }

@@ -307,7 +307,7 @@ export default function Equipes({ user, perfil, onSignOut }) {
                     ))}
                   </div>
                   {podeEditar && (
-                    <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} onClick={() => setForm('novo')}>
+                    <button className="btn btn-primary" onClick={() => setForm('novo')}>
                       + Novo Funcionário
                     </button>
                   )}

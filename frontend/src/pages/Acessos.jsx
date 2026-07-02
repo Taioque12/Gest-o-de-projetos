@@ -153,8 +153,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <span className="hint">{staff.length} usuário(s)</span>
               <button
-                className="btn btn-ghost"
-                style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
+                className="btn btn-primary"
                 onClick={() => { setShowForm(true); setErroForm('') }}
               >
                 + Novo Usuário
@@ -313,7 +312,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
               </CAMPO>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button type="button" className="btn btn-ghost" onClick={() => { setShowForm(false); setErroForm('') }} disabled={salvando}>Cancelar</button>
-                <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
+                <button type="submit" className="btn btn-primary" disabled={salvando}>
                   {salvando ? 'Criando...' : 'Criar usuário'}
                 </button>
               </div>
@@ -342,7 +341,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
               </CAMPO>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setEditUser(null)} disabled={salvando}>Cancelar</button>
-                <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
+                <button type="submit" className="btn btn-primary" disabled={salvando}>
                   {salvando ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
