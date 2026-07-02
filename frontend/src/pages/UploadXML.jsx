@@ -5,7 +5,13 @@ import Toast from '../components/Toast'
 import { renderMarkdownLite } from '../utils/markdownLite'
 const MPP_API_URL  = import.meta.env.VITE_MPP_API_URL ?? ''
 
-const MAX_TAREFAS = 150
+// Mensagens de erro internas (Supabase/Postgres/Edge Function) não devem ir
+// cruas pra UI — só as que nós mesmos escrevemos (PT-BR) são seguras de exibir.
+function msgAmigavel(err, fallback) {
+  const m = err?.message ?? ''
+  const ehNossa = /[ãáéíóçê]/i.test(m) || /^Erro \d{3}/.test(m)
+  return ehNossa ? m : fallback
+}
 
 export default function UploadXML({ onBack, onCriado, projetos = [], criarProjeto, editarProjeto, user }) {
   const [over, setOver]           = useState(false)
@@ -117,7 +123,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
 
       setResultado({ ok: true, tarefas, nome: file.name, projeto, uploadId: uploadRow?.id ?? null })
     } catch (err) {
-      setResultado({ ok: false, erro: err.message })
+      setResultado({ ok: false, erro: msgAmigavel(err, 'Não foi possível processar o arquivo. Tente de novo.') })
     }
     setLoading(false)
   }
@@ -149,7 +155,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
       const texto2 = await chamarGemini(2, 7000)
       setAnalise(texto1 + '\n\n' + texto2)
     } catch (err) {
-      setErroIA('Erro ao consultar Gemini: ' + err.message)
+      setErroIA(msgAmigavel(err, 'Erro ao consultar a IA. Tente de novo em instantes.'))
     }
     setAnalisando(false)
   }
@@ -164,7 +170,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
       }
       if (onCriado) onCriado(`Projeto "${dados.nome}" importado do XML e adicionado ao dashboard!`)
     } catch (err) {
-      setToastErro('Erro ao criar projeto: ' + err.message)
+      setToastErro(msgAmigavel(err, 'Erro ao criar o projeto. Tente de novo.'))
       setSalvando(false)
     }
   }
@@ -192,7 +198,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
       setFeedbackFinal(`✅ Avanço de "${proj.nome}" atualizado para ${prev}%.`)
       setAcao(null)
     } catch (err) {
-      setToastErro('Erro ao atualizar: ' + err.message)
+      setToastErro(msgAmigavel(err, 'Erro ao atualizar o projeto. Tente de novo.'))
     }
     setSalvando(false)
   }

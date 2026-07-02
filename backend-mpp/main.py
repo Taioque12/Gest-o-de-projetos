@@ -24,10 +24,8 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile, Depends, 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 
-# Limite de tamanho de arquivo e rate-limit simples por IP — sem auth real
-# (o serviço é chamado direto do browser, sem token: VITE_MPP_API_URL já fica
-# exposta no bundle JS, então qualquer "segredo" no header seria visível
-# também). Isso aqui só evita abuso grosseiro/acidental de um serviço
+# Limite de tamanho de arquivo e rate-limit simples por IP, além do JWT
+# (verify_jwt abaixo). Evita abuso grosseiro/acidental de um serviço
 # gratuito de recursos limitados (Render free tier).
 MAX_FILE_SIZE = 30 * 1024 * 1024  # 30MB
 RATE_LIMIT_REQUESTS = 10
@@ -75,8 +73,8 @@ _origins = _origins_env or _ALLOWED_ORIGINS_FALLBACK
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in _origins.split(",") if o.strip()],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -103,22 +101,31 @@ def health():
     return {"status": "ok", "service": "mpp-reader"}
 
 
-# Suporta tanto o novo esquema de chaves assimétricas do Supabase (ES256, via
-# JWKS) quanto o legacy HS256 (SUPABASE_JWT_SECRET), pra não quebrar se o
-# projeto ainda tiver tokens antigos em circulação.
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+# Validação do JWT do Supabase. Preferência: chave assimétrica nova (ES256,
+# baixada do endpoint JWKS do projeto — SUPABASE_URL). Se SUPABASE_URL não
+# estiver configurada, usa o secret legacy HS256 (SUPABASE_JWT_SECRET).
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
-_jwks_client = jwt.PyJWKClient(f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json") if SUPABASE_URL else None
+_jwks_client = (
+    jwt.PyJWKClient(
+        f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json",
+        cache_keys=True,
+        lifespan=300,  # re-busca o JWKS a cada 5 min (cobre rotação de chave)
+        timeout=10,
+    )
+    if SUPABASE_URL
+    else None
+)
 security = HTTPBearer()
 
 def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
     if not _jwks_client and not SUPABASE_JWT_SECRET:
-        raise HTTPException(status_code=500, detail="SUPABASE_URL/SUPABASE_JWT_SECRET não configurados no servidor.")
+        raise HTTPException(status_code=500, detail="Autenticação não configurada no servidor.")
     token = credentials.credentials
     try:
         if _jwks_client:
             signing_key = _jwks_client.get_signing_key_from_jwt(token).key
-            return jwt.decode(token, signing_key, algorithms=["ES256", "RS256"], options={"verify_aud": False})
+            return jwt.decode(token, signing_key, algorithms=["ES256"], options={"verify_aud": False})
         return jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado.")
@@ -126,6 +133,10 @@ def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
         raise HTTPException(status_code=401, detail="Não foi possível validar a assinatura do token.")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido.")
+    except (OSError, ValueError):
+        # Falha de rede/parse ao buscar o JWKS (urllib) — não é culpa do
+        # cliente; devolve 503 pra sinalizar indisponibilidade temporária.
+        raise HTTPException(status_code=503, detail="Serviço de autenticação temporariamente indisponível. Tente de novo.")
 
 
 @app.post("/parse")
