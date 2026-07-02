@@ -47,6 +47,8 @@ Row Level Security (RLS) ativo em todas as tabelas.
 
 `backend-mpp/` é um serviço FastAPI + MPXJ que lê `.mpp`/`.mpx` nativo do MS Project (formato binário, não dá pra ler só com JS no navegador). Deploy gratuito no Render — ver `backend-mpp/README.md`. Sem essa env var configurada, o import continua funcionando normalmente via XML.
 
+Env vars no Render: `SUPABASE_URL` (validação JWT via JWKS), `ALLOWED_ORIGINS` (CORS) e opcionalmente `SUPABASE_JWT_SECRET` (fallback legacy HS256).
+
 ## 🤖 Análise de IA — Edge Function
 
 A chamada ao Gemini **não** acontece no client (evita expor a API key no bundle JS). O frontend chama a Edge Function `analisar-ia` (`supabase/functions/analisar-ia`), que valida o usuário autenticado e guarda a chave como secret no servidor:
@@ -70,7 +72,9 @@ Estado completo, ordem de aplicação das migrations e pendências: ver **`SECUR
 - **Política de senha**: `admin-create-user` exige 10+ caracteres com letra e número, e valida o perfil contra whitelist.
 - **Prompts da IA no servidor**: o frontend envia só `projeto`/`tarefas`/`parte`; a Edge Function `analisar-ia` monta o prompt (lógica fora do bundle).
 - **Limite de upload**: anexos 20MB, fotos de funcionário 5MB (só imagem) — validado no client *e* no bucket do Storage (`file_size_limit`), porque validação só no client é burlável.
-- **`backend-mpp` autenticado**: exige JWT do Supabase (`SUPABASE_JWT_SECRET` no servidor), além de limite de 30MB por arquivo e rate-limit de 10 req/min por IP (respeitando `x-forwarded-for`).
+- **`backend-mpp` autenticado**: exige JWT do Supabase, validado via **JWKS** (chave assimétrica ES256 nova — `SUPABASE_URL` no servidor; timeout 10s, cache de 5 min cobrindo rotação de chave, falha de rede vira 503 amigável), com fallback pro secret legacy HS256 (`SUPABASE_JWT_SECRET`) se a URL não estiver configurada. Além de limite de 30MB por arquivo, rate-limit de 10 req/min por IP (respeitando `x-forwarded-for`) e CORS restrito a GET/POST + `Authorization`/`Content-Type`.
+- **Mensagens de erro sanitizadas na UI**: erros internos (Postgres/RLS/Edge Function/Gemini) não aparecem crus pro usuário — só mensagens amigáveis escritas pelo app (`UploadXML.jsx`).
+- **Dependências do `backend-mpp` pinadas** (`requirements.txt` com `==`) — build reprodutível, sem surpresa de versão nova em deploy.
 - **Chave do Gemini fora do client** — ver seção "Análise de IA" abaixo.
 - **Headers de segurança na Vercel** (HSTS, nosniff, X-Frame-Options, Referrer-Policy) e **Dependabot** semanal (npm/pip).
 
