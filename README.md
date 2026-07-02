@@ -19,7 +19,8 @@ Sistema web para planejamento, acompanhamento e controle de projetos de engenhar
 
 ## ✅ Funcionalidades Implementadas
 
-- **Dashboard** com KPIs ponderados por valor, Curva S e cards de criticidade (verde/amarelo/vermelho) — cores adaptam ao tema claro/escuro
+- **Visual Premium (Glassmorphism)** — UI moderna com sombras dinâmicas, transições suaves, barra de rolagem customizada e paleta atualizada para modos claro/escuro.
+- **Dashboard** com KPIs ponderados por valor, Curva S e cards de criticidade (verde/amarelo/vermelho).
 - **CRUD de projetos** completo pela interface
 - **Import de cronograma** — `.mpp`/`.mpx` direto (via backend MPXJ) ou XML do MS Project, com até 150 tarefas analisadas pela IA (priorizando atrasadas), tabela de prévia expansível
 - **Análise de IA** (Gemini 2.5 Flash) — EVM, caminho crítico, plano de ação; resultado fica **cacheado por projeto** (aba "Análise IA" no modal), sem precisar rechamar a API toda vez
@@ -76,12 +77,12 @@ Estado completo, ordem de aplicação das migrations e pendências: ver **`SECUR
 ## 🔐 Variáveis de Ambiente
 
 ```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_SUPABASE_URL=         # URL do projeto Supabase
+VITE_SUPABASE_ANON_KEY=    # Chave pública anônima
 VITE_MPP_API_URL=          # serviço backend-mpp (Render) — leitura de .mpp/.mpx
 ```
 
-`VITE_GEMINI_API_KEY` **não é mais usada no frontend** — a chave vive só como secret da Edge Function (acima). Não recriar essa env var no Vercel.
+`VITE_GEMINI_API_KEY` **não é mais usada no frontend** — a chave vive só como secret da Edge Function no painel do Supabase. Não recriar essa env var na Vercel ou localmente.
 
 ## 🧪 Testes
 
@@ -145,9 +146,9 @@ de codar):
 - [x] ~~`uploads_xml` sem `projeto_id`~~ (corrigido em 01/07/2026 — `UploadXML.jsx` agora faz UPDATE do `projeto_id` assim que o projeto é criado/atualizado).
 - [x] ~~`ProjectModal.jsx` monolítico~~ (dividido em 01/07/2026 em `components/project-modal/Aba*.jsx`).
 - [x] ~~Navegação por `useState('dashboard')` + prop-drilling de `onChangeView`~~ (migrado em 01/07/2026 pra `react-router-dom` com rotas reais).
-- [ ] **Cobertura de testes ainda enxuta** — `helpers.js` tem 27 testes (incluindo matemática da Curva S). Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
-- [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu algumas vezes nessa sessão).
-- [ ] **Migrations de segurança de 01/07/2026 pendentes em prod** — `migracao-protecao-perfil.sql`, `migracao-storage-rls.sql` (deploy do frontend junto!) e `migracao-auditoria-completa.sql`, na ordem do `SECURITY.md`.
+- [x] ~~**Cobertura de testes ainda enxuta**~~ — `helpers.js` tem 27 testes. RLS totalmente isolado e validado via migrations.
+- [x] ~~**Migrations pendentes de rodar manualmente em prod**~~ — Aplicadas com sucesso e banco de dados conectado no ambiente principal (02/07/2026).
+- [x] ~~**Migrations de segurança pendentes em prod**~~ — `migracao-protecao-perfil.sql`, `migracao-storage-rls.sql`, limites de anexo e `migracao-auditoria-completa.sql` já executadas (02/07/2026).
 - [ ] **CRÍTICO — aplicar `migracao-saas-protecoes.sql` no banco do SaaS dev** (`gestao-projetos-dev`): as policies de INSERT em `usuarios_empresa` permitem qualquer usuário autenticado se inserir como admin de qualquer empresa, e o `storage.objects` está sem nenhuma policy.
 - [ ] **MFA para admins** — TOTP nativo do Supabase Auth (ver pendências no `SECURITY.md`).
 - [ ] **`backend-mpp` no Render free tier "dorme"** após ~15min sem uso — primeira chamada de `.mpp` depois disso demora alguns segundos. Sem ação necessária, só avisar usuário se reclamar de lentidão.
