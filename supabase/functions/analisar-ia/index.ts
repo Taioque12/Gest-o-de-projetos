@@ -4,9 +4,22 @@
 // rejeição no gateway antes de chegar aqui).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'https://frontend-beta-navy-63.vercel.app',
+  Deno.env.get('FRONTEND_URL') || '',
+].filter(Boolean)
+
+function getCorsOrigin(reqOrigin: string | null) {
+  if (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) return reqOrigin
+  return ALLOWED_ORIGINS[0]
+}
+
+function getCorsHeaders(req: Request) {
+  return {
+    'Access-Control-Allow-Origin': getCorsOrigin(req.headers.get('Origin')),
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
 }
 
 const GEMINI_KEY   = Deno.env.get('GEMINI_API_KEY') ?? ''
@@ -41,6 +54,7 @@ async function checarRateLimit(admin: ReturnType<typeof createClient>, userId: s
 }
 
 Deno.serve(async (req: Request) => {
+  const cors = getCorsHeaders(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
@@ -88,6 +102,6 @@ Deno.serve(async (req: Request) => {
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(new Request('http://localhost')), 'Content-Type': 'application/json' },
   })
 }

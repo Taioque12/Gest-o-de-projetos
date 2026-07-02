@@ -310,7 +310,7 @@ export default function Equipes({ user, perfil, empresaId, onSignOut }) {
                     ))}
                   </div>
                   {podeEditar && (
-                    <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} onClick={() => setForm('novo')}>
+                    <button className="btn-primary" onClick={() => setForm('novo')}>
                       + Novo Funcionário
                     </button>
                   )}
@@ -321,7 +321,7 @@ export default function Equipes({ user, perfil, empresaId, onSignOut }) {
                   <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)' }}>
                     <p>Nenhum funcionário cadastrado.</p>
                     {podeEditar && (
-                      <button className="btn btn-ghost" style={{ marginTop: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }} onClick={() => setForm('novo')}>
+                      <button className="btn-primary" style={{ marginTop: 12 }} onClick={() => setForm('novo')}>
                         + Cadastrar primeiro funcionário
                       </button>
                     )}

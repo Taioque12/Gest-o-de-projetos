@@ -142,8 +142,7 @@ export default function Acessos({ user, perfil, empresaId, onSignOut }) {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <span className="hint">{staff.length} membro(s)</span>
               <button
-                className="btn btn-ghost"
-                style={{ background: 'var(--brand)', color: '#fff', border: 'none' }}
+                className="btn-primary"
                 onClick={() => { setShowForm(true); setErroForm('') }}
               >
                 + Novo Usuário
@@ -295,7 +294,7 @@ export default function Acessos({ user, perfil, empresaId, onSignOut }) {
               </CAMPO>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button type="button" className="btn btn-ghost" onClick={() => { setShowForm(false); setErroForm('') }} disabled={salvando}>Cancelar</button>
-                <button type="submit" className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none' }} disabled={salvando}>
+                <button type="submit" className="btn-primary" disabled={salvando}>
                   {salvando ? 'Criando...' : 'Criar usuário'}
                 </button>
               </div>

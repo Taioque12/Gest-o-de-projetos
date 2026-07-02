@@ -274,7 +274,7 @@ export default function Dashboard({ user, perfil, empresaId, superAdmin, onSignO
                 CSV
               </button>
               {podeEditar && (
-                <button className="btn btn-ghost" style={{ background: 'var(--brand)', color: '#fff', border: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
+                <button className="btn-primary" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                   onClick={() => setFormProjeto('novo')}>
                   + Nova OS
                 </button>
@@ -299,7 +299,7 @@ export default function Dashboard({ user, perfil, empresaId, superAdmin, onSignO
               <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)' }}>
                 <p>Nenhum projeto nesta classificação.</p>
                 {podeEditar && filtro === 'todos' && (
-                  <button className="btn btn-ghost" style={{ marginTop: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }}
+                  <button className="btn-primary" style={{ marginTop: 12 }}
                     onClick={() => setFormProjeto('novo')}>
                     + Cadastrar primeira OS
                   </button>
