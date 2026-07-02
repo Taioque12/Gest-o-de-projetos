@@ -59,10 +59,19 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref uaooutzbxkkcyfuwijbi
 
 ## 🛡 Endurecimento de Segurança
 
+Estado completo, ordem de aplicação das migrations e pendências: ver **`SECURITY.md`**.
+
+- **Anti-escalação de privilégio**: triggers bloqueiam não-admin de alterar `perfil`/`ativo` na tabela `usuarios` (`migracao-protecao-perfil.sql`); `useAuth.js` sem insert silencioso e com fallback de menor privilégio (`cliente`).
+- **RLS no Storage**: bucket `anexos` privado com policies por projeto via `acessos_cliente` + RLS na tabela `anexos`; download via signed URL de 1h (`migracao-storage-rls.sql` — **exige deploy do frontend junto**).
+- **Auditoria imutável**: `audit_log` com triggers em `projetos`, `acessos_cliente` e `usuarios` — quem alterou o quê, antes/depois (`migracao-auditoria-completa.sql`).
+- **Teste de isolamento RLS**: `npm run teste:isolamento` loga como cliente/equipe de teste e tenta vazar dados de todas as tabelas — exit code 1 = não faça deploy.
 - **Edge Functions com rate limit**: `analisar-ia` (3 chamadas/60s), `admin-create-user` (5/60s) — tabela genérica `rate_limit_acoes` (e `rate_limit_analise_ia` específica da IA).
+- **Política de senha**: `admin-create-user` exige 10+ caracteres com letra e número, e valida o perfil contra whitelist.
+- **Prompts da IA no servidor**: o frontend envia só `projeto`/`tarefas`/`parte`; a Edge Function `analisar-ia` monta o prompt (lógica fora do bundle).
 - **Limite de upload**: anexos 20MB, fotos de funcionário 5MB (só imagem) — validado no client *e* no bucket do Storage (`file_size_limit`), porque validação só no client é burlável.
-- **`backend-mpp` protegido**: limite de 30MB por arquivo + rate-limit de 10 req/min por IP, já que o serviço é chamado direto do browser (`VITE_MPP_API_URL` fica exposta no bundle) e não tem autenticação real.
+- **`backend-mpp` autenticado**: exige JWT do Supabase (`SUPABASE_JWT_SECRET` no servidor), além de limite de 30MB por arquivo e rate-limit de 10 req/min por IP (respeitando `x-forwarded-for`).
 - **Chave do Gemini fora do client** — ver seção "Análise de IA" abaixo.
+- **Headers de segurança na Vercel** (HSTS, nosniff, X-Frame-Options, Referrer-Policy) e **Dependabot** semanal (npm/pip).
 
 ## 🔐 Variáveis de Ambiente
 
@@ -78,10 +87,11 @@ VITE_MPP_API_URL=          # serviço backend-mpp (Render) — leitura de .mpp/.
 
 ```bash
 cd frontend
-npm test
+npm test                  # unitários (helpers.js)
+npm run teste:isolamento  # isolamento RLS entre perfis (ver SECURITY.md)
 ```
 
-Cobertura ainda enxuta — só `utils/helpers.js` (funções puras: classificação de criticidade, formatação, e a priorização de tarefas do import XML/.mpp, que já causou um bug em produção uma vez).
+Cobertura unitária ainda enxuta — só `utils/helpers.js` (funções puras: classificação de criticidade, formatação, e a priorização de tarefas do import XML/.mpp, que já causou um bug em produção uma vez). O teste de isolamento exige usuários de teste no Supabase Auth e as env vars descritas no `SECURITY.md`.
 
 ## 📁 Estrutura do Projeto
 
@@ -137,6 +147,9 @@ de codar):
 - [x] ~~Navegação por `useState('dashboard')` + prop-drilling de `onChangeView`~~ (migrado em 01/07/2026 pra `react-router-dom` com rotas reais).
 - [ ] **Cobertura de testes ainda enxuta** — `helpers.js` tem 27 testes (incluindo matemática da Curva S). Hooks (`useProjetos`, `useFuncionarios`) e componentes não têm teste nenhum.
 - [ ] **Migrations pendentes de rodar manualmente em prod** — conferir `MIGRATIONS.md` antes de cada feature nova; toda vez que uma migration ✅ não está lá, algo vai quebrar silenciosamente (já aconteceu algumas vezes nessa sessão).
+- [ ] **Migrations de segurança de 01/07/2026 pendentes em prod** — `migracao-protecao-perfil.sql`, `migracao-storage-rls.sql` (deploy do frontend junto!) e `migracao-auditoria-completa.sql`, na ordem do `SECURITY.md`.
+- [ ] **CRÍTICO — aplicar `migracao-saas-protecoes.sql` no banco do SaaS dev** (`gestao-projetos-dev`): as policies de INSERT em `usuarios_empresa` permitem qualquer usuário autenticado se inserir como admin de qualquer empresa, e o `storage.objects` está sem nenhuma policy.
+- [ ] **MFA para admins** — TOTP nativo do Supabase Auth (ver pendências no `SECURITY.md`).
 - [ ] **`backend-mpp` no Render free tier "dorme"** após ~15min sem uso — primeira chamada de `.mpp` depois disso demora alguns segundos. Sem ação necessária, só avisar usuário se reclamar de lentidão.
 - [ ] **Webhook do Mercado Pago sem validação de assinatura** (ainda não auditado — só relevante quando o `main` tiver pagamento; hoje só o `saas-multitenant` tem).
 
