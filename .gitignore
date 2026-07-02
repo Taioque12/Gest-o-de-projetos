@@ -29,6 +29,10 @@ supabase/seed.sql
 out/
 .next/
 
+# Python
+__pycache__/
+*.pyc
+
 # Misc
 *.log
 supabase/.temp/
