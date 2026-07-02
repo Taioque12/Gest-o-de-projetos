@@ -125,14 +125,18 @@ def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
         raise HTTPException(status_code=500, detail="Autenticação não configurada no servidor.")
     token = credentials.credentials
     try:
-        if _jwks_client:
+        alg = jwt.get_unverified_header(token).get("alg", "")
+        if _jwks_client and alg == "ES256":
             signing_key = _jwks_client.get_signing_key_from_jwt(token).key
             return jwt.decode(token, signing_key, algorithms=["ES256"], options={"verify_aud": False})
-        return jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
+        if SUPABASE_JWT_SECRET and alg == "HS256":
+            # Sessões antigas, emitidas antes da migração pra chave assimétrica.
+            return jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
+        raise HTTPException(status_code=401, detail="Token inválido. Saia e entre de novo no sistema.")
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado.")
+        raise HTTPException(status_code=401, detail="Token expirado. Saia e entre de novo no sistema.")
     except jwt.PyJWKClientError:
-        raise HTTPException(status_code=401, detail="Não foi possível validar a assinatura do token.")
+        raise HTTPException(status_code=401, detail="Não foi possível validar a assinatura do token. Saia e entre de novo no sistema.")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido.")
     except (OSError, ValueError):
