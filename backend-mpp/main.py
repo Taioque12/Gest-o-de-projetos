@@ -103,22 +103,27 @@ def health():
     return {"status": "ok", "service": "mpp-reader"}
 
 
+# Suporta tanto o novo esquema de chaves assimétricas do Supabase (ES256, via
+# JWKS) quanto o legacy HS256 (SUPABASE_JWT_SECRET), pra não quebrar se o
+# projeto ainda tiver tokens antigos em circulação.
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+_jwks_client = jwt.PyJWKClient(f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json") if SUPABASE_URL else None
 security = HTTPBearer()
 
 def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
-    if not SUPABASE_JWT_SECRET:
-        raise HTTPException(status_code=500, detail="SUPABASE_JWT_SECRET não configurado no servidor.")
+    if not _jwks_client and not SUPABASE_JWT_SECRET:
+        raise HTTPException(status_code=500, detail="SUPABASE_URL/SUPABASE_JWT_SECRET não configurados no servidor.")
+    token = credentials.credentials
     try:
-        payload = jwt.decode(
-            credentials.credentials,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            options={"verify_aud": False}
-        )
-        return payload
+        if _jwks_client:
+            signing_key = _jwks_client.get_signing_key_from_jwt(token).key
+            return jwt.decode(token, signing_key, algorithms=["ES256", "RS256"], options={"verify_aud": False})
+        return jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado.")
+    except jwt.PyJWKClientError:
+        raise HTTPException(status_code=401, detail="Não foi possível validar a assinatura do token.")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido.")
 

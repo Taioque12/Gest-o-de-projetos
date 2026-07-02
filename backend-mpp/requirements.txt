@@ -3,4 +3,4 @@ uvicorn[standard]
 python-multipart
 mpxj
 JPype1
-PyJWT
+PyJWT[crypto]
