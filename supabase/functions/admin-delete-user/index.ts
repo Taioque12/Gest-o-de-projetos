@@ -68,12 +68,16 @@ Deno.serve(async (req: Request) => {
       if ((count ?? 0) <= 1) return json(req, { error: 'Não é possível remover o único admin do sistema.' }, 400)
     }
 
+    // Alguns usuários da base (seed inicial) foram inseridos direto na tabela
+    // usuarios, sem conta correspondente no Auth — deleteUser retornaria
+    // "User not found" nesses casos. Isso não deve bloquear a remoção do
+    // perfil, então o erro do Auth é tolerado; só a falha em `usuarios` é fatal.
+    const { error: delAuthErr } = await admin.auth.admin.deleteUser(id)
+    if (delAuthErr && !/not.*found/i.test(delAuthErr.message)) return json(req, { error: delAuthErr.message }, 500)
+
     // acessos_cliente cai em cascata (FK on delete cascade)
     const { error: delUsuarioErr } = await admin.from('usuarios').delete().eq('id', id)
     if (delUsuarioErr) return json(req, { error: delUsuarioErr.message }, 500)
-
-    const { error: delAuthErr } = await admin.auth.admin.deleteUser(id)
-    if (delAuthErr) return json(req, { error: delAuthErr.message }, 500)
 
     return json(req, { ok: true }, 200)
   } catch (err) {

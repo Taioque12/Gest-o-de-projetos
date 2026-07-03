@@ -118,11 +118,13 @@ export default function Acessos({ user, perfil, onSignOut }) {
       )
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Erro ao remover usuário')
-      await refetch()
       setToast('Usuário removido.')
     } catch (err) {
       setToastErro('Erro: ' + err.message)
     }
+    // Sempre refaz a busca: mesmo em erro, a linha em `usuarios` pode já ter
+    // sido apagada no servidor antes da falha (ex: Auth sem conta correspondente).
+    await refetch()
     setSalvando(false)
   }
 
