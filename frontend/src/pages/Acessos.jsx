@@ -100,6 +100,32 @@ export default function Acessos({ user, perfil, onSignOut }) {
     setSalvando(false)
   }
 
+  async function handleRemoverUsuario(u) {
+    if (!window.confirm(`Remover "${u.nome || u.email}"? Esta ação não pode ser desfeita — o usuário perde o acesso imediatamente.`)) return
+    setSalvando(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ id: u.id }),
+        }
+      )
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Erro ao remover usuário')
+      await refetch()
+      setToast('Usuário removido.')
+    } catch (err) {
+      setToastErro('Erro: ' + err.message)
+    }
+    setSalvando(false)
+  }
+
   async function handleCriarUsuario(e) {
     e.preventDefault()
     setErroForm('')
@@ -168,6 +194,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>E-mail</th>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Função</th>
                   <th style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--ink-2)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Perfil</th>
+                  <th style={{ padding: '8px 12px' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -202,6 +229,10 @@ export default function Acessos({ user, perfil, onSignOut }) {
                       <button onClick={() => { setEditUser(u); setEditData({ nome: u.nome || '', funcao: u.funcao || '', data_nascimento: u.data_nascimento || '' }) }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 13, padding: 4 }} title="Editar usuário">✏️</button>
                       </div>
+                    </td>
+                    <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                      <button onClick={() => handleRemoverUsuario(u)} disabled={salvando}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 14, padding: 4 }} title="Remover usuário">🗑️</button>
                     </td>
                   </tr>
                 ))}
