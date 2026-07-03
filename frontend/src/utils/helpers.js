@@ -130,14 +130,15 @@ export const histogramaOpts = (p, efetivo = []) => {
 
 export const portfolioCurveOpts = projetos => {
   const VTOT = projetos.reduce((s,p)=>s+p.valor,0)
-  const wAvgPrev = projetos.reduce((s,p)=>s+p.valor*p.prev,0)/VTOT
-  const wAvgReal = projetos.reduce((s,p)=>s+p.valor*p.real,0)/VTOT
+  const wAvgPrev = VTOT > 0 ? projetos.reduce((s,p)=>s+p.valor*p.prev,0)/VTOT : 0
+  const wAvgReal = VTOT > 0 ? projetos.reduce((s,p)=>s+p.valor*p.real,0)/VTOT : 0
+  const denom = VTOT > 0 ? VTOT : 1
   const gs = Math.min(...projetos.map(p=>p._s)), ge=Math.max(...projetos.map(p=>p._e)), span=ge-gs
   const planned=[], actual=[]
   for (let ms=gs; ms<=ge; ms+=WEEK) {
     const x=(ms-gs)/span
-    planned.push({x, y:projetos.reduce((a,p)=>a+p.valor*plannedPct(p,ms),0)/VTOT})
-    if (ms<=HOJE) actual.push({x, y:projetos.reduce((a,p)=>a+p.valor*realizadoPct(p,ms),0)/VTOT})
+    planned.push({x, y:projetos.reduce((a,p)=>a+p.valor*plannedPct(p,ms),0)/denom})
+    if (ms<=HOJE) actual.push({x, y:projetos.reduce((a,p)=>a+p.valor*realizadoPct(p,ms),0)/denom})
   }
   if (planned[planned.length-1].x < 1) planned.push({x:1,y:100})
   const tX=(HOJE-gs)/span

@@ -100,12 +100,6 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
         )
       })}
 
-      {/* Label % realizado */}
-      <rect x={PX(last.x) + 10} y={PY(realToday) - 11} width="46" height="18" rx="5" fill="#16a34a" />
-      <text x={PX(last.x) + 33} y={PY(realToday) + 2} textAnchor="middle" fontSize="11" fontWeight="800" fill="#fff" fontFamily="Inter, sans-serif">
-        {fmt(realToday, 0)}%
-      </text>
-
       {/* Linha HOJE */}
       <line x1={hx} y1={padT} x2={hx} y2={y0} stroke="var(--ink-2)" strokeWidth="1.5" strokeDasharray="5 4" />
 
@@ -115,27 +109,42 @@ export default function CurvaS({ opts, baseline = null, height = 360 }) {
         HOJE
       </text>
 
-      {/* Label % previsto */}
-      <text x={hx + 8} y={PY(prevToday) - 10} fontSize="11" fontWeight="700" fill="var(--ink)" fontFamily="Inter, sans-serif">
-        {fmt(prevToday, 0)}%
-      </text>
+      {/* Quando a linha "hoje" cai perto do último ponto (caso comum), previsto
+          e realizado ficam muito próximos — empilha os labels na vertical em
+          vez de lado a lado, pra não sobrepor. */}
+      {(() => {
+        const proximos = Math.abs(PX(last.x) - hx) < 60
+        const yReal = PY(realToday)
+        const yPrev = PY(prevToday)
+        const empilhado = proximos && Math.abs(yReal - yPrev) < 22
 
-      {/* Desvio — destaque com fundo */}
-      {desvio !== 0 && (
-        <g>
-          <rect
-            x={hx + 6} y={PY(prevToday) - 2} width="54" height="16" rx="4"
-            fill={desvioPositivo ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'}
-            stroke={desvioPositivo ? 'rgba(34,197,94,.5)' : 'rgba(239,68,68,.5)'}
-            strokeWidth="1"
-          />
-          <text x={hx + 33} y={PY(prevToday) + 10} textAnchor="middle" fontSize="11" fontWeight="800"
-            fill={desvioPositivo ? '#4ade80' : '#f87171'}
-            fontFamily="Inter, sans-serif">
-            {desvio > 0 ? '+' : ''}{fmt(desvio, 1)}pp
-          </text>
-        </g>
-      )}
+        const realY = empilhado ? Math.min(yReal, yPrev) - 11 : yReal - 11
+        const prevY = empilhado ? realY + 20 : yPrev - 11
+        const labelX = Math.max(PX(last.x), hx) + 10
+
+        return (
+          <>
+            {/* Label % realizado */}
+            <rect x={labelX} y={realY} width="46" height="18" rx="5" fill="#16a34a" />
+            <text x={labelX + 23} y={realY + 13} textAnchor="middle" fontSize="11" fontWeight="800" fill="#fff" fontFamily="Inter, sans-serif">
+              {fmt(realToday, 0)}%
+            </text>
+
+            {/* Label % previsto + desvio */}
+            <rect
+              x={labelX} y={prevY} width="72" height="18" rx="5"
+              fill={desvioPositivo ? 'rgba(34,197,94,.18)' : 'rgba(239,68,68,.18)'}
+              stroke={desvioPositivo ? 'rgba(34,197,94,.5)' : 'rgba(239,68,68,.5)'}
+              strokeWidth="1"
+            />
+            <text x={labelX + 36} y={prevY + 13} textAnchor="middle" fontSize="10.5" fontWeight="700"
+              fill="var(--ink)"
+              fontFamily="Inter, sans-serif">
+              {fmt(prevToday, 0)}% · {desvio > 0 ? '+' : ''}{fmt(desvio, 1)}pp
+            </text>
+          </>
+        )
+      })()}
     </svg>
   )
 }
