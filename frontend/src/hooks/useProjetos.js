@@ -73,7 +73,7 @@ export function useProjetos(perfil, userId, userEmail) {
   }, [fetchProjetos])
 
   async function criarProjeto(dados) {
-    const { prev, real, ...projetoData } = dados
+    const { prev, real, upload_id, ...projetoData } = dados
     const { data, error } = await supabase
       .from('projetos')
       .insert({
@@ -95,6 +95,16 @@ export function useProjetos(perfil, userId, userEmail) {
       .single()
     if (error) throw error
 
+    // Guarda no histórico, sem sobrescrever análises anteriores
+    if (projetoData.ultima_analise_ia) {
+      await supabase.from('analise_ia_historico').insert({
+        projeto_id: data.id,
+        texto:      projetoData.ultima_analise_ia,
+        upload_id:  upload_id ?? null,
+        criado_por: userEmail ?? null,
+      })
+    }
+
     // Registra o avanço inicial
     if (prev != null || real != null) {
       await supabase.from('atualizacoes_semana').insert({
@@ -113,7 +123,7 @@ export function useProjetos(perfil, userId, userEmail) {
   }
 
   async function editarProjeto(id, dados, origem = 'manual') {
-    const { prev, real, ...projetoData } = dados
+    const { prev, real, upload_id, ...projetoData } = dados
     const update = {
       nome:             projetoData.nome,
       cliente:          projetoData.cliente,
@@ -137,6 +147,16 @@ export function useProjetos(perfil, userId, userEmail) {
       .update(update)
       .eq('id', id)
     if (error) throw error
+
+    // Guarda no histórico, sem sobrescrever análises anteriores
+    if (update.ultima_analise_ia) {
+      await supabase.from('analise_ia_historico').insert({
+        projeto_id: id,
+        texto:      update.ultima_analise_ia,
+        upload_id:  upload_id ?? null,
+        criado_por: userEmail ?? null,
+      })
+    }
 
     // Insere nova entrada de avanço com a data de hoje (mantém histórico)
     if (prev != null || real != null) {

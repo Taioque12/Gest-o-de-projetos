@@ -163,7 +163,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
   async function handleCriarProjeto(dados) {
     setSalvando(true)
     try {
-      const novoProjeto = await criarProjeto({ ...dados, ultima_analise_ia: analise || null })
+      const novoProjeto = await criarProjeto({ ...dados, ultima_analise_ia: analise || null, upload_id: resultado?.uploadId ?? null })
       if (resultado?.uploadId && novoProjeto?.id) {
         supabase.from('uploads_xml').update({ projeto_id: novoProjeto.id }).eq('id', resultado.uploadId)
           .then(() => {}).catch(() => {})
@@ -190,6 +190,7 @@ export default function UploadXML({ onBack, onCriado, projetos = [], criarProjet
         valor_os: proj.valor || null, equipes: proj.equipes ?? [],
         acao_recomendada: proj.acao ?? '', prev, real: prev,
         ultima_analise_ia: analise || undefined,
+        upload_id: resultado?.uploadId ?? null,
       }, 'xml')
       if (resultado?.uploadId) {
         supabase.from('uploads_xml').update({ projeto_id: proj.id }).eq('id', resultado.uploadId)
