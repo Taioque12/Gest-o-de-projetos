@@ -60,6 +60,8 @@ supabase secrets set GEMINI_API_KEY=sua_chave --project-ref uaooutzbxkkcyfuwijbi
 
 > `--no-verify-jwt`: a função já valida o usuário manualmente via `auth.getUser()`; o `verify_jwt` da plataforma rejeitava a chamada no gateway antes de chegar no código (sem log, erro genérico "non-2xx status code").
 
+> ⚠️ **Não há CI de deploy das Edge Functions** — push no repo NÃO atualiza a função no Supabase. Sempre que `supabase/functions/analisar-ia/index.ts` mudar, é preciso redeployar via CLI (comando acima) ou manualmente pelo Dashboard (Edge Functions → `analisar-ia` → Code → colar o código → **Deploy updates**; nunca "Deploy a new function", que cria função nova com outro nome). Sintoma clássico de função dessincronizada: frontend envia `{projeto, tarefas, parte}` e a versão antiga responde `400 {"error":"prompt é obrigatório"}` — foi exatamente o bug de 03/07/2026 ("Erro ao consultar a IA" na UI).
+
 ## 🛡 Endurecimento de Segurança
 
 Estado completo, ordem de aplicação das migrations e pendências: ver **`SECURITY.md`**.
