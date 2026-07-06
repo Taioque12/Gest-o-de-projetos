@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { supabaseConfigurado } from './supabase'
 import Login from './pages/Login'
+import LandingPage from './pages/LandingPage'
 import Dashboard from './pages/Dashboard'
 import ClienteView from './pages/ClienteView'
 import ChunkErrorBoundary from './components/ChunkErrorBoundary'
@@ -26,7 +27,12 @@ function AppInner() {
   if (loading) return <div className="loading-screen">Carregando...</div>
 
   if (supabaseConfigurado && !user) {
-    return <Login onSignIn={signIn} />
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="*" element={<Login onSignIn={signIn} />} />
+      </Routes>
+    )
   }
 
   // Cliente tem visão própria, sem acesso às rotas administrativas —

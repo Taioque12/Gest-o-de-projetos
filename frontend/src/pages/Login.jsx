@@ -34,6 +34,7 @@ export default function Login({ onSignIn }) {
 
   return (
     <div className="login-page">
+      <div className="login-page-noise" />
       <div className="login-card">
         <div className="login-logo">GP</div>
         <h1>Gestão de Projetos</h1>
