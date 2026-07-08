@@ -1,11 +1,11 @@
-# Roadmap: Dashboard Online MA CONEGLIAN
+# Roadmap: Dashboard Online
 
 ## Status Atual ✅
 
 | Entrega | Status | Local |
 |---|---|---|
 | **Dashboard offline** (HTML + dados fictícios) | ✅ Pronto | `index.html` |
-| **Identidade visual** (verde MA CONEGLIAN) | ✅ Aplicada | Header + cores |
+| **Identidade visual** (verde) | ✅ Aplicada | Header + cores |
 | **Campos adicionais** (Resp., Valor, Prazo, Data-fim) | ✅ Incluídos | Cards + Modal |
 | **Curva S por projeto** (semanal, duração própria) | ✅ Implementada | Modal de cada projeto |
 
@@ -35,7 +35,7 @@
    
 5. Criar usuário admin para teste
    └─ Authentication → Users → Add user
-   └─ Email: gestor@maconeglia.com
+   └─ Email: gestor@exemplo.com
    └─ Salvar senha
    └─ Estimar: 2 min
 ```

@@ -1,5 +1,5 @@
 -- ================================================================
--- RLS — MA CONEGLIAN Gestão de Projetos
+-- RLS — Gestão de Projetos
 -- Rodar no Supabase SQL Editor: https://supabase.com/dashboard/project/uaooutzbxkkcyfuwijbi/sql
 -- ================================================================
 

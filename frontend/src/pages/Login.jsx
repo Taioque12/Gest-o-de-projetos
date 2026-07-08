@@ -51,7 +51,7 @@ export default function Login({ onSignIn }) {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="gestor@maconeglia.com"
+                  placeholder="gestor@exemplo.com"
                   required
                   autoFocus
                 />

@@ -1,6 +1,6 @@
 -- ================================================================
 -- MIGRAÇÃO · Histograma de Efetivo (Mão de Obra) por Semana
--- MA CONEGLIAN Gestão de Projetos
+-- Gestão de Projetos
 -- Rodar no Supabase SQL Editor:
 --   https://supabase.com/dashboard/project/uaooutzbxkkcyfuwijbi/sql
 -- Seguro de rodar mais de uma vez (idempotente).

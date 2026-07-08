@@ -325,7 +325,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
                 <input style={INPUT_STYLE} value={form.nome} onChange={campo('nome')} placeholder="Ex: Carlos Silva" required />
               </CAMPO>
               <CAMPO label="E-mail *">
-                <input style={INPUT_STYLE} type="email" value={form.email} onChange={campo('email')} placeholder="carlos@maconeglia.com" required />
+                <input style={INPUT_STYLE} type="email" value={form.email} onChange={campo('email')} placeholder="carlos@exemplo.com" required />
               </CAMPO>
               <CAMPO label="Senha *">
                 <input style={INPUT_STYLE} type="password" value={form.senha} onChange={campo('senha')} placeholder="Mínimo 6 caracteres" required minLength={6} />

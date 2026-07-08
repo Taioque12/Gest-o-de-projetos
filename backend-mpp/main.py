@@ -1,5 +1,5 @@
 """
-MA CONEGLIAN · Leitor de arquivos do MS Project (.mpp)
+Leitor de arquivos do MS Project (.mpp)
 ======================================================
 Backend FastAPI que recebe um arquivo .mpp / .mpx / .xml do Microsoft Project,
 lê o cronograma com a biblioteca MPXJ (via JPype + JVM) e devolve as tarefas
@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="MA CONEGLIAN · MPP Reader", lifespan=lifespan)
+app = FastAPI(title="MPP Reader", lifespan=lifespan)
 
 # CORS — domínios autorizados a chamar a API (frontend local + Vercel).
 # Sobrescreva com a variável de ambiente ALLOWED_ORIGINS (separada por vírgula).

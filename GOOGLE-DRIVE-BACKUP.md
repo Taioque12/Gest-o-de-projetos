@@ -1,4 +1,4 @@
-# Google Drive Backup — MA CONEGLIAN Gestão de Projetos
+# Google Drive Backup — Gestão de Projetos
 
 ## Passo 1: Preparar a pasta para fazer upload (2 min)
 
@@ -23,7 +23,7 @@ C:\Users\MAC ENGENHARIA\Documents\Gestão de projetos\
 
 1. Acesse https://drive.google.com (com sua conta Google)
 2. Clique em **"+ Novo"** → **"Pasta"**
-3. Nomeie: `MA-CONEGLIAN-Gestao-Projetos` (ou seu nome preferido)
+3. Nomeie: `Gestao-Projetos` (ou seu nome preferido)
 4. Abra a pasta criada
 5. **Arraste e solte** a pasta `Gestão de projetos` do Windows Explorer aqui
 6. Aguarde upload (alguns segundos)
@@ -74,7 +74,7 @@ https://drive.google.com/drive/folders/1ABC123XYZ...
 No Google Drive, você deve ver:
 
 ```
-📁 MA-CONEGLIAN-Gestao-Projetos
+📁 Gestao-Projetos
 ├── 📄 index.html
 ├── 📄 README.md
 ├── 📄 ROADMAP.md

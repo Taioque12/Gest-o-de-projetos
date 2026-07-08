@@ -1,11 +1,11 @@
-# Setup Supabase — MA CONEGLIAN Dashboard Online
+# Setup Supabase — Dashboard Online
 
 ## Passo 1: Criar conta Supabase (5 min)
 
 1. Acesse https://supabase.com
 2. Clique em **"Start your project"** → Sign up com Google ou email
 3. Criar projeto → escolha:
-   - **Organization name:** MA CONEGLIAN
+   - **Organization name:** Minha Empresa
    - **Project name:** gestao-projetos
    - **Region:** São Paulo (sa-east-1) — mais próximo
    - **Password:** salve em local seguro
@@ -54,7 +54,7 @@
 
 1. Vá para **Authentication** → **Users**
 2. Clique em **"+ Add user"**
-3. Email: `gestor@maconeglia.com`
+3. Email: `gestor@exemplo.com`
 4. Senha: defina uma senha (salve em local seguro)
 5. Clique em **"Create user"**
 

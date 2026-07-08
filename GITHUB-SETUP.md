@@ -1,10 +1,10 @@
-# GitHub Setup — MA CONEGLIAN Gestão de Projetos
+# GitHub Setup — Gestão de Projetos
 
 ## Passo 1: Criar repositório no GitHub (3 min)
 
 1. Acesse https://github.com/new
 2. Preencha:
-   - **Repository name:** `gestao-projetos-ma-coneglian` (ou seu nome preferido)
+   - **Repository name:** `gestao-projetos` (ou seu nome preferido)
    - **Description:** "Sistema de gestão de projetos de engenharia elétrica"
    - **Visibility:** Private (privado — recomendado para dados da empresa)
    - **Initialize this repository with:** deixe tudo vazio (já temos local)
@@ -21,7 +21,7 @@ Na pasta `Gestão de projetos`, execute no PowerShell ou Git Bash:
 git status
 
 # Adicionar o remoto (substitua USERNAME e REPO-NAME)
-git remote add origin https://github.com/USERNAME/gestao-projetos-ma-coneglian.git
+git remote add origin https://github.com/USERNAME/gestao-projetos.git
 
 # Fazer o push inicial (primeira vez pede autenticação)
 git branch -M main
@@ -47,7 +47,7 @@ O arquivo `.gitignore` já está configurado para:
 
 ## Passo 4: Verificar no GitHub
 
-1. Acesse sua URL: `https://github.com/SEU-USERNAME/gestao-projetos-ma-coneglian`
+1. Acesse sua URL: `https://github.com/SEU-USERNAME/gestao-projetos`
 2. Você deve ver:
    - ✅ Todos os arquivos (README.md, schema-supabase.sql, index.html, etc)
    - ✅ Commit inicial com a data de hoje

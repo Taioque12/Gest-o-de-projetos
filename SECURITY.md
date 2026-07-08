@@ -1,4 +1,4 @@
-# Segurança — Gestão de Projetos MA Coneglian
+# Segurança — Gestão de Projetos
 
 Estado das proteções e pendências, em ordem de prioridade pensando em clientes pagantes.
 

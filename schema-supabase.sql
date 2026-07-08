@@ -1,5 +1,5 @@
 -- ========================================
--- MA CONEGLIAN · Schema do Banco Supabase
+-- Schema do Banco Supabase
 -- ========================================
 
 -- Extensões necessárias
@@ -162,10 +162,10 @@ create policy "all_frentes" on frentes_servico
 
 -- ========== DADOS INICIAIS (Ficticios) ==========
 insert into usuarios (email, nome, perfil) values
-  ('gestor@maconeglia.com', 'Gestor MA CONEGLIAN', 'admin'),
-  ('carlos@maconeglia.com', 'Eng. Carlos Menezes', 'equipe'),
-  ('patricia@maconeglia.com', 'Eng. Patrícia Lopes', 'equipe'),
-  ('rafael@maconeglia.com', 'Téc. Rafael Souza', 'equipe'),
+  ('gestor@exemplo.com', 'Gestor', 'admin'),
+  ('carlos@exemplo.com', 'Eng. Carlos Menezes', 'equipe'),
+  ('patricia@exemplo.com', 'Eng. Patrícia Lopes', 'equipe'),
+  ('rafael@exemplo.com', 'Téc. Rafael Souza', 'equipe'),
   ('contato@petroquimica.com', 'Petroquímica Norte', 'cliente'),
   ('contato@logistica-sul.com', 'Logística Sul', 'cliente');
 

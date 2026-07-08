@@ -1,4 +1,4 @@
-# Frontend MA CONEGLIAN Dashboard — Setup Vercel
+# Frontend Dashboard — Setup Vercel
 
 ## Estrutura do Projeto
 

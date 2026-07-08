@@ -450,7 +450,7 @@ Para a empresa atual (antes de multi-tenant):
 ```sql
 -- 1. Criar empresa padrão para dados existentes
 INSERT INTO empresas (cnpj, nome_empresa, nome_responsavel, email_responsavel, plano)
-VALUES ('00.000.000/0000-00', 'MA CONEGLIAN (Legado)', 'Admin', 'admin@maconeglia.com', 'pro')
+VALUES ('00.000.000/0000-00', 'Minha Empresa (Legado)', 'Admin', 'admin@exemplo.com', 'pro')
 RETURNING id AS empresa_id;
 
 -- 2. Vincular usuário atual como admin
