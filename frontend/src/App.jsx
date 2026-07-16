@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import LandingPage from './pages/LandingPage'
 import Dashboard from './pages/Dashboard'
 import ClienteView from './pages/ClienteView'
+import Sidebar from './components/Sidebar'
 import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
 const Equipes = lazy(() => import('./pages/Equipes'))
@@ -43,30 +44,35 @@ function AppInner() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route
-        path="/dashboard"
-        element={<Dashboard user={user} perfil={perfil} onSignOut={signOut} />}
-      />
-      <Route
-        path="/equipes"
-        element={
-          <LazyPage>
-            <Equipes user={user} perfil={perfil} onSignOut={signOut} />
-          </LazyPage>
-        }
-      />
-      <Route
-        path="/acessos"
-        element={
-          perfil === 'admin'
-            ? <LazyPage><Acessos user={user} perfil={perfil} onSignOut={signOut} /></LazyPage>
-            : <Navigate to="/dashboard" replace />
-        }
-      />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={<Dashboard user={user} perfil={perfil} onSignOut={signOut} />}
+          />
+          <Route
+            path="/equipes"
+            element={
+              <LazyPage>
+                <Equipes user={user} perfil={perfil} onSignOut={signOut} />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/acessos"
+            element={
+              perfil === 'admin'
+                ? <LazyPage><Acessos user={user} perfil={perfil} onSignOut={signOut} /></LazyPage>
+                : <Navigate to="/dashboard" replace />
+            }
+          />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </main>
+    </div>
   )
 }
 

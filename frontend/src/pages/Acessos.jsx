@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useUsuarios } from '../hooks/useUsuarios'
 import { useProjetos } from '../hooks/useProjetos'
-import Header from '../components/Header'
+import TopBar from '../components/TopBar'
 import Toast from '../components/Toast'
 import { supabase } from '../supabase'
 
@@ -170,7 +170,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
 
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} />
+      <TopBar onSignOut={onSignOut} />
 
       <div className="wrap">
 

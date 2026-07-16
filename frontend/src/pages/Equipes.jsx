@@ -6,7 +6,7 @@ import FuncionarioCard from '../components/FuncionarioCard'
 import FuncionarioForm from '../components/FuncionarioForm'
 import PainelEquipe from '../components/PainelEquipe'
 import ProgramacaoGlobal from '../components/ProgramacaoGlobal'
-import Header from '../components/Header'
+import TopBar from '../components/TopBar'
 import Toast from '../components/Toast'
 
 // ── Modal CRUD de habilidades ────────────────────────────────
@@ -185,7 +185,7 @@ export default function Equipes({ user, perfil, onSignOut }) {
 
   return (
     <>
-      <Header perfil={perfil} onSignOut={onSignOut} />
+      <TopBar onSignOut={onSignOut} />
 
       <div style={{ borderBottom: '1px solid var(--line)', background: 'var(--surface-2)', marginBottom: 0 }}>
         <div className="wrap" style={{ display: 'flex', gap: 0, paddingTop: 0, paddingBottom: 0 }}>

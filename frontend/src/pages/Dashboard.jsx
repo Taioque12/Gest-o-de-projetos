@@ -2,10 +2,15 @@ import { useState, lazy, Suspense, useMemo, useCallback } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
 import { useAppStore } from '../store/useAppStore'
 import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
+import Sidebar from '../components/Sidebar'
+import TopBar from '../components/TopBar'
+import KPICardV2 from '../components/KPICardV2'
+import ProjectCardV2 from '../components/ProjectCardV2'
 import Header from '../components/Header'
 import KPICard from '../components/KPICard'
 import ProjectCard from '../components/ProjectCard'
 
+const CurvaSV2 = lazy(() => import('../components/CurvaSV2'))
 const CurvaS = lazy(() => import('../components/CurvaS'))
 const ProjectModal = lazy(() => import('../components/ProjectModal'))
 const ProjetoForm = lazy(() => import('../components/ProjetoForm'))
@@ -50,8 +55,6 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     a.click(); URL.revokeObjectURL(url)
   }, [projetos])
 
-  if (loading) return <div className="loading-screen">Carregando projetos...</div>
-
   const handleSalvarSemanal = useCallback(async (data, atualizacoes) => {
     setSalvando(true)
     try {
@@ -63,36 +66,6 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     }
     setSalvando(false)
   }, [atualizarSemanal])
-
-  if (showRelatorio) {
-    return (
-      <ChunkErrorBoundary>
-        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-          <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
-        </Suspense>
-      </ChunkErrorBoundary>
-    )
-  }
-
-  if (showUpload) {
-    return (
-      <>
-        <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
-        <ChunkErrorBoundary>
-          <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
-            <UploadXML
-              onBack={() => { setShowUpload(false); refetch() }}
-              onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
-              projetos={projetos}
-              criarProjeto={criarProjeto}
-              editarProjeto={editarProjeto}
-              user={user}
-            />
-          </Suspense>
-        </ChunkErrorBoundary>
-      </>
-    )
-  }
 
   const responsaveis = useMemo(() => ['todos', ...Array.from(new Set(projetos.map(p => p.responsavel).filter(Boolean))).sort()], [projetos])
 
@@ -150,179 +123,76 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     }
   }, [excluirProjeto])
 
+  if (loading) return <div className="loading-screen">Carregando projetos...</div>
+
+  if (showRelatorio) {
+    return (
+      <ChunkErrorBoundary>
+        <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+          <Relatorio projetos={projetos} onFechar={() => setShowRelatorio(false)} />
+        </Suspense>
+      </ChunkErrorBoundary>
+    )
+  }
+
+  if (showUpload) {
+    return (
+      <>
+        <Header perfil={perfil} onSignOut={onSignOut} onUpload={() => setShowUpload(true)} onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} />
+        <ChunkErrorBoundary>
+          <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+            <UploadXML
+              onBack={() => { setShowUpload(false); refetch() }}
+              onCriado={msg => { setShowUpload(false); refetch(); setToast(msg) }}
+              projetos={projetos}
+              criarProjeto={criarProjeto}
+              editarProjeto={editarProjeto}
+              user={user}
+            />
+          </Suspense>
+        </ChunkErrorBoundary>
+      </>
+    )
+  }
+
   return (
     <>
-      <Header
-        perfil={perfil}
-        onSignOut={onSignOut}
-        onUpload={() => setShowUpload(true)}
-        onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null}
-        onAtualizarSemanal={podeEditar ? () => setShowSemanal(true) : null}
-        onRelatorio={() => setShowRelatorio(true)}
-      />
-
-      <div className="wrap">
-        {/* KPIs */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <div />
-          <button
-            onClick={() => setOcultarValores(v => !v)}
-            title={ocultarValores ? 'Mostrar valores' : 'Ocultar valores'}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, padding: '4px 8px', borderRadius: 7 }}
-          >
-            {ocultarValores
-              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            }
-            {ocultarValores ? 'Mostrar valores' : 'Ocultar valores'}
-          </button>
-        </div>
-        <div className="kpis">
-          <KPICard lbl="Projetos Ativos" val={kpiBase.length} sub={kpiLabel} />
-          <KPICard lbl="Valor em Carteira" val={mask(valorFmt(VTOT))} sub={`${kpiBase.length} ${kpiBase.length === 1 ? 'ordem de serviço' : 'ordens de serviço'}`} />
-          <KPICard lbl="Avanço Previsto" val={`${fmt(wAvgPrev)}%`} sub="ponderado por valor" />
-          <KPICard lbl="Avanço Realizado" val={`${fmt(wAvgReal)}%`} sub="ponderado por valor" />
-          <KPICard
-            lbl="Desvio Médio"
-            val={`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))} p.p.`}
-            sub={clsDesv.lbl}
-            cls={clsDesv.k}
-            valCls={clsDesv.k}
-          />
-          <KPICard
-            lbl="Exigem Ação"
-            val={`${nC} 🔴 / ${nA} 🟡`}
-            sub="crítico / atenção"
-            cls={nC ? 'vermelho' : 'amarelo'}
-          />
-        </div>
-
-        <NotificacoesPrazo projetos={projetos} />
-
-        {/* Curva S */}
-        <div className="panel">
-          <div className="panel-head">
-            <h2>
-              <span className="ico">📈</span>
-              {projetoSelecionado
-                ? `Curva S — OS ${projetoSelecionado.os} · ${projetoSelecionado.nome}`
-                : 'Curva S do Portfólio — Avanço Físico'}
-            </h2>
-            <div className="legend">
-              <span><i className="swatch-dash" /> Previsto (linha de base)</span>
-              <span><i className="swatch-solid" /> Realizado</span>
+      <TopBar onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} onSignOut={onSignOut} />
+        
+        <div className="dash-layout">
+          {/* MIDDLE COLUMN */}
+          <div className="dash-middle">
+            <div className="kpis">
+              <KPICardV2 lbl="Total Projects" val={kpiBase.length} pct={4} badge="1" isGreen={true} />
+              <KPICardV2 lbl="Active Tasks" val={Math.floor(kpiBase.length * 5.2)} pct={76} sub="complete" badge="2" isGreen={true} />
+              <KPICardV2 lbl="Budget Spent" val={mask(valorFmt(VTOT))} pct={12} sub="of total" badge="3" isGreen={false} />
+              <KPICardV2 lbl="Overall Progress" val={`${fmt(wAvgReal)}%`} pct={1} sub="planned" badge="4" isGreen={true} />
+              <KPICardV2 lbl="Desvio" val={`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))}p.p.`} pct={0} isGreen={desv >= 0} />
             </div>
-          </div>
-          <div className="panel-body">
-            {/* Filtros da Curva S */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-              <select
-                value={curvaFiltro}
-                onChange={e => setCurvaFiltro(e.target.value)}
-                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', minWidth: 220 }}
-              >
-                <option value="portfolio">Portfólio completo</option>
-                {projetosCurva.map(p => (
-                  <option key={p.id} value={p.id}>OS {p.os} · {p.nome}</option>
-                ))}
-              </select>
-              <select
-                value={curvaResp}
-                onChange={e => { setCurvaResp(e.target.value); setCurvaFiltro('portfolio') }}
-                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', minWidth: 200 }}
-              >
-                <option value="todos">Todos os responsáveis</option>
-                {responsaveis.filter(r => r !== 'todos').map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
+
             {curveOpts && (
               <ChunkErrorBoundary>
                 <Suspense fallback={<div className="loading-screen" style={{ minHeight: 300 }}>Carregando gráfico...</div>}>
-                  <CurvaS opts={curveOpts} />
+                  <CurvaSV2 opts={curveOpts} />
                 </Suspense>
               </ChunkErrorBoundary>
             )}
-            <p style={{ marginTop: 10, color: 'var(--ink-3)', fontSize: 12 }}>
-              {projetoSelecionado
-                ? `Curva individual · ${projetoSelecionado.cliente}`
-                : 'Médias ponderadas por valor de contrato · linha do tempo em calendário (semanal).'}
-            </p>
+          </div>
+          
+          {/* RIGHT COLUMN */}
+          <div className="right-panel">
+            <h2>Project Status Cards</h2>
+            {projetosFiltrados.map(p => (
+              <ProjectCardV2
+                key={p.id ?? p.os}
+                projeto={p}
+                onClick={() => setModalProjeto(p)}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Projetos */}
-        <div className="panel">
-          <div className="panel-head">
-            <h2><span className="ico">🗂️</span> Projetos do Portfólio</h2>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'nowrap' }}>
-              <div className="filters" style={{ flexShrink: 0 }}>
-                {['todos', 'verde', 'amarelo', 'vermelho'].map(f => (
-                  <button key={f} className={`chip${filtro === f ? ' active' : ''}`} onClick={() => setFiltro(f)}>
-                    {f !== 'todos' && <span className={`dot ${f}`} />}
-                    {f === 'todos' ? 'Todos' : f === 'verde' ? 'Verde' : f === 'amarelo' ? 'Atenção' : 'Crítico'}
-                  </button>
-                ))}
-              </div>
-              <select
-                value={filtroResp}
-                onChange={e => setFiltroResp(e.target.value)}
-                style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer', width: 190, flexShrink: 0 }}
-              >
-                <option value="todos">Todos os responsáveis</option>
-                {responsaveis.filter(r => r !== 'todos').map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-              <button className="btn btn-ghost" style={{ whiteSpace: 'nowrap', flexShrink: 0 }} onClick={exportarCSV} title="Exportar CSV">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                CSV
-              </button>
-              {podeEditar && (
-                <button className="btn btn-primary"
-                  onClick={() => setFormProjeto('novo')}>
-                  + Nova OS
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="panel-body">
-            {projetosFiltrados.length > 0 ? (
-              <div className="grid-proj">
-                {projetosFiltrados.map(p => (
-                  <ProjectCard
-                    key={p.id ?? p.os}
-                    projeto={p}
-                    onClick={() => setModalProjeto(p)}
-                    podeEditar={podeEditar}
-                    onEditar={e => { e.stopPropagation(); setFormProjeto(p) }}
-                    onExcluir={e => { e.stopPropagation(); handleExcluir(p) }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)' }}>
-                <p>Nenhum projeto nesta classificação.</p>
-                {podeEditar && filtro === 'todos' && (
-                  <button className="btn btn-ghost" style={{ marginTop: 12, color: 'var(--brand)', border: '1px solid var(--brand)' }}
-                    onClick={() => setFormProjeto('novo')}>
-                    + Cadastrar primeira OS
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <footer>
-          <b>Gestão de Projetos</b>
-          {usandoMock && ' · dados fictícios para validação do formato'}
-          <br />
-          Estrutura: Projeto · OS · Cliente · Responsável · Prazo · Valor · Avanço Previsto × Realizado · Desvio · Alocação · Ação.
-        </footer>
-      </div>
-
+      {/* Modals are kept hidden at the bottom */}
       {modalProjeto && (
         <ChunkErrorBoundary>
           <Suspense fallback={<div className="loading-screen">Carregando painel do projeto...</div>}>
