@@ -1,5 +1,6 @@
-import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react'
+import { useState, lazy, Suspense, useMemo, useCallback } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
+import { useAppStore } from '../store/useAppStore'
 import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
 import Header from '../components/Header'
 import KPICard from '../components/KPICard'
@@ -18,24 +19,19 @@ const Relatorio = lazy(() => import('../components/Relatorio'))
 
 export default function Dashboard({ user, perfil, onSignOut }) {
   const { projetos, atualizacoes, loading, usandoMock, refetch, criarProjeto, editarProjeto, excluirProjeto, atualizarSemanal } = useProjetos(perfil, user?.id, user?.email)
-  const [filtro, setFiltro] = useState('todos')
-  const [filtroResp, setFiltroResp] = useState('todos')
-  const [curvaFiltro, setCurvaFiltro] = useState('portfolio')
-  const [curvaResp, setCurvaResp] = useState('todos')
-  const [modalProjeto, setModalProjeto] = useState(null)
-  const [showUpload, setShowUpload] = useState(false)
-  const [showSemanal, setShowSemanal] = useState(false)
-  const [showRelatorio, setShowRelatorio] = useState(false)
-  const [formProjeto, setFormProjeto] = useState(null) // null | 'novo' | projeto
+  const {
+    filtro, setFiltro, filtroResp, setFiltroResp,
+    curvaFiltro, setCurvaFiltro, curvaResp, setCurvaResp,
+    modalProjeto, setModalProjeto,
+    showUpload, setShowUpload, showSemanal, setShowSemanal, showRelatorio, setShowRelatorio,
+    formProjeto, setFormProjeto,
+    ocultarValores, setOcultarValores
+  } = useAppStore()
+
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
   const [toast, setToast] = useState('')
   const [toastErro, setToastErro] = useState('')
-  const [ocultarValores, setOcultarValores] = useState(() => localStorage.getItem('ocultarValores') === '1')
-
-  useEffect(() => {
-    localStorage.setItem('ocultarValores', ocultarValores ? '1' : '0')
-  }, [ocultarValores])
 
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
   const mask = v => ocultarValores ? '••••••' : v
