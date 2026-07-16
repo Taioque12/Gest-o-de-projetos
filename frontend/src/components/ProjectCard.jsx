@@ -11,7 +11,7 @@ export default function ProjectCard({ projeto, onClick, podeEditar, onEditar, on
       <div className={`strip ${c.k}`} />
       <div className="card-inner">
         <div className="card-top">
-          <h3>{p.nome}</h3>
+          <h3 className="text-truncate" title={p.nome}>{p.nome}</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span className={`pill ${c.k}`}>{c.emo} {c.lbl}</span>
             {podeEditar && (

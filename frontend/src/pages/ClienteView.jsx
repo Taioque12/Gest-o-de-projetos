@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
 import { classify, valorFmt, fmtFull } from '../utils/helpers'
 import Header from '../components/Header'
-import ProjectModal from '../components/ProjectModal'
+
+const ProjectModal = lazy(() => import('../components/ProjectModal'))
 
 export default function ClienteView({ user, perfil, onSignOut }) {
   const { projetos, atualizacoes, loading } = useProjetos(perfil, user?.id)
@@ -75,11 +76,13 @@ export default function ClienteView({ user, perfil, onSignOut }) {
       </div>
 
       {modal && (
-        <ProjectModal
-          projeto={modal}
-          atualizacoes={atualizacoes.filter(a => a.projeto_id === modal.id)}
-          onClose={() => setModal(null)}
-        />
+        <Suspense fallback={<div className="loading-screen">Carregando projeto...</div>}>
+          <ProjectModal
+            projeto={modal}
+            atualizacoes={atualizacoes.filter(a => a.projeto_id === modal.id)}
+            onClose={() => setModal(null)}
+          />
+        </Suspense>
       )}
     </>
   )

@@ -1,4 +1,5 @@
-import CurvaS from '../CurvaS'
+import { lazy, Suspense } from 'react'
+const CurvaS = lazy(() => import('../CurvaS'))
 
 export default function AbaComparativo({ p, curveOpts, baselineOpts, baselineAtivo }) {
   if (!baselineAtivo) return (
@@ -75,15 +76,11 @@ export default function AbaComparativo({ p, curveOpts, baselineOpts, baselineAti
         </table>
       </div>
 
-      {/* Curva S com baseline sobreposto */}
-      <div className="m-sec">
-        <h4>📈 Curva S — Planejado × Realizado × Baseline</h4>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 8, fontSize: 12 }}>
-          <span><span style={{ display: 'inline-block', width: 24, height: 3, background: '#90a298', verticalAlign: 'middle', marginRight: 4 }} />Planejado atual</span>
-          <span><span style={{ display: 'inline-block', width: 24, height: 3, background: '#0f7a3d', verticalAlign: 'middle', marginRight: 4 }} />Realizado</span>
-          <span><span style={{ display: 'inline-block', width: 24, height: 3, background: '#f97316', borderTop: '2px dashed #f97316', verticalAlign: 'middle', marginRight: 4 }} />Baseline</span>
-        </div>
-        <CurvaS opts={curveOpts} baseline={baselineOpts} />
+      <div className="m-sec" style={{ marginTop: 24 }}>
+        <h4>📈 Gráfico comparativo de Curva S</h4>
+        <Suspense fallback={<div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Carregando gráfico...</div>}>
+          <CurvaS opts={curveOpts} baseline={baselineOpts} />
+        </Suspense>
       </div>
     </>
   )

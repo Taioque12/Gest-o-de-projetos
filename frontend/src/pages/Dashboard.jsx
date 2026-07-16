@@ -1,14 +1,14 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
 import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
 import Header from '../components/Header'
 import KPICard from '../components/KPICard'
-import CurvaS from '../components/CurvaS'
 import ProjectCard from '../components/ProjectCard'
-import ProjectModal from '../components/ProjectModal'
-import ProjetoForm from '../components/ProjetoForm'
-import AlocacaoTable from '../components/AlocacaoTable'
-import AtualizacaoSemanal from '../components/AtualizacaoSemanal'
+
+const CurvaS = lazy(() => import('../components/CurvaS'))
+const ProjectModal = lazy(() => import('../components/ProjectModal'))
+const ProjetoForm = lazy(() => import('../components/ProjetoForm'))
+const AtualizacaoSemanal = lazy(() => import('../components/AtualizacaoSemanal'))
 import Toast from '../components/Toast'
 import NotificacoesPrazo from '../components/NotificacoesPrazo'
 import ChunkErrorBoundary from '../components/ChunkErrorBoundary'
@@ -40,7 +40,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
   const mask = v => ocultarValores ? '••••••' : v
 
-  function exportarCSV() {
+  const exportarCSV = useCallback(() => {
     const cols = ['OS', 'Projeto', 'Cliente', 'Escopo', 'Responsável', 'Início', 'Término', 'Prazo', 'Valor (R$)', 'Previsto (%)', 'Realizado (%)', 'Desvio (p.p.)', 'Status']
     const rows = projetos.map(p => {
       const c = classify(p.prev, p.real)
@@ -52,11 +52,11 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     const a = document.createElement('a')
     a.href = url; a.download = `projetos_${new Date().toISOString().slice(0,10)}.csv`
     a.click(); URL.revokeObjectURL(url)
-  }
+  }, [projetos])
 
   if (loading) return <div className="loading-screen">Carregando projetos...</div>
 
-  async function handleSalvarSemanal(data, atualizacoes) {
+  const handleSalvarSemanal = useCallback(async (data, atualizacoes) => {
     setSalvando(true)
     try {
       await atualizarSemanal(data, atualizacoes)
@@ -66,7 +66,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
       setToastErro('Erro ao salvar: ' + err.message)
     }
     setSalvando(false)
-  }
+  }, [atualizarSemanal])
 
   if (showRelatorio) {
     return (
@@ -98,32 +98,38 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     )
   }
 
-  const responsaveis = ['todos', ...Array.from(new Set(projetos.map(p => p.responsavel).filter(Boolean))).sort()]
+  const responsaveis = useMemo(() => ['todos', ...Array.from(new Set(projetos.map(p => p.responsavel).filter(Boolean))).sort()], [projetos])
 
-  const projetosFiltrados = projetos
+  const projetosFiltrados = useMemo(() => projetos
     .filter(p => filtro === 'todos' || classify(p.prev, p.real).k === filtro)
-    .filter(p => filtroResp === 'todos' || p.responsavel === filtroResp)
+    .filter(p => filtroResp === 'todos' || p.responsavel === filtroResp), [projetos, filtro, filtroResp])
 
-  const projetoSelecionado = projetos.find(p => p.id === curvaFiltro)
-  const projetosCurva = curvaResp === 'todos' ? projetos : projetos.filter(p => p.responsavel === curvaResp)
-  const curveOpts = projetosCurva.length
+  const projetoSelecionado = useMemo(() => projetos.find(p => p.id === curvaFiltro), [projetos, curvaFiltro])
+  const projetosCurva = useMemo(() => curvaResp === 'todos' ? projetos : projetos.filter(p => p.responsavel === curvaResp), [projetos, curvaResp])
+  const curveOpts = useMemo(() => projetosCurva.length
     ? (projetoSelecionado ? projectCurveOpts(projetoSelecionado) : portfolioCurveOpts(projetosCurva))
-    : null
+    : null, [projetosCurva, projetoSelecionado])
 
   // KPIs reagem ao filtro da Curva S
-  const kpiBase = projetoSelecionado ? [projetoSelecionado] : projetosCurva
-  const VTOT     = kpiBase.reduce((s, p) => s + p.valor, 0)
-  const wAvgPrev = kpiBase.length && VTOT ? kpiBase.reduce((s, p) => s + p.valor * p.prev, 0) / VTOT : 0
-  const wAvgReal = kpiBase.length && VTOT ? kpiBase.reduce((s, p) => s + p.valor * p.real, 0) / VTOT : 0
-  const desv     = wAvgReal - wAvgPrev
-  const clsDesv  = classify(wAvgPrev, wAvgReal)
-  const nC = kpiBase.filter(p => classify(p.prev, p.real).k === 'vermelho').length
-  const nA = kpiBase.filter(p => classify(p.prev, p.real).k === 'amarelo').length
-  const kpiLabel = projetoSelecionado
-    ? `OS ${projetoSelecionado.os}`
-    : curvaResp !== 'todos' ? curvaResp : 'portfólio completo'
+  const { kpiBase, VTOT, wAvgPrev, wAvgReal, desv, clsDesv, nC, nA, kpiLabel } = useMemo(() => {
+    const base = projetoSelecionado ? [projetoSelecionado] : projetosCurva
+    const vtot = base.reduce((s, p) => s + p.valor, 0)
+    const prev = base.length && vtot ? base.reduce((s, p) => s + p.valor * p.prev, 0) / vtot : 0
+    const real = base.length && vtot ? base.reduce((s, p) => s + p.valor * p.real, 0) / vtot : 0
+    return {
+      kpiBase: base,
+      VTOT: vtot,
+      wAvgPrev: prev,
+      wAvgReal: real,
+      desv: real - prev,
+      clsDesv: classify(prev, real),
+      nC: base.filter(p => classify(p.prev, p.real).k === 'vermelho').length,
+      nA: base.filter(p => classify(p.prev, p.real).k === 'amarelo').length,
+      kpiLabel: projetoSelecionado ? `OS ${projetoSelecionado.os}` : (curvaResp !== 'todos' ? curvaResp : 'portfólio completo')
+    }
+  }, [projetoSelecionado, projetosCurva, curvaResp])
 
-  async function handleSalvar(dados) {
+  const handleSalvar = useCallback(async (dados) => {
     setSalvando(true)
     setErroForm('')
     try {
@@ -137,16 +143,16 @@ export default function Dashboard({ user, perfil, onSignOut }) {
       setErroForm(err.message ?? 'Erro ao salvar.')
     }
     setSalvando(false)
-  }
+  }, [formProjeto, criarProjeto, editarProjeto])
 
-  async function handleExcluir(projeto) {
+  const handleExcluir = useCallback(async (projeto) => {
     if (!window.confirm(`Excluir a OS "${projeto.os} — ${projeto.nome}"? Esta ação não pode ser desfeita.`)) return
     try {
       await excluirProjeto(projeto.id)
     } catch (err) {
       setToastErro('Erro ao excluir: ' + err.message)
     }
-  }
+  }, [excluirProjeto])
 
   return (
     <>
@@ -235,7 +241,13 @@ export default function Dashboard({ user, perfil, onSignOut }) {
                 ))}
               </select>
             </div>
-            {curveOpts && <CurvaS opts={curveOpts} />}
+            {curveOpts && (
+              <ChunkErrorBoundary>
+                <Suspense fallback={<div className="loading-screen" style={{ minHeight: 300 }}>Carregando gráfico...</div>}>
+                  <CurvaS opts={curveOpts} />
+                </Suspense>
+              </ChunkErrorBoundary>
+            )}
             <p style={{ marginTop: 10, color: 'var(--ink-3)', fontSize: 12 }}>
               {projetoSelecionado
                 ? `Curva individual · ${projetoSelecionado.cliente}`
@@ -316,33 +328,45 @@ export default function Dashboard({ user, perfil, onSignOut }) {
       </div>
 
       {modalProjeto && (
-        <ProjectModal
-          projeto={modalProjeto}
-          atualizacoes={atualizacoes}
-          podeEditar={podeEditar}
-          onClose={() => setModalProjeto(null)}
-        />
+        <ChunkErrorBoundary>
+          <Suspense fallback={<div className="loading-screen">Carregando painel do projeto...</div>}>
+            <ProjectModal
+              projeto={modalProjeto}
+              atualizacoes={atualizacoes}
+              podeEditar={podeEditar}
+              onClose={() => setModalProjeto(null)}
+            />
+          </Suspense>
+        </ChunkErrorBoundary>
       )}
 
       {toast && <Toast mensagem={toast} onClose={() => setToast('')} />}
       {toastErro && <Toast mensagem={toastErro} tipo="erro" onClose={() => setToastErro('')} />}
 
       {showSemanal && (
-        <AtualizacaoSemanal
-          projetos={projetos}
-          onSalvar={handleSalvarSemanal}
-          onFechar={() => setShowSemanal(false)}
-          salvando={salvando}
-        />
+        <ChunkErrorBoundary>
+          <Suspense fallback={<div className="loading-screen">Aguarde...</div>}>
+            <AtualizacaoSemanal
+              projetos={projetos}
+              onSalvar={handleSalvarSemanal}
+              onFechar={() => setShowSemanal(false)}
+              salvando={salvando}
+            />
+          </Suspense>
+        </ChunkErrorBoundary>
       )}
 
       {formProjeto && (
-        <ProjetoForm
-          projeto={formProjeto === 'novo' ? null : formProjeto}
-          onSalvar={handleSalvar}
-          onFechar={() => { setFormProjeto(null); setErroForm('') }}
-          salvando={salvando}
-        />
+        <ChunkErrorBoundary>
+          <Suspense fallback={<div className="loading-screen">Carregando formulário...</div>}>
+            <ProjetoForm
+              projeto={formProjeto === 'novo' ? null : formProjeto}
+              onSalvar={handleSalvar}
+              onFechar={() => { setFormProjeto(null); setErroForm('') }}
+              salvando={salvando}
+            />
+          </Suspense>
+        </ChunkErrorBoundary>
       )}
     </>
   )

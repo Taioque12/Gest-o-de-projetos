@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { classify, valorFmt, fmtFull } from '../../utils/helpers'
-import CurvaS from '../CurvaS'
+import { gerarStatusExecutivo } from '../../utils/managementTalk'
+
+const CurvaS = lazy(() => import('../CurvaS'))
 
 const inp = { padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, marginTop: 2 }
 
 export default function AbaVisaoGeral({ p, c, desv, curveOpts, baselineOpts, baselineAtivo, baselines, podeEditar, congelarBaseline, excluirBaseline }) {
   const [congelando, setCongelando] = useState(false)
   const [descBaseline, setDescBaseline] = useState('')
+  const [mtalkFormat, setMtalkFormat] = useState('slack')
+  const [mtalkCopied, setMtalkCopied] = useState(false)
 
   async function handleCongelar() {
     setCongelando(true)
@@ -41,7 +45,9 @@ export default function AbaVisaoGeral({ p, c, desv, curveOpts, baselineOpts, bas
 
       <div className="m-sec">
         <h4>📈 Curva S do projeto {baselineAtivo && <span style={{ fontSize: 11, color: '#f97316', fontWeight: 600, marginLeft: 6 }}>· BL: {baselineAtivo.descricao || baselineAtivo.data_congelamento}</span>}</h4>
-        <CurvaS opts={curveOpts} baseline={baselineOpts} />
+        <Suspense fallback={<div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Carregando gráfico...</div>}>
+          <CurvaS opts={curveOpts} baseline={baselineOpts} />
+        </Suspense>
       </div>
 
       {podeEditar && (
@@ -106,6 +112,43 @@ export default function AbaVisaoGeral({ p, c, desv, curveOpts, baselineOpts, bas
       <div className="m-sec">
         <h4>🎯 Ação Recomendada</h4>
         <div className="acao-box">{p.acao}</div>
+      </div>
+
+      <div className="m-sec">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <h4 style={{ margin: 0 }}>📊 Reporte Executivo (Management Talk)</h4>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => setMtalkFormat('slack')}
+              style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line)', background: mtalkFormat === 'slack' ? 'var(--brand)' : 'var(--surface-2)', color: mtalkFormat === 'slack' ? '#fff' : 'var(--ink)', cursor: 'pointer' }}
+            >
+              Slack
+            </button>
+            <button
+              onClick={() => setMtalkFormat('jira')}
+              style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line)', background: mtalkFormat === 'jira' ? 'var(--brand)' : 'var(--surface-2)', color: mtalkFormat === 'jira' ? '#fff' : 'var(--ink)', cursor: 'pointer' }}
+            >
+              JIRA
+            </button>
+          </div>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <textarea
+            readOnly
+            value={gerarStatusExecutivo(p, mtalkFormat)}
+            style={{ width: '100%', height: mtalkFormat === 'jira' ? 200 : 120, fontSize: 13, padding: 12, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink)', resize: 'vertical' }}
+          />
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(gerarStatusExecutivo(p, mtalkFormat))
+              setMtalkCopied(true)
+              setTimeout(() => setMtalkCopied(false), 2000)
+            }}
+            style={{ position: 'absolute', top: 10, right: 10, padding: '4px 8px', fontSize: 11, borderRadius: 4, background: 'var(--brand)', color: '#fff', border: 'none', cursor: 'pointer' }}
+          >
+            {mtalkCopied ? 'Copiado!' : 'Copiar'}
+          </button>
+        </div>
       </div>
     </>
   )
