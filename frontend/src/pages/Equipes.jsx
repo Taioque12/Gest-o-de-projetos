@@ -201,8 +201,8 @@ export default function Equipes({ user, perfil, onSignOut }) {
         </div>
       </div>
 
-      <div className="wrap equipe-layout" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 24, alignItems: 'start' }}>
-        <div>
+      <div className="dash-layout" style={{ display: 'grid', gridTemplateColumns: funcSelecionados.length > 0 && abaEquipe === 'equipe' ? '1fr 340px' : '1fr', gap: 32, alignItems: 'start' }}>
+        <div className="dash-middle">
 
           {/* ── ABA PROGRAMAÇÃO ── */}
           {abaEquipe === 'programacao' && (

@@ -172,7 +172,8 @@ export default function Acessos({ user, perfil, onSignOut }) {
     <>
       <TopBar onSignOut={onSignOut} />
 
-      <div className="wrap">
+      <div className="dash-layout" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32, alignItems: 'start' }}>
+        <div className="dash-middle">
 
         {/* Usuários da equipe */}
         <div className="panel">
@@ -309,6 +310,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
         </div>
 
         <footer><b>Gestão de Projetos</b> · Gestão de Acessos</footer>
+        </div>
       </div>
 
       {/* Modal novo usuário */}
