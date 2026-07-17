@@ -43,6 +43,7 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
 
   const [iaPrompt, setIaPrompt] = useState('')
   const [iaLoading, setIaLoading] = useState(false)
+  const [projetosSimilares, setProjetosSimilares] = useState([])
 
   async function handleGerarIA() {
     if (!iaPrompt) return
@@ -70,6 +71,12 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
         d.setDate(d.getDate() + data.dias_estimados)
         setForm(prev => ({ ...prev, data_fim: d.toISOString().slice(0, 10) }))
       }
+      if (data.projetos_similares && Array.isArray(data.projetos_similares)) {
+        setProjetosSimilares(data.projetos_similares)
+      } else {
+        setProjetosSimilares([])
+      }
+      
       setIaPrompt('')
     } catch (err) {
       console.error(err)
@@ -186,6 +193,25 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
                   {iaLoading ? 'Gerando...' : 'Gerar IA'}
                 </button>
               </div>
+              
+              {projetosSimilares.length > 0 && (
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--line)', paddingTop: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}>📚 Histórico Semelhante (AgentDB)</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {projetosSimilares.map((p, i) => (
+                      <div key={i} style={{ padding: 12, background: 'var(--surface-solid)', borderRadius: 8, border: '1px solid var(--line)' }}>
+                        <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>{Math.round(p.similaridade * 100)}% Match</div>
+                        <div style={{ fontSize: 13, color: 'var(--ink)', marginTop: 4 }}>{p.conteudo_texto}</div>
+                        {p.metadata && p.metadata.acao_recomendada && (
+                          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--laranja)', background: 'oklch(1 0 0 / .05)', padding: '4px 8px', borderRadius: 4 }}>
+                            <strong>Risco Histórico:</strong> {p.metadata.acao_recomendada}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

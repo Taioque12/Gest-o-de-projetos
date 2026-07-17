@@ -82,6 +82,35 @@ serve(async (req) => {
       parsed = { nome: "Projeto Indefinido", escopo: "Instalação", dias_estimados: 30, frentes: ["Geral"] }
     }
 
+    // 2. Vector Search (AgentDB)
+    let projetos_similares = []
+    try {
+      const embedResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'models/text-embedding-004',
+          content: { parts: [{ text: sanitizedPrompt }] }
+        })
+      })
+      if (embedResponse.ok) {
+        const embedData = await embedResponse.json()
+        const query_embedding = embedData.embedding?.values
+        if (query_embedding) {
+          const { data: matches } = await supabaseClient.rpc('match_projetos', {
+            query_embedding,
+            match_threshold: 0.70, // 70% similaridade
+            match_count: 3
+          })
+          projetos_similares = matches || []
+        }
+      }
+    } catch (e) {
+      console.error("AgentDB search error:", e)
+    }
+
+    parsed.projetos_similares = projetos_similares
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
