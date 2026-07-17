@@ -31,6 +31,15 @@ export default function ProjectCardV2({ projeto, onClick }) {
         <span>Due {fmtFull(p._e).slice(0, 5)}</span>
         <span className={`p-pill ${k}`}>{pillTxt}</span>
       </div>
+
+      {p.alerta_ia && (
+        <div style={{ marginTop: 12, padding: '8px', background: 'oklch(1 0 0 / .05)', border: '1px solid var(--vermelho)', borderRadius: 8, fontSize: 12, color: 'var(--vermelho)', lineHeight: 1.4 }}>
+          <strong style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 14 }}>🤖</span> Scrum Master AI
+          </strong>
+          <div style={{ marginTop: 4 }}>{p.alerta_ia}</div>
+        </div>
+      )}
     </div>
   )
 }
