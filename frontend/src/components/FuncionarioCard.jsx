@@ -1,7 +1,7 @@
 function corNota(n) {
-  if (n >= 8) return { bg: '#dcfce7', txt: '#166534', bar: '#16a34a' }
-  if (n >= 5) return { bg: '#fef9c3', txt: '#92400e', bar: '#ca8a04' }
-  return              { bg: '#fee2e2', txt: '#991b1b', bar: '#dc2626' }
+  if (n >= 8) return { bg: '#064e3b', txt: '#4ade80', bar: '#22c55e' }
+  if (n >= 5) return { bg: '#713f12', txt: '#facc15', bar: '#eab308' }
+  return              { bg: '#7f1d1d', txt: '#f87171', bar: '#ef4444' }
 }
 
 function mediaGeral(f, habilidades) {
