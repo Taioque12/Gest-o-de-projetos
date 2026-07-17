@@ -11,6 +11,7 @@ import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
 const Equipes = lazy(() => import('./pages/Equipes'))
 const Acessos = lazy(() => import('./pages/Acessos'))
+const KanbanGlobal = lazy(() => import('./pages/KanbanGlobal'))
 
 function LazyPage({ children }) {
   return (
@@ -58,6 +59,14 @@ function AppInner() {
             element={
               <LazyPage>
                 <Equipes user={user} perfil={perfil} onSignOut={signOut} />
+              </LazyPage>
+            }
+          />
+          <Route
+            path="/kanban"
+            element={
+              <LazyPage>
+                <KanbanGlobal />
               </LazyPage>
             }
           />

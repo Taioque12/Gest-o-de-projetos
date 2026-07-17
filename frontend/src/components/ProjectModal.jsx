@@ -13,6 +13,7 @@ import AbaHistorico from './project-modal/AbaHistorico'
 import AbaAnexos from './project-modal/AbaAnexos'
 import AbaAnaliseIA from './project-modal/AbaAnaliseIA'
 import KanbanBoard from './KanbanBoard'
+import { gerarRelatorioPDF } from '../utils/pdfGenerator'
 
 const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Kanban', 'Histórico', 'Anexos', 'Análise IA']
 
@@ -22,6 +23,7 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
   const desv = p.real - p.prev
   const curveOpts = projectCurveOpts(p)
   const [aba, setAba] = useState('Visão Geral')
+  const [gerandoPdf, setGerandoPdf] = useState(false)
 
   // Hooks de dados ficam aqui (não dentro de cada aba) porque os badges de
   // contagem no cabeçalho das abas precisam do total mesmo antes do usuário
@@ -47,10 +49,26 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
   return (
     <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="modal" style={{ maxWidth: 700 }} role="dialog" aria-modal="true" aria-labelledby="project-modal-titulo" tabIndex={-1} ref={el => el?.focus()}>
-        <div className={`modal-head ${c.k}`}>
-          <button className="close" onClick={onClose} aria-label="Fechar">×</button>
-          <h2 id="project-modal-titulo">{p.nome}</h2>
-          <p>OS {p.os} · {p.cliente} · {p.escopo}</p>
+        <div className={`modal-head ${c.k}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h2 id="project-modal-titulo">{p.nome}</h2>
+            <p>OS {p.os} · {p.cliente} · {p.escopo}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button 
+              className="btn btn-ghost" 
+              style={{ fontSize: 11, padding: '6px 12px' }}
+              onClick={async () => {
+                setGerandoPdf(true)
+                await gerarRelatorioPDF(p.nome, 'pdf-export-area')
+                setGerandoPdf(false)
+              }}
+              disabled={gerandoPdf}
+            >
+              {gerandoPdf ? 'Gerando...' : '📄 Exportar PDF'}
+            </button>
+            <button className="close" style={{ position: 'relative', top: 0, right: 0 }} onClick={onClose} aria-label="Fechar">×</button>
+          </div>
         </div>
 
         {/* Abas */}
@@ -78,7 +96,7 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
           ))}
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body" id="pdf-export-area" style={{ background: 'var(--surface-solid)' }}>
           {aba === 'Visão Geral' && (
             <AbaVisaoGeral
               p={p} c={c} desv={desv} curveOpts={curveOpts} baselineOpts={baselineOpts}
