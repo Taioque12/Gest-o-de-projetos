@@ -1,14 +1,14 @@
-/* ═══════════════════════════════════════════════════════════════
-   MOCKUP — App Shell v3 (depende dos tokens de globals.css)
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MOCKUP â€” App Shell v3 (depende dos tokens de globals.css)
    Racional:
-   • Shell em CSS GRID (não flex): sidebar/main viram tracks — o
-     colapso p/ mobile é trocar o template, sem hacks.
-   • Orbes de luz FIXAS atrás do glass com leve animação de deriva:
-     o blur ganha vida (glass sem nada atrás dele parece cinza).
-   • Espaçamento fluido com clamp(): escala do mobile ao ultrawide
-     sem degraus; conteúdo limitado a 1680px em telas gigantes.
-   • Entrada em cascata (stagger) dos blocos principais.
-   ═══════════════════════════════════════════════════════════════ */
+   â€¢ Shell em CSS GRID (nÃ£o flex): sidebar/main viram tracks â€” o
+     colapso p/ mobile Ã© trocar o template, sem hacks.
+   â€¢ Orbes de luz FIXAS atrÃ¡s do glass com leve animaÃ§Ã£o de deriva:
+     o blur ganha vida (glass sem nada atrÃ¡s dele parece cinza).
+   â€¢ EspaÃ§amento fluido com clamp(): escala do mobile ao ultrawide
+     sem degraus; conteÃºdo limitado a 1680px em telas gigantes.
+   â€¢ Entrada em cascata (stagger) dos blocos principais.
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .app-shell{
   display:grid;
@@ -16,7 +16,7 @@
   min-height:100dvh;
   background:var(--surface-page);
   position:relative;
-  isolation:isolate;          /* orbes ficam atrás de tudo, sem z-index war */
+  isolation:isolate;          /* orbes ficam atrÃ¡s de tudo, sem z-index war */
   overflow:clip;
 }
 /* Orbes de luz: deriva lenta = o glassmorphism "respira" */
@@ -38,7 +38,7 @@
   to{transform:translate(60px,40px) scale(1.08)}
 }
 
-/* ═══ Sidebar ═══ */
+/* â•â•â• Sidebar â•â•â• */
 .sidebar{
   background:oklch(0.17 0.03 255 / .5);
   backdrop-filter:var(--glass-blur-heavy);
@@ -70,7 +70,7 @@
   animation:indicator-in var(--dur-base) var(--ease-spring);
 }
 @keyframes indicator-in{from{transform:scaleY(.3);opacity:0}to{transform:none;opacity:1}}
-/* Tooltip do item (sidebar é icon-only): usa data-label */
+/* Tooltip do item (sidebar Ã© icon-only): usa data-label */
 .side-item[data-label]::after{
   content:attr(data-label);position:absolute;left:calc(100% + 14px);top:50%;
   translate:0 -50%;background:var(--surface-solid);border:1px solid var(--line);
@@ -89,7 +89,7 @@
 .side-avatar img:hover{transform:scale(1.1)}
 .side-avatar span{font-size:11px;color:var(--ink-2);font-weight:600}
 
-/* ═══ Main ═══ */
+/* â•â•â• Main â•â•â• */
 .main-content{
   min-width:0;
   padding:clamp(16px,3vw,40px);
@@ -97,7 +97,7 @@
   height:100dvh;overflow-y:auto;
   scrollbar-gutter:stable;
 }
-/* Ultrawide: conteúdo centrado, não esticado */
+/* Ultrawide: conteÃºdo centrado, nÃ£o esticado */
 .main-content > *{width:100%;max-width:1680px;margin-inline:auto}
 
 /* Entrada em cascata */
@@ -105,7 +105,7 @@
 .kpis{animation-delay:.06s}.scurve-panel{animation-delay:.12s}.right-panel{animation-delay:.18s}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-/* ═══ TopBar ═══ */
+/* â•â•â• TopBar â•â•â• */
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:clamp(20px,2.5vw,32px)}
 .topbar-left{display:flex;align-items:baseline;gap:12px;min-width:0}
 .topbar-left h1{font-size:var(--text-title);font-weight:700;color:var(--ink);letter-spacing:-.5px;font-family:var(--font-display)}
@@ -147,7 +147,7 @@
 .top-date{color:var(--ink-2);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;
   border-left:1px solid var(--line);padding-left:16px;margin-left:4px}
 
-/* ═══ Dashboard grid ═══ */
+/* â•â•â• Dashboard grid â•â•â• */
 .dash-layout{
   display:grid;
   grid-template-columns:minmax(0,1fr) clamp(300px,24vw,380px);
@@ -155,7 +155,7 @@
 }
 .dash-middle{display:flex;flex-direction:column;gap:clamp(20px,2.5vw,32px);min-width:0}
 
-/* ═══ KPIs ═══ */
+/* â•â•â• KPIs â•â•â• */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:clamp(12px,1.2vw,16px)}
 .kpi{
   background:var(--surface);backdrop-filter:var(--glass-blur);border:var(--glass-border);
@@ -167,6 +167,33 @@
 .kpi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .kpi-lbl{font-size:12.5px;color:var(--ink-2);font-weight:500}
 .kpi-badge{background:oklch(1 0 0 / .08);color:var(--ink-2);font-size:10px;padding:2px 6px;border-radius:6px;font-weight:700}
+.frente-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+.acao-box { background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); padding: 16px; border-radius: 10px; color: var(--ink); font-size: 14px; font-weight: 500; border-left: 4px solid #3b82f6; }
+
+/* â•â•â• Componentes de IA e Upload â•â•â• */
+.upload-page { padding: clamp(16px, 3vw, 40px); display: flex; justify-content: center; }
+.upload-card { background: var(--surface); border: var(--glass-border); border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 600px; box-shadow: var(--elev-2), var(--glass-inset); }
+.drop-zone { border: 2px dashed var(--line); border-radius: 12px; padding: 48px 24px; text-align: center; cursor: pointer; transition: var(--transition); background: var(--surface-2); margin-bottom: 24px; }
+.drop-zone:hover, .drop-zone.over { border-color: var(--brand); background: var(--brand-light); }
+.upload-result { padding: 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); margin-bottom: 24px; font-size: 14px; }
+.upload-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.upload-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); color: var(--ink-2); font-weight: 600; }
+.upload-table td { padding: 8px; border-bottom: 1px solid var(--line); }
+.upload-acoes { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+.upload-acoes-title { font-weight: 700; margin-bottom: 16px; }
+
+.ia-box { margin-top: 24px; border: 1px solid oklch(0.7 0.15 280 / 0.4); border-radius: 12px; overflow: hidden; background: oklch(0.7 0.15 280 / 0.05); }
+.ia-box-header { background: oklch(0.7 0.15 280 / 0.15); padding: 12px 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; color: oklch(0.7 0.15 280); }
+.ia-loading { padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--ink-2); font-size: 13px; }
+.ia-spinner { width: 24px; height: 24px; border: 3px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ia-resultado { padding: 24px; }
+.ia-hint { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: 16px; }
+
+.ia-heading { color: var(--ink); font-weight: 700; margin: 16px 0 8px; font-size: 15px; }
+.ia-p { color: var(--ink-2); margin-bottom: 12px; line-height: 1.6; font-size: 14px; }
+.ia-item { color: var(--ink-2); margin-left: 20px; margin-bottom: 6px; font-size: 14px; list-style-type: disc; }
 .kpi-val{font-size:var(--text-kpi);font-weight:700;color:var(--ink);letter-spacing:-.5px;line-height:1;font-family:var(--font-display)}
 .kpi-bot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px}
 .kpi-sub{font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
@@ -174,7 +201,7 @@
 .kpi-sub.down{color:var(--vermelho-text)}
 .kpi-sub-text{color:var(--ink-3);font-weight:500}
 
-/* ═══ S-Curve panel ═══ */
+/* â•â•â• S-Curve panel â•â•â• */
 .scurve-panel{
   background:var(--surface);backdrop-filter:var(--glass-blur);border:var(--glass-border);
   border-radius:var(--radius-lg);padding:clamp(16px,2vw,24px);
@@ -188,7 +215,7 @@
 .leg-dash{width:16px;border-top:2px dashed var(--ink-2)}
 .leg-solid{width:16px;height:3px;background:linear-gradient(90deg,var(--accent),var(--brand));border-radius:2px}
 
-/* ═══ Right panel — project cards ═══ */
+/* â•â•â• Right panel â€” project cards â•â•â• */
 .right-panel{display:flex;flex-direction:column;gap:16px;min-width:0}
 .right-panel h2{font-size:var(--text-h2);font-weight:700;color:var(--ink);margin-bottom:4px;font-family:var(--font-display)}
 .p-card{
@@ -222,9 +249,9 @@
 .p-pill.amarelo{background:var(--amarelo-bg);color:var(--amarelo-text)}
 .p-pill.vermelho{background:var(--vermelho-bg);color:var(--vermelho-text)}
 
-/* ═══════════════ RESPONSIVIDADE ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RESPONSIVIDADE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* Tablets: painel direito desce para baixo do gráfico */
+/* Tablets: painel direito desce para baixo do grÃ¡fico */
 @media (max-width:1100px){
   .dash-layout{grid-template-columns:1fr}
   .right-panel{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
@@ -242,10 +269,10 @@
   .sidebar-logo,.side-avatar span{display:none}
   .side-avatar{margin-top:0}
   .side-nav{flex-direction:row;gap:4px;width:auto}
-  .side-item{width:44px;height:44px}                 /* hit target ≥44px */
+  .side-item{width:44px;height:44px}                 /* hit target â‰¥44px */
   .side-item.active::before{left:10px;right:10px;top:auto;bottom:-8px;width:auto;height:3px;border-radius:4px 4px 0 0}
   .side-item[data-label]::after{display:none}
-  .main-content{height:auto;min-height:100dvh;padding:16px 16px 96px} /* espaço p/ bottom bar */
+  .main-content{height:auto;min-height:100dvh;padding:16px 16px 96px} /* espaÃ§o p/ bottom bar */
   .topbar{flex-direction:column;align-items:stretch}
   .topbar-right{justify-content:space-between}
   .search-box,.search-box:focus-within{width:100%;flex:1}
@@ -253,7 +280,7 @@
   .kpis{grid-template-columns:1fr 1fr}
 }
 
-/* ── Mapa de Competências ── */
+/* â”€â”€ Mapa de CompetÃªncias â”€â”€ */
 .comp-resumo-grid {
   display: flex;
   gap: 16px;
@@ -298,7 +325,7 @@
   white-space: nowrap;
 }
 
-/* ── Cards de Funcionário ── */
+/* â”€â”€ Cards de FuncionÃ¡rio â”€â”€ */
 .func-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -421,46 +448,3 @@
   width: 32px;
   padding: 0;
 }
-
-/* ═══ Componentes do Modal de Projeto ═══ */
-.m-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-.m-stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px; text-align: center; }
-.m-stat .l { font-size: 11px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; margin-bottom: 4px; }
-.m-stat .v { font-size: 24px; font-weight: 800; color: var(--ink); }
-
-.m-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 32px; }
-.m-fact { background: var(--surface-2); border: 1px solid var(--line); padding: 12px; border-radius: 10px; }
-.m-fact .l { font-size: 11px; color: var(--ink-3); margin-bottom: 2px; }
-.m-fact .v { font-size: 13px; font-weight: 600; color: var(--ink); }
-
-.m-sec { margin-bottom: 32px; }
-.m-sec h4 { font-size: 14px; color: var(--ink); margin-bottom: 12px; font-weight: 700; }
-
-.frente { background: var(--surface-2); padding: 12px 16px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--line); }
-.frente-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-
-.acao-box { background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); padding: 16px; border-radius: 10px; color: var(--ink); font-size: 14px; font-weight: 500; border-left: 4px solid #3b82f6; }
-
-/* ═══ Componentes de IA e Upload ═══ */
-.upload-page { padding: clamp(16px, 3vw, 40px); display: flex; justify-content: center; }
-.upload-card { background: var(--surface); border: var(--glass-border); border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 600px; box-shadow: var(--elev-2), var(--glass-inset); }
-.drop-zone { border: 2px dashed var(--line); border-radius: 12px; padding: 48px 24px; text-align: center; cursor: pointer; transition: var(--transition); background: var(--surface-2); margin-bottom: 24px; }
-.drop-zone:hover, .drop-zone.over { border-color: var(--brand); background: var(--brand-light); }
-.upload-result { padding: 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); margin-bottom: 24px; font-size: 14px; }
-.upload-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-.upload-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); color: var(--ink-2); font-weight: 600; }
-.upload-table td { padding: 8px; border-bottom: 1px solid var(--line); }
-.upload-acoes { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
-.upload-acoes-title { font-weight: 700; margin-bottom: 16px; }
-
-.ia-box { margin-top: 24px; border: 1px solid oklch(0.7 0.15 280 / 0.4); border-radius: 12px; overflow: hidden; background: oklch(0.7 0.15 280 / 0.05); }
-.ia-box-header { background: oklch(0.7 0.15 280 / 0.15); padding: 12px 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; color: oklch(0.7 0.15 280); }
-.ia-loading { padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--ink-2); font-size: 13px; }
-.ia-spinner { width: 24px; height: 24px; border: 3px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.ia-resultado { padding: 24px; }
-.ia-hint { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: 16px; }
-
-.ia-heading { color: var(--ink); font-weight: 700; margin: 16px 0 8px; font-size: 15px; }
-.ia-p { color: var(--ink-2); margin-bottom: 12px; line-height: 1.6; font-size: 14px; }
-.ia-item { color: var(--ink-2); margin-left: 20px; margin-bottom: 6px; font-size: 14px; list-style-type: disc; }
