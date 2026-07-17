@@ -13,7 +13,7 @@ SELECT cron.schedule(
     $$
     SELECT net.http_post(
         url:='https://uaooutzbxkkcyfuwijbi.supabase.co/functions/v1/scrum-agent',
-        headers:=jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhb291dHpieGtrY3lmdXdpamJpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjA5NTYyNCwiZXhwIjoyMDk3NjcxNjI0fQ.5S3dtP-6dQXYxV--aw0oxw1ehltg7rJEVGZJ3Di6d6k')
+        headers:=jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer {{SUPABASE_SERVICE_ROLE_KEY}}')
     );
     $$
 );

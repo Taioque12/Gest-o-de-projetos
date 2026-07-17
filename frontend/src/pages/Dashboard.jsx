@@ -9,11 +9,8 @@ import TopBar from '../components/TopBar'
 import KPICardV2 from '../components/KPICardV2'
 import ProjectCardV2 from '../components/ProjectCardV2'
 import Header from '../components/Header'
-import KPICard from '../components/KPICard'
-import ProjectCard from '../components/ProjectCard'
 
 const CurvaSV2 = lazy(() => import('../components/CurvaSV2'))
-const CurvaS = lazy(() => import('../components/CurvaS'))
 const ProjectModal = lazy(() => import('../components/ProjectModal'))
 const ProjetoForm = lazy(() => import('../components/ProjetoForm'))
 const AtualizacaoSemanal = lazy(() => import('../components/AtualizacaoSemanal'))

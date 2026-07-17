@@ -11,13 +11,17 @@ export default function EmpreiteiroView({ user, onSignOut }) {
 
   useEffect(() => {
     async function load() {
-      // O empreiteiro só vê projetos genéricos ou associados a ele, 
-      // mas como simplificação, ele vê os projetos ativos.
-      // Numa implementação real haveria uma tabela "projeto_empreiteiros"
+      // Busca estritamente projetos aos quais o terceirizado (cliente) foi dado acesso
       const { data, error } = await supabase
         .from('projetos')
-        .select('id, nome, status')
-        .neq('status', 'concluido')
+        .select(`
+          id, 
+          nome, 
+          status,
+          acessos_cliente!inner(usuario_id)
+        `)
+        .eq('acessos_cliente.usuario_id', user?.id)
+        .neq('status', 'Concluído')
         
       if (!error && data) setProjetos(data)
       setLoading(false)

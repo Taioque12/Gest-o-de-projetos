@@ -28,14 +28,24 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: "Nenhum projeto ativo para analisar." }), { status: 200 })
     }
 
-    // Prepara dados para a LLM
+    // Agrupa projetos por cliente (Pseudo-Tenant) para não vazar dados entre locatários diferentes
+    const projetosPorCliente = projetos.reduce((acc, p) => {
+      const c = p.cliente || 'Desconhecido'
+      if (!acc[c]) acc[c] = []
+      acc[c].push(p)
+      return acc
+    }, {})
+
+    let recomendacoesGerais = []
     const hoje = new Date().toISOString().slice(0, 10)
-    const projetosContext = projetos.map(p => {
-      let calcAtraso = ""
-      if (p.fim && p.fim < hoje) calcAtraso = "ATRASADO"
-      const estourou = p.real > p.prev ? "ESTOUROU" : "NO ORÇAMENTO"
-      return `OS: ${p.os} | Nome: ${p.nome} | Status: ${p.status} | Prazo: ${p.fim} (${calcAtraso}) | Avanço: ${p.real}/${p.prev} (${estourou})`
-    }).join('\n')
+
+    for (const [cliente, projetosCliente] of Object.entries(projetosPorCliente)) {
+      const projetosContext = projetosCliente.map(p => {
+        let calcAtraso = ""
+        if (p.fim && p.fim < hoje) calcAtraso = "ATRASADO"
+        const estourou = p.real > p.prev ? "ESTOUROU" : "NO ORÇAMENTO"
+        return `OS: ${p.os} | Nome: ${p.nome} | Status: ${p.status} | Prazo: ${p.fim} (${calcAtraso}) | Avanço: ${p.real}/${p.prev} (${estourou})`
+      }).join('\\n')
 
     const systemInstruction = `
       Você é um Master Scrum durão e sênior. Seu papel é olhar os dados brutos de projetos ativos e alertar sobre gargalos.
@@ -49,33 +59,33 @@ serve(async (req) => {
       ]
     `
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemInstruction }] },
-        contents: [{ role: "user", parts: [{ text: "Analise estes projetos:\n" + projetosContext }] }],
-        generationConfig: {
-          temperature: 0.4,
-          responseMimeType: "application/json"
-        }
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemInstruction }] },
+          contents: [{ role: "user", parts: [{ text: "Analise estes projetos do cliente " + cliente + ":\\n" + projetosContext }] }],
+          generationConfig: {
+            temperature: 0.4,
+            responseMimeType: "application/json"
+          }
+        })
       })
-    })
 
-    if (!response.ok) throw new Error('Falha ao comunicar com LLM.')
-
-    const data = await response.json()
-    const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
-    
-    let recomendacoes = []
-    try {
-      recomendacoes = JSON.parse(textOutput)
-    } catch(e) {
-      console.error("JSON parse erro:", e)
+      if (response.ok) {
+        const data = await response.json()
+        const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+        try {
+          const recomendacoes = JSON.parse(textOutput)
+          recomendacoesGerais = [...recomendacoesGerais, ...recomendacoes]
+        } catch(e) {
+          console.error("JSON parse erro:", e)
+        }
+      }
     }
 
     // Grava os alertas de volta no banco
-    for (const rec of recomendacoes) {
+    for (const rec of recomendacoesGerais) {
       if (rec.os && rec.alerta_ia) {
         await supabaseClient
           .from('projetos')
@@ -84,7 +94,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, analises: recomendacoes.length }), {
+    return new Response(JSON.stringify({ success: true, analises: recomendacoesGerais.length }), {
       headers: { 'Content-Type': 'application/json' }
     })
   } catch (error) {

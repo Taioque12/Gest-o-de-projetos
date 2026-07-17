@@ -5,6 +5,7 @@ export default function KanbanBoard({ projetoId }) {
   const [tarefas, setTarefas] = useState([])
   const [loading, setLoading] = useState(true)
   const [novaTarefa, setNovaTarefa] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   useEffect(() => {
     fetchTarefas()
@@ -50,10 +51,14 @@ export default function KanbanBoard({ projetoId }) {
   }
 
   async function excluirTarefa(tarefaId) {
-    if (!window.confirm('Excluir tarefa?')) return
+    if (confirmDelete !== tarefaId) {
+      setConfirmDelete(tarefaId)
+      return
+    }
     const { error } = await supabase.from('tarefas').delete().eq('id', tarefaId)
     if (!error) {
       setTarefas(tarefas.filter(t => t.id !== tarefaId))
+      setConfirmDelete(null)
     }
   }
 
@@ -102,8 +107,18 @@ export default function KanbanBoard({ projetoId }) {
                         Avançar →
                       </button>
                     )}
-                    <button onClick={() => excluirTarefa(t.id)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 4, border: 'none', background: '#fee2e2', color: '#991b1b', cursor: 'pointer', marginLeft: 'auto' }}>
-                      🗑
+                    <button 
+                      onClick={() => excluirTarefa(t.id)} 
+                      style={{ 
+                        fontSize: 11, padding: '4px 8px', borderRadius: 4, border: 'none', 
+                        background: confirmDelete === t.id ? '#ef4444' : '#fee2e2', 
+                        color: confirmDelete === t.id ? '#fff' : '#991b1b', 
+                        cursor: 'pointer', marginLeft: 'auto',
+                        transition: '0.2s'
+                      }}
+                      onBlur={() => setConfirmDelete(null)}
+                    >
+                      {confirmDelete === t.id ? 'Certeza?' : '🗑'}
                     </button>
                   </div>
                 </div>

@@ -13,6 +13,8 @@ export default function AbaRDO({ projetoId, podeEditar }) {
   const [enviando, setEnviando] = useState(false)
   const [gravando, setGravando] = useState(false)
   const [processandoVoz, setProcessandoVoz] = useState(false)
+  const [erroMsg, setErroMsg] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   useEffect(() => {
     fetchRdos()
@@ -33,9 +35,10 @@ export default function AbaRDO({ projetoId, podeEditar }) {
   }
 
   function iniciarGravacaoIA() {
+    setErroMsg('')
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
-      alert("Seu navegador não suporta gravação de voz. Tente usar o Google Chrome.")
+      setErroMsg("Seu navegador não suporta gravação de voz. Tente usar o Google Chrome.")
       return
     }
 
@@ -97,18 +100,23 @@ export default function AbaRDO({ projetoId, podeEditar }) {
     if (!error && data) {
       setRdos([data, ...rdos])
       setNovoRdo({ ...novoRdo, ocorrencias: '', efetivo_presente: 0 })
+      setErroMsg('')
     } else {
       console.error(error)
-      alert("Erro ao salvar RDO")
+      setErroMsg("Erro ao salvar RDO")
     }
     setEnviando(false)
   }
 
   async function excluirRdo(id) {
-    if (!window.confirm("Excluir este Diário de Obra?")) return
+    if (confirmDelete !== id) {
+      setConfirmDelete(id)
+      return
+    }
     const { error } = await supabase.from('rdo').delete().eq('id', id)
     if (!error) {
       setRdos(rdos.filter(r => r.id !== id))
+      setConfirmDelete(null)
     }
   }
 
@@ -132,6 +140,8 @@ export default function AbaRDO({ projetoId, podeEditar }) {
               {gravando ? 'Ouvindo...' : processandoVoz ? 'Pensando...' : 'Preencher com Voz (IA)'}
             </button>
           </div>
+          
+          {erroMsg && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '8px 12px', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{erroMsg}</div>}
           
           <div className="form-grid">
             <div className="field">
@@ -178,7 +188,17 @@ export default function AbaRDO({ projetoId, podeEditar }) {
                     </span>
                   </div>
                   {podeEditar && (
-                    <button onClick={() => excluirRdo(rdo.id)} className="btn btn-ghost" style={{ padding: '4px 8px' }}>Excluir</button>
+                    <button 
+                      onClick={() => excluirRdo(rdo.id)} 
+                      onBlur={() => setConfirmDelete(null)}
+                      className="btn btn-ghost" 
+                      style={{ 
+                        padding: '4px 8px', 
+                        color: confirmDelete === rdo.id ? '#ef4444' : 'inherit'
+                      }}
+                    >
+                      {confirmDelete === rdo.id ? 'Certeza?' : 'Excluir'}
+                    </button>
                   )}
                 </div>
                 <div style={{ fontSize: 14, color: 'var(--ink-2)' }}>

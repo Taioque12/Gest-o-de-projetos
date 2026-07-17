@@ -19,12 +19,18 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
     if (userError || !user) throw new Error('Não autorizado.')
 
+    // Verifica se o usuário tem permissão (admin ou equipe)
+    const perfil = user.user_metadata?.perfil || (await supabaseClient.from('usuarios').select('perfil').eq('id', user.id).single()).data?.perfil;
+    if (perfil !== 'admin' && perfil !== 'equipe') {
+      throw new Error('Permissão negada. Apenas admins ou equipe podem sincronizar com o GitHub.')
+    }
+
     const ghToken = Deno.env.get('GITHUB_TOKEN')
     if (!ghToken) throw new Error('GITHUB_TOKEN não configurado nos secrets do Supabase.')
 
-    const { action, projeto_id, repo } = await req.json()
-    // repo format: "owner/repo" e.g. "Taioque12/Gest-o-de-projetos"
-    if (!repo) throw new Error('Campo "repo" é obrigatório (formato: owner/repo).')
+    const repo = Deno.env.get('GITHUB_REPO') || 'Taioque12/Gest-o-de-projetos'
+    
+    const { action, projeto_id } = await req.json()
 
     const ghHeaders = {
       'Authorization': `Bearer ${ghToken}`,

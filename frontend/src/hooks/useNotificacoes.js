@@ -8,14 +8,23 @@ export function useNotificacoes() {
   useEffect(() => {
     fetchNotificacoes()
 
-    const sub = supabase
-      .channel('notif-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notificacoes' }, () => {
-        fetchNotificacoes()
-      })
-      .subscribe()
+    let sub = null;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return;
+      sub = supabase
+        .channel('notif-changes')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: `usuario_id=eq.${session.user.id}` }, (payload) => {
+          setNotificacoes(prev => [payload.new, ...prev].slice(0, 5))
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notificacoes', filter: `usuario_id=eq.${session.user.id}` }, (payload) => {
+          if (payload.new.lida) {
+            setNotificacoes(prev => prev.filter(n => n.id !== payload.new.id))
+          }
+        })
+        .subscribe()
+    })
 
-    return () => { supabase.removeChannel(sub) }
+    return () => { if (sub) supabase.removeChannel(sub) }
   }, [])
 
   async function fetchNotificacoes() {
@@ -29,7 +38,9 @@ export function useNotificacoes() {
       .order('criado_em', { ascending: false })
       .limit(5)
 
-    if (!error && data) {
+    if (error) {
+      console.error('Erro ao buscar notificações:', error)
+    } else if (data) {
       setNotificacoes(data)
     }
     setLoading(false)
@@ -37,7 +48,9 @@ export function useNotificacoes() {
 
   async function marcarLida(id) {
     const { error } = await supabase.from('notificacoes').update({ lida: true }).eq('id', id)
-    if (!error) {
+    if (error) {
+      console.error('Erro ao marcar notificação como lida:', error)
+    } else {
       setNotificacoes(ns => ns.filter(n => n.id !== id))
     }
   }

@@ -22,11 +22,16 @@ serve(async (req) => {
     }
 
     const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Não autorizado.");
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) throw new Error("Token inválido ou expirado.");
 
     // 1. Busca dados do projeto para dar contexto (somente leitura autorizada pelo RLS)
     const { data: proj, error: projErr } = await supabaseClient
@@ -39,7 +44,48 @@ serve(async (req) => {
       throw new Error("Projeto não encontrado ou sem permissão");
     }
 
-    // 2. Monta o Prompt de Sistema com o contexto do projeto
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiKey) throw new Error("Chave do Gemini não configurada");
+
+    // 2. Busca embeddings (RAG) se houver uma pergunta do usuário
+    const lastMessage = messages[messages.length - 1];
+    let ragContext = "";
+    
+    if (lastMessage && lastMessage.role === "user") {
+      try {
+        // Gera embedding da pergunta
+        const embedRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: { parts: [{ text: lastMessage.text }] }
+          })
+        });
+        
+        if (embedRes.ok) {
+          const embedData = await embedRes.json();
+          const queryEmbedding = embedData.embedding?.values;
+          
+          if (queryEmbedding) {
+            // Busca no AgentDB
+            const { data: matches } = await supabaseClient.rpc('match_projetos', {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.6,
+              match_count: 3
+            });
+            
+            if (matches && matches.length > 0) {
+              ragContext = "\\n\\nCONHECIMENTO DA BASE (AgentDB):\\n" + matches.map(m => `- ${m.conteudo_texto}`).join('\\n');
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Erro no RAG:", e);
+      }
+    }
+
+    // 3. Monta o Prompt de Sistema com o contexto do projeto
     const systemPrompt = `Você é o Copilot de Engenharia (IA) da Construtora.
 Seu papel é ajudar o Diretor/Engenheiro a gerenciar a obra baseando-se nos dados reais.
 Nome do Projeto: ${proj.nome} (OS: ${proj.os}, Cliente: ${proj.cliente})
@@ -48,7 +94,7 @@ Avanço Realizado Atual: ${proj.real}%
 Diferença: ${proj.real - proj.prev}% (Positivo é adiantado, Negativo é atrasado).
 
 Seja muito objetivo, profissional e direto. Use formatação markdown para destacar pontos importantes.
-Se perguntarem por cronograma, você pode mencionar que possui os dados da linha de base (se aplicável).`;
+Se perguntarem por cronograma, você pode mencionar que possui os dados da linha de base (se aplicável).${ragContext}`;
 
     const geminiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiKey) throw new Error("Chave do Gemini não configurada");

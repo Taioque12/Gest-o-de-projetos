@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 /**
  * MVP de Inteligência Artificial para Matchmaking de Equipes.
@@ -8,8 +8,10 @@ import { useState } from 'react'
 export function useIAMatchmaking(funcionarios, projetos) {
   const [loading, setLoading] = useState(false)
   const [sugestoes, setSugestoes] = useState(null)
+  const requestIdRef = useRef(0)
   
   const analisarProjeto = async (projetoId) => {
+    const currentRequestId = ++requestIdRef.current
     setLoading(true)
     setSugestoes(null)
     
@@ -70,8 +72,11 @@ export function useIAMatchmaking(funcionarios, projetos) {
       candidatos: ranking
     }
     
-    setSugestoes(resultado)
-    setLoading(false)
+    // Evita race condition: só atualiza se for a última requisição feita
+    if (currentRequestId === requestIdRef.current) {
+      setSugestoes(resultado)
+      setLoading(false)
+    }
     return resultado
   }
 
