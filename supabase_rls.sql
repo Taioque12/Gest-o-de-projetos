@@ -1,6 +1,6 @@
 -- ================================================================
 -- RLS — Gestão de Projetos
--- Rodar no Supabase SQL Editor: https://supabase.com/dashboard/project/uaooutzbxkkcyfuwijbi/sql
+-- Rodar no Supabase SQL Editor: https://supabase.com/dashboard/project/<PROJECT_REF>/sql
 -- ================================================================
 
 -- 1. Função helper SECURITY DEFINER

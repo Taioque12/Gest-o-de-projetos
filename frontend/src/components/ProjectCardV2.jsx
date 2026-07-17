@@ -14,7 +14,7 @@ export default function ProjectCardV2({ projeto, onClick }) {
   return (
     <div className="p-card" onClick={onClick}>
       <div className="p-card-top">
-        <div className="p-card-title">{p.nome}</div>
+        <span className="p-card-title">{p.nome}</span>
         <button className="p-card-more">•••</button>
       </div>
       
@@ -29,19 +29,6 @@ export default function ProjectCardV2({ projeto, onClick }) {
       
       <div className="p-card-bot">
         <span>Due {fmtFull(p._e).slice(0, 5)}</span>
-        {p.equipes && p.equipes.length > 0 ? (
-          <div className="p-avatars">
-            <img src="https://ui-avatars.com/api/?name=A&background=random&color=fff" alt="Team" />
-            <img src="https://ui-avatars.com/api/?name=B&background=random&color=fff" alt="Team" />
-            <img src="https://ui-avatars.com/api/?name=C&background=random&color=fff" alt="Team" />
-          </div>
-        ) : (
-          <span>No team</span>
-        )}
-      </div>
-      
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
-        <span style={{ fontSize: '11px', color: 'var(--ink-3)' }}>Status:</span>
         <span className={`p-pill ${k}`}>{pillTxt}</span>
       </div>
     </div>

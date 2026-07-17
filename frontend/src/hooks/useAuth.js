@@ -10,23 +10,24 @@ export function useAuth() {
     // Modo demo (sem Supabase): mantém UI completa de admin
     if (!supabaseConfigurado) { setPerfil('admin'); setLoading(false); return }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchPerfil(session.user.id)
-      else setLoading(false)
-    })
+    let montado = true
 
+    // onAuthStateChange já dispara com a sessão atual (INITIAL_SESSION) ao
+    // inscrever — dispensa um getSession() separado, que duplicava a busca
+    // de perfil no mount.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_ev, session) => {
+      if (!montado) return
       setUser(session?.user ?? null)
-      if (session?.user) fetchPerfil(session.user.id)
+      if (session?.user) fetchPerfil(session.user.id, () => montado)
       else { setPerfil('cliente'); setLoading(false) }
     })
 
-    return () => subscription.unsubscribe()
+    return () => { montado = false; subscription.unsubscribe() }
   }, [])
 
   // Busca perfil usando auth.uid() — usuarios.id deve ser igual ao auth.uid()
-  async function fetchPerfil(authUid) {
+  async function fetchPerfil(authUid, aindaMontado) {
+    let perfil = 'cliente'
     try {
       const { data, error } = await supabase
         .from('usuarios')
@@ -38,12 +39,12 @@ export function useAuth() {
 
       // Linha em usuarios é criada pelo trigger on_auth_user_created;
       // se ainda não existir, assume o menor privilégio em vez de inserir daqui
-      setPerfil(data?.perfil ?? 'cliente')
+      perfil = data?.perfil ?? 'cliente'
     } catch {
       // Se RLS bloquear, assume o menor privilégio como fallback seguro
-      setPerfil('cliente')
+      perfil = 'cliente'
     }
-    setLoading(false)
+    if (aindaMontado()) { setPerfil(perfil); setLoading(false) }
   }
 
   const signIn = (email, password) =>

@@ -4,7 +4,7 @@ Migrations SQL rodam manualmente no SQL Editor do Supabase (não há ferramenta 
 versionamento automático). Esta tabela existe pra não perder o controle de qual
 arquivo já foi aplicado em cada ambiente — atualize ao rodar uma nova.
 
-| Arquivo | O que faz | `main` (prod · `uaooutzbxkkcyfuwijbi`) |
+| Arquivo | O que faz | `main` (prod · `<PROJECT_REF>`) |
 |---|---|---|
 | `schema-supabase.sql` | Schema base (tabelas iniciais) | ✅ |
 | `supabase_rls.sql` | RLS inicial por perfil (admin/equipe/cliente) | ✅ |

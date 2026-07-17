@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: auditoria completa (audit_log + triggers)
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 --
 -- Complementa a migracao-auditoria.sql (que só marca autoria de
 -- lançamentos). Aqui todo INSERT/UPDATE/DELETE em tabelas

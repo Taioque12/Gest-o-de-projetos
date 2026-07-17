@@ -45,10 +45,10 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
 
   return (
     <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal" style={{ maxWidth: 700 }}>
+      <div className="modal" style={{ maxWidth: 700 }} role="dialog" aria-modal="true" aria-labelledby="project-modal-titulo" tabIndex={-1} ref={el => el?.focus()}>
         <div className={`modal-head ${c.k}`}>
-          <button className="close" onClick={onClose}>×</button>
-          <h2>{p.nome}</h2>
+          <button className="close" onClick={onClose} aria-label="Fechar">×</button>
+          <h2 id="project-modal-titulo">{p.nome}</h2>
           <p>OS {p.os} · {p.cliente} · {p.escopo}</p>
         </div>
 

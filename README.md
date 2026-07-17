@@ -54,8 +54,8 @@ Env vars no Render: `SUPABASE_URL` (validação JWT via JWKS), `ALLOWED_ORIGINS`
 A chamada ao Gemini **não** acontece no client (evita expor a API key no bundle JS). O frontend chama a Edge Function `analisar-ia` (`supabase/functions/analisar-ia`), que valida o usuário autenticado e guarda a chave como secret no servidor:
 
 ```bash
-supabase functions deploy analisar-ia --project-ref uaooutzbxkkcyfuwijbi --no-verify-jwt
-supabase secrets set GEMINI_API_KEY=sua_chave --project-ref uaooutzbxkkcyfuwijbi
+supabase functions deploy analisar-ia --project-ref <PROJECT_REF> --no-verify-jwt
+supabase secrets set GEMINI_API_KEY=sua_chave --project-ref <PROJECT_REF>
 ```
 
 > `--no-verify-jwt`: a função já valida o usuário manualmente via `auth.getUser()`; o `verify_jwt` da plataforma rejeitava a chamada no gateway antes de chegar no código (sem log, erro genérico "non-2xx status code").

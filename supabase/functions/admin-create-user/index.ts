@@ -1,8 +1,13 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
+const ALLOWED_ORIGINS = new Set(
+  (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://gest-o-de-projetos-eoum.vercel.app,https://gest-o-de-projetos-eight.vercel.app,https://frontend-beta-navy-63.vercel.app')
+    .split(',').map(o => o.trim()).filter(Boolean)
+)
+
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') || '';
-  const isAllowed = origin.endsWith('.vercel.app') || origin.startsWith('http://localhost:');
+  const isAllowed = ALLOWED_ORIGINS.has(origin) || origin.startsWith('http://localhost:');
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : '',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -11,27 +16,13 @@ function getCorsHeaders(req: Request) {
 
 // Rate limit genérico (tabela rate_limit_acoes): no máx N chamadas por
 // janela de tempo por usuário+ação — evita spam de criação de usuários.
+// Check-and-increment atômico via RPC (evita corrida sob concorrência).
 async function checarRateLimit(admin: ReturnType<typeof createClient>, userId: string, acao: string, janelaMs: number, maxChamadas: number) {
-  const { data: row } = await admin
-    .from('rate_limit_acoes')
-    .select('janela_inicio, chamadas')
-    .eq('user_id', userId)
-    .eq('acao', acao)
-    .maybeSingle()
-
-  const agora = Date.now()
-  if (!row || agora - new Date(row.janela_inicio).getTime() > janelaMs) {
-    await admin.from('rate_limit_acoes')
-      .upsert({ user_id: userId, acao, janela_inicio: new Date().toISOString(), chamadas: 1 })
-    return true
-  }
-  if (row.chamadas >= maxChamadas) return false
-
-  await admin.from('rate_limit_acoes')
-    .update({ chamadas: row.chamadas + 1 })
-    .eq('user_id', userId)
-    .eq('acao', acao)
-  return true
+  const { data, error } = await admin.rpc('incrementar_rate_limit_acao', {
+    p_user_id: userId, p_acao: acao, p_janela_ms: janelaMs, p_max: maxChamadas,
+  })
+  if (error) return false
+  return data === true
 }
 
 Deno.serve(async (req: Request) => {
@@ -60,6 +51,9 @@ Deno.serve(async (req: Request) => {
     const { email, senha, nome, perfil, funcao, data_nascimento } = await req.json()
     if (!email || !senha) return json(req, { error: 'E-mail e senha são obrigatórios' }, 400)
 
+    if (typeof email !== 'string' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+      return json(req, { error: 'E-mail inválido.' }, 400)
+
     // Política de senha: mínimo 10 caracteres com letra e número
     if (typeof senha !== 'string' || senha.length < 10)
       return json(req, { error: 'Senha deve ter no mínimo 10 caracteres.' }, 400)
@@ -69,6 +63,13 @@ Deno.serve(async (req: Request) => {
     if (perfil && !['admin', 'equipe', 'cliente'].includes(perfil))
       return json(req, { error: 'Perfil inválido.' }, 400)
 
+    for (const [campo, valor] of Object.entries({ nome, funcao })) {
+      if (valor != null && (typeof valor !== 'string' || valor.length > 200))
+        return json(req, { error: `Campo "${campo}" inválido.` }, 400)
+    }
+    if (data_nascimento != null && (typeof data_nascimento !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data_nascimento)))
+      return json(req, { error: 'Data de nascimento inválida.' }, 400)
+
     const liberado = await checarRateLimit(admin, user.id, 'admin-create-user', 60_000, 5)
     if (!liberado) return json(req, { error: 'Muitos convites em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
 
@@ -77,7 +78,13 @@ Deno.serve(async (req: Request) => {
       password: senha,
       email_confirm: true,
     })
-    if (createErr) return json(req, { error: createErr.message }, 400)
+    if (createErr) {
+      console.error('admin-create-user createUser:', createErr.message)
+      const msg = /already.*registered|already.*exists/i.test(createErr.message)
+        ? 'E-mail já cadastrado.'
+        : 'Não foi possível criar o usuário.'
+      return json(req, { error: msg }, 400)
+    }
 
     const { error: insertErr } = await admin.from('usuarios').upsert({
       id: created.user.id,
@@ -87,11 +94,15 @@ Deno.serve(async (req: Request) => {
       funcao: funcao ?? null,
       data_nascimento: data_nascimento ?? null,
     })
-    if (insertErr) return json(req, { error: insertErr.message }, 500)
+    if (insertErr) {
+      console.error('admin-create-user insert usuarios:', insertErr.message)
+      return json(req, { error: 'Usuário criado no Auth, mas falhou ao salvar o perfil. Contate o suporte.' }, 500)
+    }
 
     return json(req, { id: created.user.id }, 200)
   } catch (err) {
-    return json(req, { error: String(err) }, 500)
+    console.error('admin-create-user:', err)
+    return json(req, { error: 'Erro interno ao criar usuário.' }, 500)
   }
 })
 

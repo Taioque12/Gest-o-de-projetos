@@ -4,9 +4,14 @@
 // rejeição no gateway antes de chegar aqui).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
+const ALLOWED_ORIGINS = new Set(
+  (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://gest-o-de-projetos-eoum.vercel.app,https://gest-o-de-projetos-eight.vercel.app,https://frontend-beta-navy-63.vercel.app')
+    .split(',').map(o => o.trim()).filter(Boolean)
+)
+
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') || '';
-  const isAllowed = origin.endsWith('.vercel.app') || origin.startsWith('http://localhost:');
+  const isAllowed = ALLOWED_ORIGINS.has(origin) || origin.startsWith('http://localhost:');
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : '',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -22,24 +27,11 @@ const MAX_CHAMADAS = 3
 const MAX_TAREFAS = 150;
 
 async function checarRateLimit(admin: ReturnType<typeof createClient>, userId: string) {
-  const { data: row } = await admin
-    .from('rate_limit_analise_ia')
-    .select('janela_inicio, chamadas')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const agora = Date.now()
-  if (!row || agora - new Date(row.janela_inicio).getTime() > JANELA_MS) {
-    await admin.from('rate_limit_analise_ia')
-      .upsert({ user_id: userId, janela_inicio: new Date().toISOString(), chamadas: 1 })
-    return true
-  }
-  if (row.chamadas >= MAX_CHAMADAS) return false
-
-  await admin.from('rate_limit_analise_ia')
-    .update({ chamadas: row.chamadas + 1 })
-    .eq('user_id', userId)
-  return true
+  const { data, error } = await admin.rpc('incrementar_rate_limit_ia', {
+    p_user_id: userId, p_janela_ms: JANELA_MS, p_max: MAX_CHAMADAS,
+  })
+  if (error) return false
+  return data === true
 }
 
 function classificarTarefas(tarefas: any[], hoje: string) {
@@ -186,21 +178,38 @@ Deno.serve(async (req: Request) => {
     if (!liberado) return json(req, { error: 'Muitas análises em pouco tempo. Aguarde um minuto e tente de novo.' }, 429)
 
     const { projeto, tarefas, parte, maxTokens } = await req.json()
-    if (!projeto || !tarefas || !parte) return json(req, { error: 'projeto, tarefas e parte são obrigatórios' }, 400)
+    if (!projeto || !Array.isArray(tarefas) || !parte) return json(req, { error: 'projeto, tarefas e parte são obrigatórios' }, 400)
+    if (tarefas.length > MAX_TAREFAS * 4) return json(req, { error: 'Cronograma excede o limite suportado.' }, 400)
 
-    const prompt = parte === 1 ? buildPromptParte1(projeto, tarefas) : buildPromptParte2(projeto, tarefas);
+    // Trunca campos textuais controlados pelo cliente pra reduzir superfície
+    // de prompt injection e evitar payloads desproporcionais.
+    const projetoSaneado = {
+      ...projeto,
+      nome: typeof projeto.nome === 'string' ? projeto.nome.slice(0, 200) : projeto.nome,
+    }
+    const tarefasSaneadas = tarefas.map((t: any) => ({
+      ...t,
+      nome: typeof t?.nome === 'string' ? t.nome.slice(0, 200) : t?.nome,
+    }))
+
+    const maxTokensNum = Number(maxTokens)
+    const maxOutputTokens = Number.isFinite(maxTokensNum) ? Math.min(Math.max(maxTokensNum, 256), 8000) : 6000
+
+    const prompt = parte === 1 ? buildPromptParte1(projetoSaneado, tarefasSaneadas) : buildPromptParte2(projetoSaneado, tarefasSaneadas);
 
     const resp = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: maxTokens ?? 6000, temperature: 0.2 },
+        generationConfig: { maxOutputTokens, temperature: 0.2 },
       }),
+      signal: AbortSignal.timeout(30_000),
     })
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}))
-      return json(req, { error: err.error?.message ?? `Erro ${resp.status} ao consultar Gemini` }, 502)
+      console.error('analisar-ia Gemini error:', resp.status, err.error?.message)
+      return json(req, { error: `Erro ${resp.status} ao consultar Gemini` }, 502)
     }
     const data = await resp.json()
     const texto = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sem resposta.'

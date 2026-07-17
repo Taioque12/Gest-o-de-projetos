@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: funcionarios + programacao_semanal
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 -- Data: 2026-06-23
 -- ============================================================
 

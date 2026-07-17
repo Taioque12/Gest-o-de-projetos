@@ -64,8 +64,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="MPP Reader", lifespan=lifespan)
 
 # CORS — domínios autorizados a chamar a API (frontend local + Vercel).
-# Sobrescreva com a variável de ambiente ALLOWED_ORIGINS (separada por vírgula).
-_ALLOWED_ORIGINS_FALLBACK = "http://localhost:5173,https://gest-o-de-projetos-eoum.vercel.app,https://gest-o-de-projetos-eight.vercel.app,https://frontend-beta-navy-63.vercel.app"
+# Sobrescreva com a variável de ambiente ALLOWED_ORIGINS (separada por vírgula);
+# obrigatória em produção — o fallback cobre só o dev local.
+_ALLOWED_ORIGINS_FALLBACK = "http://localhost:5173"
 _origins_env = os.environ.get("ALLOWED_ORIGINS")
 if not _origins_env:
     print(f"[startup] ALLOWED_ORIGINS não configurada — usando fallback: {_ALLOWED_ORIGINS_FALLBACK}")
@@ -147,12 +148,11 @@ def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
 
 @app.post("/parse")
 def parse(request: Request, arquivo: UploadFile = File(...), token_payload: dict = Depends(verify_jwt)):
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        ip = forwarded_for.split(",")[0].strip()
-    else:
-        ip = request.client.host if request.client else "unknown"
-    _checar_rate_limit(ip)
+    # Chave por identidade do usuário (sub do JWT já validado), não por IP:
+    # X-Forwarded-For é enviado pelo cliente e pode ser forjado/variado a
+    # cada requisição pra contornar o rate limit por IP.
+    chave = token_payload.get("sub") or (request.client.host if request.client else "unknown")
+    _checar_rate_limit(chave)
 
     nome = arquivo.filename or "projeto.mpp"
     if not nome.lower().endswith((".mpp", ".mpx", ".xml")):

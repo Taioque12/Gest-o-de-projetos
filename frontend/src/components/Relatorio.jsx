@@ -26,8 +26,8 @@ export default function Relatorio({ projetos, onFechar }) {
   }, [onFechar])
 
   const VTOT     = projetos.reduce((s, p) => s + p.valor, 0)
-  const wPrev    = projetos.length ? projetos.reduce((s, p) => s + p.valor * p.prev, 0) / VTOT : 0
-  const wReal    = projetos.length ? projetos.reduce((s, p) => s + p.valor * p.real, 0) / VTOT : 0
+  const wPrev    = VTOT ? projetos.reduce((s, p) => s + p.valor * p.prev, 0) / VTOT : 0
+  const wReal    = VTOT ? projetos.reduce((s, p) => s + p.valor * p.real, 0) / VTOT : 0
   const nCrit    = projetos.filter(p => classify(p.prev, p.real).k === 'vermelho').length
   const nAtenc   = projetos.filter(p => classify(p.prev, p.real).k === 'amarelo').length
 

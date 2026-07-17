@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: RLS no Storage e na tabela anexos
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 --
 -- Antes desta migration o bucket 'anexos' era público: qualquer
 -- pessoa com a URL baixava o arquivo, e qualquer usuário logado

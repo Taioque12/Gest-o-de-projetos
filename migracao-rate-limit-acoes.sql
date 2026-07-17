@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: rate limit genérico por usuário+ação
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 --
 -- Generaliza o padrão já usado em rate_limit_analise_ia pra outras
 -- Edge Functions sensíveis (admin-create-user) sem duplicar tabela

@@ -330,7 +330,7 @@ export default function Acessos({ user, perfil, onSignOut }) {
                 <input style={INPUT_STYLE} type="email" value={form.email} onChange={campo('email')} placeholder="carlos@exemplo.com" required />
               </CAMPO>
               <CAMPO label="Senha *">
-                <input style={INPUT_STYLE} type="password" value={form.senha} onChange={campo('senha')} placeholder="Mínimo 6 caracteres" required minLength={6} />
+                <input style={INPUT_STYLE} type="password" value={form.senha} onChange={campo('senha')} placeholder="Mín. 10 caracteres, com letras e números" required minLength={10} pattern="(?=.*[a-zA-Z])(?=.*[0-9]).{10,}" title="Mínimo 10 caracteres, com letras e números" />
               </CAMPO>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <CAMPO label="Função / Cargo">

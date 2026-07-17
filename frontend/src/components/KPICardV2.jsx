@@ -12,12 +12,13 @@ export default function KPICardV2({ lbl, val, sub, pct, badge, isGreen }) {
       <div className="kpi-val">{val}</div>
       
       <div className="kpi-bot">
-        <div className={`kpi-sub ${isGreen ? 'up' : 'down'}`}>
-          {isGreen ? '↑' : '↓'} {pct}% {sub && <span className="kpi-sub-text">{sub}</span>}
-        </div>
-        <svg width="40" height="20" viewBox="0 0 40 20">
-          <polyline points={p1} fill="none" stroke={isGreen ? "#22c55e" : "#fb923c"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <span className={`kpi-sub ${isGreen ? 'up' : 'down'}`}>
+          {isGreen ? '↑' : '↓'} {pct}%
+        </span>
+        {sub && <span className="kpi-sub-text">{sub}</span>}
+      </div>
+      <div className="track" style={{ height: '5px', marginTop: '10px' }}>
+        <div className={`fill ${isGreen ? 'real-verde' : 'real-amarelo'}`} style={{ width: `${pct}%` }}></div>
       </div>
     </div>
   )

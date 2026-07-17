@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: rate limit da análise IA (Gemini) por usuário
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS rate_limit_analise_ia (

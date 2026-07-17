@@ -2,7 +2,7 @@
 -- MIGRAÇÃO: custo_dia em funcionarios
 -- Adiciona coluna custo_dia (R$/dia) à tabela funcionarios para
 -- calcular custo de mão de obra previsto vs realizado por OS.
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 -- Data: 2026-06-23
 -- ============================================================
 

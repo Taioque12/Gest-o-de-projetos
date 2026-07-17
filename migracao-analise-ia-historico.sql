@@ -3,7 +3,7 @@
 -- Guarda cada análise gerada (não sobrescreve mais), permitindo
 -- baixar PDF individual e manter trilha histórica conforme o
 -- cronograma é reimportado e reanalisado.
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 -- Data: 2026-07-03
 -- ============================================================
 

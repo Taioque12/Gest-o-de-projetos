@@ -2,7 +2,7 @@
 -- MIGRAÇÃO · Histograma de Efetivo (Mão de Obra) por Semana
 -- Gestão de Projetos
 -- Rodar no Supabase SQL Editor:
---   https://supabase.com/dashboard/project/uaooutzbxkkcyfuwijbi/sql
+--   https://supabase.com/dashboard/project/<PROJECT_REF>/sql
 -- Seguro de rodar mais de uma vez (idempotente).
 -- ================================================================
 

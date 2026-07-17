@@ -7,10 +7,15 @@ export default function Toast({ mensagem, tipo = 'sucesso', onClose }) {
   }, [onClose, tipo])
 
   return (
-    <div className={`toast${tipo === 'erro' ? ' toast-erro' : ''}`} onClick={onClose}>
+    <div
+      className={`toast${tipo === 'erro' ? ' toast-erro' : ''}`}
+      onClick={onClose}
+      role="status"
+      aria-live={tipo === 'erro' ? 'assertive' : 'polite'}
+    >
       <span>{tipo === 'erro' ? '❌' : '✅'}</span>
       <span>{mensagem}</span>
-      <button className="toast-close">×</button>
+      <button className="toast-close" aria-label="Fechar notificação">×</button>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: proteção contra escalação de privilégio no perfil
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 --
 -- A policy "usuarios_update_proprio" permite que o usuário edite
 -- a própria linha — incluindo o campo perfil. Sem este trigger,

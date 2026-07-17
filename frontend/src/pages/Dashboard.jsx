@@ -1,7 +1,8 @@
 import { useState, lazy, Suspense, useMemo, useCallback } from 'react'
 import { useProjetos } from '../hooks/useProjetos'
 import { useAppStore } from '../store/useAppStore'
-import { classify, valorFmt, fmt, portfolioCurveOpts, projectCurveOpts } from '../utils/helpers'
+import { classify, valorFmt, fmt } from '../utils/helpers'
+import { useDashboardKPIs } from '../hooks/useDashboardKPIs'
 import Sidebar from '../components/Sidebar'
 import TopBar from '../components/TopBar'
 import KPICardV2 from '../components/KPICardV2'
@@ -73,30 +74,10 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     .filter(p => filtro === 'todos' || classify(p.prev, p.real).k === filtro)
     .filter(p => filtroResp === 'todos' || p.responsavel === filtroResp), [projetos, filtro, filtroResp])
 
-  const projetoSelecionado = useMemo(() => projetos.find(p => p.id === curvaFiltro), [projetos, curvaFiltro])
-  const projetosCurva = useMemo(() => curvaResp === 'todos' ? projetos : projetos.filter(p => p.responsavel === curvaResp), [projetos, curvaResp])
-  const curveOpts = useMemo(() => projetosCurva.length
-    ? (projetoSelecionado ? projectCurveOpts(projetoSelecionado) : portfolioCurveOpts(projetosCurva))
-    : null, [projetosCurva, projetoSelecionado])
-
-  // KPIs reagem ao filtro da Curva S
-  const { kpiBase, VTOT, wAvgPrev, wAvgReal, desv, clsDesv, nC, nA, kpiLabel } = useMemo(() => {
-    const base = projetoSelecionado ? [projetoSelecionado] : projetosCurva
-    const vtot = base.reduce((s, p) => s + p.valor, 0)
-    const prev = base.length && vtot ? base.reduce((s, p) => s + p.valor * p.prev, 0) / vtot : 0
-    const real = base.length && vtot ? base.reduce((s, p) => s + p.valor * p.real, 0) / vtot : 0
-    return {
-      kpiBase: base,
-      VTOT: vtot,
-      wAvgPrev: prev,
-      wAvgReal: real,
-      desv: real - prev,
-      clsDesv: classify(prev, real),
-      nC: base.filter(p => classify(p.prev, p.real).k === 'vermelho').length,
-      nA: base.filter(p => classify(p.prev, p.real).k === 'amarelo').length,
-      kpiLabel: projetoSelecionado ? `OS ${projetoSelecionado.os}` : (curvaResp !== 'todos' ? curvaResp : 'portfólio completo')
-    }
-  }, [projetoSelecionado, projetosCurva, curvaResp])
+  const { 
+    projetoSelecionado, projetosCurva, curveOpts,
+    kpiBase, VTOT, wAvgPrev, wAvgReal, desv, clsDesv, nC, nA, kpiLabel 
+  } = useDashboardKPIs(projetos, curvaResp, curvaFiltro)
 
   const handleSalvar = useCallback(async (dados) => {
     setSalvando(true)
@@ -123,7 +104,23 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     }
   }, [excluirProjeto])
 
-  if (loading) return <div className="loading-screen">Carregando projetos...</div>
+  if (loading) return (
+    <div className="dash-layout" style={{ marginTop: 'clamp(20px,2.5vw,32px)' }}>
+      <div className="dash-middle">
+        <div className="kpis">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 96, borderRadius: 'var(--radius, 16px)' }} />
+          ))}
+        </div>
+        <div className="skeleton" style={{ height: 300, marginTop: 20, borderRadius: 'var(--radius, 16px)' }} />
+      </div>
+      <div className="right-panel">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="skeleton" style={{ height: 120, marginBottom: 14, borderRadius: 'var(--radius, 16px)' }} />
+        ))}
+      </div>
+    </div>
+  )
 
   if (showRelatorio) {
     return (
@@ -159,7 +156,7 @@ export default function Dashboard({ user, perfil, onSignOut }) {
     <>
       <TopBar onNovoProjeto={podeEditar ? () => setFormProjeto('novo') : null} onSignOut={onSignOut} />
         
-        <div className="dash-layout">
+        <div className="dash-layout" style={{ marginTop: 'clamp(20px,2.5vw,32px)' }}>
           {/* MIDDLE COLUMN */}
           <div className="dash-middle">
             <div className="kpis">

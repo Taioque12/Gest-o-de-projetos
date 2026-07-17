@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
+import { syncEfetivo } from '../utils/syncEfetivo'
 
 export function useProgramacao(projetoId) {
   const [alocacoes, setAlocacoes] = useState([])
@@ -8,10 +9,11 @@ export function useProgramacao(projetoId) {
 
   const refetch = useCallback(async () => {
     if (!supabaseConfigurado || !projetoId) { setLoading(false); return }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('programacao_semanal')
       .select('*')
       .eq('projeto_id', projetoId)
+    if (error) { console.error('useProgramacao refetch:', error.message); setLoading(false); return }
     const alocs = data ?? []
     setAlocacoes(alocs)
     // Verifica conflitos cross-projeto para todas as alocações atuais
@@ -43,10 +45,11 @@ export function useProgramacao(projetoId) {
     if (!supabaseConfigurado) return
     const d = Number(dias) || 0
     if (d === 0) {
-      await supabase
+      const { error } = await supabase
         .from('programacao_semanal')
         .delete()
         .match({ projeto_id: projetoId, funcionario_id, data_semana })
+      if (error) throw error
     } else {
       const { error } = await supabase
         .from('programacao_semanal')
@@ -57,28 +60,7 @@ export function useProgramacao(projetoId) {
       if (error) throw error
     }
     await refetch() // refetch já chama checkAllConflicts
-    await syncEfetivo(data_semana)
-  }
-
-  async function syncEfetivo(data_semana) {
-    const { data: alocs } = await supabase
-      .from('programacao_semanal')
-      .select('dias')
-      .eq('projeto_id', projetoId)
-      .eq('data_semana', data_semana)
-    const mob = (alocs ?? []).filter(a => (a.dias || 0) > 0).length
-    const { data: ef } = await supabase
-      .from('efetivo_semana')
-      .select('previstos')
-      .eq('projeto_id', projetoId)
-      .eq('data_semana', data_semana)
-      .maybeSingle()
-    await supabase
-      .from('efetivo_semana')
-      .upsert(
-        { projeto_id: projetoId, data_semana, previstos: ef?.previstos ?? 0, mobilizados: mob },
-        { onConflict: 'projeto_id,data_semana' }
-      )
+    await syncEfetivo(projetoId, data_semana)
   }
 
   return { alocacoes, conflitos, loading, alocar }

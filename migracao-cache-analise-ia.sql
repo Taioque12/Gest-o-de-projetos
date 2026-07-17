@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: cache de análise IA por projeto
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 -- ============================================================
 
 ALTER TABLE projetos

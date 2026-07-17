@@ -3,7 +3,7 @@
 -- A policy "usuarios_select_proprio" (supabase_rls.sql) só deixa
 -- cada usuário ver a própria linha — por isso a tela de Acessos
 -- (só acessível a admin) não listava colegas recém-criados.
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 -- Data: 2026-07-03
 -- ============================================================
 

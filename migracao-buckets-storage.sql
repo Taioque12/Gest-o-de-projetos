@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: limite de tamanho nos buckets do Storage
--- Rodar no SQL Editor do Supabase (projeto uaooutzbxkkcyfuwijbi)
+-- Rodar no SQL Editor do Supabase (projeto <PROJECT_REF>)
 --
 -- Os buckets já existem (criados manualmente no painel) — esta
 -- migration só ADICIONA file_size_limit, sem afetar arquivos já

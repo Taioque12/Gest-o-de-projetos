@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseConfigurado } from '../supabase'
+import { syncEfetivo } from '../utils/syncEfetivo'
 
 export function useProgramacaoGlobal() {
   const [alocacoes, setAlocacoes]       = useState([])
@@ -9,11 +10,12 @@ export function useProgramacaoGlobal() {
 
   const refetch = useCallback(async () => {
     if (!supabaseConfigurado) { setLoading(false); return }
-    const [{ data: alocs }, { data: projs }, { data: indisp }] = await Promise.all([
+    const [{ data: alocs, error: e1 }, { data: projs, error: e2 }, { data: indisp, error: e3 }] = await Promise.all([
       supabase.from('programacao_semanal').select('*'),
       supabase.from('projetos').select('id, nome, os, data_inicio, data_fim'),
       supabase.from('indisponibilidades').select('*'),
     ])
+    if (e1 || e2 || e3) console.error('useProgramacaoGlobal refetch:', e1?.message || e2?.message || e3?.message)
     setAlocacoes(alocs ?? [])
     setProjetos(projs ?? [])
     setIndisp(indisp ?? [])
@@ -22,25 +24,13 @@ export function useProgramacaoGlobal() {
 
   useEffect(() => { refetch() }, [refetch])
 
-  async function syncEfetivo(projeto_id, data_semana) {
-    const { data: alocs } = await supabase.from('programacao_semanal')
-      .select('dias').eq('projeto_id', projeto_id).eq('data_semana', data_semana)
-    const mob = (alocs ?? []).filter(a => (a.dias || 0) > 0).length
-    const { data: ef } = await supabase.from('efetivo_semana')
-      .select('previstos').eq('projeto_id', projeto_id).eq('data_semana', data_semana).maybeSingle()
-    await supabase.from('efetivo_semana')
-      .upsert(
-        { projeto_id, data_semana, previstos: ef?.previstos ?? 0, mobilizados: mob },
-        { onConflict: 'projeto_id,data_semana' }
-      )
-  }
-
   async function alocar({ funcionario_id, projeto_id, data_semana, dias }) {
     if (!supabaseConfigurado) return
     const d = Number(dias) || 0
     if (d === 0) {
-      await supabase.from('programacao_semanal').delete()
+      const { error } = await supabase.from('programacao_semanal').delete()
         .match({ funcionario_id, projeto_id, data_semana })
+      if (error) throw error
     } else {
       const { error } = await supabase.from('programacao_semanal')
         .upsert(
@@ -56,15 +46,17 @@ export function useProgramacaoGlobal() {
   // Copia todas as alocações de semanaOrigem → semanaDestino (não sobrescreve existentes)
   async function copiarSemana(semanaOrigem, semanaDestino) {
     if (!supabaseConfigurado) return
-    const { data: origem } = await supabase.from('programacao_semanal')
+    const { data: origem, error: origemErr } = await supabase.from('programacao_semanal')
       .select('*').eq('data_semana', semanaOrigem)
+    if (origemErr) throw origemErr
     if (!origem?.length) return
 
     const registros = origem.map(({ funcionario_id, projeto_id, dias }) => ({
       funcionario_id, projeto_id, data_semana: semanaDestino, dias,
     }))
-    await supabase.from('programacao_semanal')
+    const { error } = await supabase.from('programacao_semanal')
       .upsert(registros, { onConflict: 'projeto_id,funcionario_id,data_semana', ignoreDuplicates: true })
+    if (error) throw error
 
     const projIds = [...new Set(registros.map(r => r.projeto_id))]
     await Promise.all(projIds.map(pid => syncEfetivo(pid, semanaDestino)))
@@ -82,8 +74,9 @@ export function useProgramacaoGlobal() {
 
   async function desmarcarIndisponivel({ funcionario_id, data_semana }) {
     if (!supabaseConfigurado) return
-    await supabase.from('indisponibilidades').delete()
+    const { error } = await supabase.from('indisponibilidades').delete()
       .match({ funcionario_id, data_semana })
+    if (error) throw error
     await refetch()
   }
 
