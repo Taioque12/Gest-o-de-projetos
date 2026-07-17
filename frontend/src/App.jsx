@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import LandingPage from './pages/LandingPage'
 import Dashboard from './pages/Dashboard'
 import ClienteView from './pages/ClienteView'
+import EmpreiteiroView from './pages/EmpreiteiroView'
 import Sidebar from './components/Sidebar'
 import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
@@ -43,6 +44,10 @@ function AppInner() {
   // direta, independente do que estiver na barra de endereço.
   if (perfil === 'cliente') {
     return <ClienteView user={user} perfil={perfil} onSignOut={signOut} />
+  }
+  
+  if (perfil === 'empreiteiro') {
+    return <EmpreiteiroView user={user} onSignOut={signOut} />
   }
 
   return (

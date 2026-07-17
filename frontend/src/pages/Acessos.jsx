@@ -5,12 +5,13 @@ import TopBar from '../components/TopBar'
 import Toast from '../components/Toast'
 import { supabase } from '../supabase'
 
-const PERFIS = ['admin', 'equipe', 'cliente']
+const PERFIS = ['admin', 'equipe', 'cliente', 'empreiteiro']
 
 const PERFIL_COR = {
   admin:   { bg: '#dcfce7', txt: '#166534' },
   equipe:  { bg: '#dbeafe', txt: '#1e40af' },
   cliente: { bg: '#fef3c7', txt: '#92400e' },
+  empreiteiro: { bg: '#e0e7ff', txt: '#3730a3' },
 }
 
 const CAMPO = ({ label, children }) => (

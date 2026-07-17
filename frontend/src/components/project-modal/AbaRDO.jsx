@@ -11,6 +11,8 @@ export default function AbaRDO({ projetoId, podeEditar }) {
     ocorrencias: ''
   })
   const [enviando, setEnviando] = useState(false)
+  const [gravando, setGravando] = useState(false)
+  const [processandoVoz, setProcessandoVoz] = useState(false)
 
   useEffect(() => {
     fetchRdos()
@@ -28,6 +30,55 @@ export default function AbaRDO({ projetoId, podeEditar }) {
       setRdos(data)
     }
     setLoading(false)
+  }
+
+  function iniciarGravacaoIA() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert("Seu navegador não suporta gravação de voz. Tente usar o Google Chrome.")
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'pt-BR'
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+
+    recognition.onstart = () => {
+      setGravando(true)
+    }
+
+    recognition.onresult = async (event) => {
+      setGravando(false)
+      const transcript = event.results[0][0].transcript
+      
+      setProcessandoVoz(true)
+      try {
+        const { data, error } = await supabase.functions.invoke('rdo-ai', {
+          body: { textoTranscrevido: transcript }
+        })
+
+        if (!error && data) {
+          setNovoRdo(prev => ({
+            ...prev,
+            clima: data.clima || prev.clima,
+            efetivo_presente: data.efetivo !== undefined ? data.efetivo : prev.efetivo_presente,
+            ocorrencias: (prev.ocorrencias ? prev.ocorrencias + '\n' : '') + (data.ocorrencias || transcript)
+          }))
+        }
+      } catch (err) {
+        console.error("Erro IA Voz", err)
+      }
+      setProcessandoVoz(false)
+    }
+
+    recognition.onerror = (e) => {
+      console.error(e)
+      setGravando(false)
+      setProcessandoVoz(false)
+    }
+
+    recognition.start()
   }
 
   async function handleSalvar(e) {
@@ -67,7 +118,20 @@ export default function AbaRDO({ projetoId, podeEditar }) {
     <div>
       {podeEditar && (
         <form onSubmit={handleSalvar} style={{ background: 'var(--surface-2)', padding: 20, borderRadius: 12, marginBottom: 24, border: '1px solid var(--line)' }}>
-          <h3 style={{ marginBottom: 16, fontSize: 16, color: 'var(--ink)' }}>Registrar RDO</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 16, color: 'var(--ink)', margin: 0 }}>Registrar RDO</h3>
+            <button 
+              type="button" 
+              onClick={iniciarGravacaoIA}
+              disabled={gravando || processandoVoz}
+              style={{ 
+                background: gravando ? 'var(--vermelho)' : 'var(--brand)', 
+                color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 8, 
+                display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600
+              }}>
+              {gravando ? 'Ouvindo...' : processandoVoz ? 'Pensando...' : 'Preencher com Voz (IA)'}
+            </button>
+          </div>
           
           <div className="form-grid">
             <div className="field">
