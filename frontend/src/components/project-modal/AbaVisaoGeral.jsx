@@ -24,15 +24,42 @@ export default function AbaVisaoGeral({ p, c, desv, curveOpts, baselineOpts, bas
   return (
     <>
       <div className="m-grid">
-        <div className="m-stat"><div className="l">Previsto</div><div className="v">{p.prev}%</div></div>
-        <div className="m-stat"><div className="l">Realizado</div><div className="v">{p.real}%</div></div>
-        <div className="m-stat">
-          <div className="l">Desvio</div>
-          <div className="v" style={{ color: `var(--${c.k})` }}>
-            {desv >= 0 ? '+' : '−'}{Math.abs(desv)} p.p.
+        <div className="m-stat"><div className="l">Previsto (Físico)</div><div className="v">{p.prev}%</div></div>
+        <div className="m-stat" style={{ borderLeft: c.s, background: 'var(--surface-solid)' }}>
+          <div className="l">Realizado (Físico)</div>
+          <div className="v" style={{ color: c.c }}>{p.real}%</div>
+          <div style={{ fontSize: 11, color: c.c, fontWeight: 600, marginTop: 4 }}>Desvio: {desv > 0 ? '+' : ''}{desv.toFixed(1)} p.p.</div>
+        </div>
+
+        {p.orcamento > 0 && (
+          <div className="m-stat" style={{ background: 'var(--surface-solid)' }}>
+            <div className="l">Custo (EVM)</div>
+            <div className="v" style={{ fontSize: 18, marginTop: 4 }}>
+              R$ {Number(p.custo_realizado || 0).toLocaleString('pt-BR')}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
+              de R$ {Number(p.orcamento).toLocaleString('pt-BR')} orçados
+            </div>
+          </div>
+        )}
+      </div>
+
+      {p.orcamento > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+          <div style={{ background: 'var(--surface-2)', padding: 12, borderRadius: 8, border: '1px solid var(--line)', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>SPI (Prazo)</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: (p.real / (p.prev || 1)) >= 1 ? 'var(--verde)' : 'var(--vermelho)' }}>
+              {p.prev > 0 ? (p.real / p.prev).toFixed(2) : '-'}
+            </div>
+          </div>
+          <div style={{ background: 'var(--surface-2)', padding: 12, borderRadius: 8, border: '1px solid var(--line)', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>CPI (Custo)</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: (((p.real/100)*p.orcamento) / (p.custo_realizado || 1)) >= 1 ? 'var(--verde)' : 'var(--vermelho)' }}>
+              {p.custo_realizado > 0 ? (((p.real/100)*p.orcamento) / p.custo_realizado).toFixed(2) : '-'}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="m-facts">
         <div className="m-fact"><div className="l">Responsável</div><div className="v">{p.responsavel}</div></div>

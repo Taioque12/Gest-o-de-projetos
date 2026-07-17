@@ -12,10 +12,11 @@ import AbaProgramacao from './project-modal/AbaProgramacao'
 import AbaHistorico from './project-modal/AbaHistorico'
 import AbaAnexos from './project-modal/AbaAnexos'
 import AbaAnaliseIA from './project-modal/AbaAnaliseIA'
+import AbaRDO from './project-modal/AbaRDO'
 import KanbanBoard from './KanbanBoard'
 import { gerarRelatorioPDF } from '../utils/pdfGenerator'
 
-const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Kanban', 'Histórico', 'Anexos', 'Análise IA']
+const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Kanban', 'Diário', 'Histórico', 'Anexos', 'Análise IA']
 
 export default function ProjectModal({ projeto, atualizacoes = [], onClose, podeEditar = false }) {
   const p = projeto
@@ -125,6 +126,10 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
 
           {aba === 'Kanban' && (
             <KanbanBoard projetoId={p.id} />
+          )}
+
+          {aba === 'Diário' && (
+            <AbaRDO projetoId={p.id} podeEditar={podeEditar} />
           )}
 
           {aba === 'Histórico' && <AbaHistorico hist={hist} />}

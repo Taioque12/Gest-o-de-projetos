@@ -35,6 +35,8 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
     acao:          projeto?.acao          ?? iv.acao          ?? '',
     prev:          projeto?.prev          ?? iv.prev          ?? 0,
     real:          projeto?.real          ?? iv.real          ?? 0,
+    orcamento:     projeto?.orcamento     ?? iv.orcamento     ?? 0,
+    custo_realizado: projeto?.custo_realizado ?? iv.custo_realizado ?? 0,
   })
   const [equipes, setEquipes] = useState(projeto?.equipes ?? iv.equipes ?? [])
   const [equipeInput, setEquipeInput] = useState('')
@@ -160,6 +162,8 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
       acao_recomendada: form.acao.trim(),
       prev:            Number(form.prev),
       real:            Number(form.real),
+      orcamento:       Number(form.orcamento),
+      custo_realizado: Number(form.custo_realizado),
     })
   }
 
@@ -254,7 +258,7 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
             </div>
           </div>
 
-          <div className="form-section-title">Cronograma & Valor</div>
+          <div className="form-section-title">Cronograma & Valor & Financeiro (EVM)</div>
           <div className="form-grid">
             <div className="field">
               <label>Data Início *</label>
@@ -267,13 +271,14 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
               <FieldErro k="data_fim" />
             </div>
             <div className="field">
-              <label>Prazo (meses)</label>
-              <input value={prazo || ''} readOnly style={{ background: 'var(--surface-2)', color: 'var(--ink-3)' }} />
+              <label>Orçamento (R$)</label>
+              <input type="number" min="0" step="1" value={form.orcamento}
+                onChange={e => set('orcamento', e.target.value)} placeholder="0" />
             </div>
-            <div className="field" style={{ gridColumn: 'span 2' }}>
-              <label>Valor da OS (R$)</label>
-              <input type="number" min="0" step="1000" value={form.valor_os}
-                onChange={e => set('valor_os', e.target.value)} placeholder="2850000" />
+            <div className="field">
+              <label>Custo Realizado (R$)</label>
+              <input type="number" min="0" step="1" value={form.custo_realizado}
+                onChange={e => set('custo_realizado', e.target.value)} placeholder="0" />
             </div>
           </div>
 
