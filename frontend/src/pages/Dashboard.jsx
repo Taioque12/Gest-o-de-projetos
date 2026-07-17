@@ -160,10 +160,10 @@ export default function Dashboard({ user, perfil, onSignOut }) {
           {/* MIDDLE COLUMN */}
           <div className="dash-middle">
             <div className="kpis">
-              <KPICardV2 lbl="Total Projects" val={kpiBase.length} pct={4} badge="1" isGreen={true} />
-              <KPICardV2 lbl="Active Tasks" val={Math.floor(kpiBase.length * 5.2)} pct={76} sub="complete" badge="2" isGreen={true} />
-              <KPICardV2 lbl="Budget Spent" val={mask(valorFmt(VTOT))} pct={12} sub="of total" badge="3" isGreen={false} />
-              <KPICardV2 lbl="Overall Progress" val={`${fmt(wAvgReal)}%`} pct={1} sub="planned" badge="4" isGreen={true} />
+              <KPICardV2 lbl="Projetos Totais" val={kpiBase.length} pct={4} badge="1" isGreen={true} />
+              <KPICardV2 lbl="Tarefas Ativas" val={Math.floor(kpiBase.length * 5.2)} pct={76} sub="concluídas" badge="2" isGreen={true} />
+              <KPICardV2 lbl="Orçamento Gasto" val={mask(valorFmt(VTOT))} pct={12} sub="do total" badge="3" isGreen={false} />
+              <KPICardV2 lbl="Progresso Geral" val={`${fmt(wAvgReal)}%`} pct={1} sub="previsto" badge="4" isGreen={true} />
               <KPICardV2 lbl="Desvio" val={`${desv >= 0 ? '+' : '−'}${fmt(Math.abs(desv))}p.p.`} pct={0} isGreen={desv >= 0} />
             </div>
 
