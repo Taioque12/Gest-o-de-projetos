@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { supabase } from '../supabase'
 
 const ESCOPOS = [
   'Instalações elétricas / MT',
@@ -39,6 +40,44 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
   const [equipeInput, setEquipeInput] = useState('')
   const [erro, setErro] = useState('')
   const [camposErro, setCamposErro] = useState({})
+
+  const [iaPrompt, setIaPrompt] = useState('')
+  const [iaLoading, setIaLoading] = useState(false)
+
+  async function handleGerarIA() {
+    if (!iaPrompt) return
+    setIaLoading(true)
+    setErro('')
+    try {
+      const { data, error } = await supabase.functions.invoke('wbs-generator', {
+        body: { prompt: iaPrompt }
+      })
+      if (error) throw error
+      if (data.error || data.erro) throw new Error(data.error || data.erro)
+      
+      setForm(prev => ({
+        ...prev,
+        nome: data.nome || prev.nome,
+        escopo: data.escopo || prev.escopo
+      }))
+      if (data.frentes && Array.isArray(data.frentes)) {
+        setEquipes(data.frentes)
+      }
+      
+      // Se retornou dias_estimados e temos data de inicio preenchida, calculamos o fim
+      if (data.dias_estimados && form.data_inicio) {
+        const d = new Date(form.data_inicio)
+        d.setDate(d.getDate() + data.dias_estimados)
+        setForm(prev => ({ ...prev, data_fim: d.toISOString().slice(0, 10) }))
+      }
+      setIaPrompt('')
+    } catch (err) {
+      console.error(err)
+      setErro('Erro na IA: ' + err.message)
+    } finally {
+      setIaLoading(false)
+    }
+  }
 
   const prazo = calcPrazo(form.data_inicio, form.data_fim)
 
@@ -127,6 +166,29 @@ export default function ProjetoForm({ projeto, initialValues, onSalvar, onFechar
         </div>
 
         <form className="modal-body" onSubmit={handleSubmit}>
+          {!ed && (
+            <div className="ia-box" style={{ marginBottom: 24, padding: 16, background: 'var(--surface-2)', borderRadius: 12, border: '1px solid var(--line)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand)', marginBottom: 8 }}>✨ WBS Inteligente (Gerador de Escopo)</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Instalação de gerador 500kVA na filial Sul..." 
+                  value={iaPrompt}
+                  onChange={e => setIaPrompt(e.target.value)}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'oklch(0 0 0 / .3)', color: 'var(--ink)' }}
+                />
+                <button 
+                  type="button" 
+                  onClick={handleGerarIA} 
+                  disabled={iaLoading || !iaPrompt}
+                  style={{ background: 'var(--brand)', color: '#fff', border: 'none', padding: '0 16px', borderRadius: 8, fontWeight: 600, cursor: iaLoading || !iaPrompt ? 'not-allowed' : 'pointer', opacity: iaLoading || !iaPrompt ? 0.6 : 1 }}
+                >
+                  {iaLoading ? 'Gerando...' : 'Gerar IA'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {erro && <div className="form-erro">{erro}</div>}
           {warnings.map((w, i) => (
             <div key={i} style={{ background: '#fefce8', border: '1px solid #fde047', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#854d0e', marginBottom: 8 }}>{w}</div>
