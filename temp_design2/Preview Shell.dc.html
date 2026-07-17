@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="improved/globals.css">
+<link rel="stylesheet" href="improved/mockup.css">
+</helmet>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">P</div>
+    <nav class="side-nav">
+      <div class="side-item active" data-label="Dashboard"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg></div>
+      <div class="side-item" data-label="Projetos"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
+      <div class="side-item" data-label="Tarefas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></div>
+      <div class="side-item" data-label="Equipes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+      <div class="side-item" data-label="Relatórios"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+      <div class="side-item" data-label="Configurações"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+    </nav>
+    <div class="side-avatar">
+      <img src="https://i.pravatar.cc/76?img=12" alt="Alex R.">
+      <span>Alex R.</span>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left"><h1>Project Dashboard</h1><span>Overview</span></div>
+      <div class="topbar-right">
+        <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><input placeholder="Buscar…"><kbd>⌘K</kbd></div>
+        <button class="top-icon-btn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span class="notif-dot"></span></button>
+        <button class="btn-new">+ Novo Projeto</button>
+        <div class="top-date"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>17 Jul 2026</div>
+      </div>
+    </div>
+    <div class="kpis">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-lbl">{{ k.lbl }}</span><span class="kpi-badge">{{ k.badge }}</span></div>
+          <div class="kpi-val">{{ k.val }}</div>
+          <div class="kpi-bot"><span class="kpi-sub {{ k.dir }}">{{ k.sub }}</span><span class="kpi-sub-text">{{ k.note }}</span></div>
+          <div class="track" style="height:5px;margin-top:10px"><div class="fill {{ k.fillCls }}" style="width: {{ k.pct }}"></div></div>
+        </div>
+      </sc-for>
+    </div>
+    <div class="dash-layout" style="margin-top:clamp(20px,2.5vw,32px)">
+      <div class="dash-middle">
+        <div class="scurve-panel">
+          <div class="scurve-head">
+            <div class="scurve-title"><h2>Curva S — Avanço do Projeto</h2><p>% acumulado concluído</p></div>
+            <div class="scurve-legend">
+              <span class="leg-item"><span class="leg-dash"></span>Previsto</span>
+              <span class="leg-item"><span class="leg-solid"></span>Realizado</span>
+            </div>
+          </div>
+          <svg viewBox="0 0 640 300" style="width:100%;height:auto;display:block" role="img" aria-label="Curva S previsto × realizado">
+            <defs>
+              <linearGradient id="scurve-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="oklch(0.72 0.17 162 / .25)"></stop>
+                <stop offset="100%" stop-color="oklch(0.72 0.17 162 / 0)"></stop>
+              </linearGradient>
+              <linearGradient id="scurve-line" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="oklch(0.78 0.15 55)"></stop>
+                <stop offset="100%" stop-color="oklch(0.80 0.16 163)"></stop>
+              </linearGradient>
+            </defs>
+            <g stroke="oklch(1 0 0 / .07)"><line x1="40" y1="20" x2="40" y2="260"></line><line x1="40" y1="260" x2="620" y2="260"></line><line x1="40" y1="200" x2="620" y2="200" stroke-dasharray="2 4"></line><line x1="40" y1="140" x2="620" y2="140" stroke-dasharray="2 4"></line><line x1="40" y1="80" x2="620" y2="80" stroke-dasharray="2 4"></line><line x1="40" y1="20" x2="620" y2="20" stroke-dasharray="2 4"></line></g>
+            <g fill="oklch(0.58 0.02 250)" font-size="11" font-family="Inter">
+              <text x="32" y="264" text-anchor="end">0%</text><text x="32" y="204" text-anchor="end">25%</text><text x="32" y="144" text-anchor="end">50%</text><text x="32" y="84" text-anchor="end">75%</text><text x="32" y="24" text-anchor="end">100%</text>
+              <text x="60" y="282">Jan</text><text x="140" y="282">Fev</text><text x="220" y="282">Mar</text><text x="300" y="282">Abr</text><text x="380" y="282">Mai</text><text x="460" y="282">Jun</text><text x="540" y="282">Jul</text><text x="608" y="282">Ago</text>
+            </g>
+            <path d="M64 258 C 160 250, 200 200, 300 140 S 480 40, 616 22" fill="none" stroke="oklch(0.97 0.005 250 / .75)" stroke-width="2" stroke-dasharray="6 6"></path>
+            <path d="M64 258 C 170 254, 230 220, 320 160 S 500 55, 616 30 L 616 260 L 64 260 Z" fill="url(#scurve-area)" stroke="none"></path>
+            <path d="M64 258 C 170 254, 230 220, 320 160 S 500 55, 616 30" fill="none" stroke="url(#scurve-line)" stroke-width="3" stroke-linecap="round"></path>
+            <g fill="oklch(0.16 0.02 250)" stroke="oklch(0.80 0.16 163)" stroke-width="2.5">
+              <circle cx="320" cy="160" r="5"></circle><circle cx="460" cy="80" r="5"></circle><circle cx="616" cy="30" r="5"></circle>
+            </g>
+            <text x="330" y="152" fill="oklch(0.97 0.005 250)" font-size="12" font-weight="700" font-family="Space Grotesk">50%</text>
+            <text x="470" y="72" fill="oklch(0.97 0.005 250)" font-size="12" font-weight="700" font-family="Space Grotesk">87%</text>
+            <text x="570" y="24" fill="oklch(0.97 0.005 250)" font-size="12" font-weight="700" font-family="Space Grotesk">100%</text>
+          </svg>
+        </div>
+        <div class="scurve-panel" style="padding:20px 24px">
+          <div class="scurve-title"><h2>Micro-interações</h2><p>Passe o mouse nos cards, botões e itens da sidebar · Tab para ver o focus ring · reduza a janela para testar tablet/mobile</p></div>
+        </div>
+      </div>
+      <div class="right-panel">
+        <h2>Status dos Projetos</h2>
+        <sc-for list="{{ projs }}" as="p" hint-placeholder-count="3">
+          <div class="p-card">
+            <div class="p-card-top"><span class="p-card-title">{{ p.nome }}</span><button class="p-card-more">⋯</button></div>
+            <div class="p-card-stat {{ p.cor }}"><span>{{ p.fase }}</span><span>{{ p.pct }}</span></div>
+            <div class="p-track"><div class="p-fill {{ p.cor }}" style="width: {{ p.pct }}"></div></div>
+            <div class="p-card-bot">
+              <span>{{ p.prazo }}</span>
+              <span class="p-pill {{ p.cor }}">{{ p.status }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      kpis: [
+        { lbl: "Total de Projetos", badge: "1", val: "28", dir: "up", sub: "↑ 4%", note: "vs. mês anterior", fillCls: "real-verde", pct: "72%" },
+        { lbl: "Tarefas Ativas", badge: "2", val: "145", dir: "up", sub: "76%", note: "concluídas", fillCls: "real-verde", pct: "76%" },
+        { lbl: "Orçamento Gasto", badge: "3", val: "R$ 214 mil", dir: "down", sub: "61%", note: "de R$ 350 mil", fillCls: "real-amarelo", pct: "61%" },
+        { lbl: "Velocidade da Equipe", badge: "4", val: "42", dir: "up", sub: "↑ 12%", note: "pts/sprint", fillCls: "real-verde", pct: "84%" },
+        { lbl: "Avanço Geral", badge: "5", val: "72%", dir: "up", sub: "↑ 3 p.p.", note: "vs. previsto", fillCls: "real-verde", pct: "72%" },
+      ],
+      projs: [
+        { nome: "Alpha Launch", fase: "Em andamento", pct: "84%", cor: "verde", prazo: "Entrega 30 Ago", status: "NO PRAZO" },
+        { nome: "Client Beta", fase: "Pendente", pct: "12%", cor: "amarelo", prazo: "Entrega 15 Set", status: "RISCOS" },
+        { nome: "Marketing Campaign", fase: "Planejamento", pct: "5%", cor: "vermelho", prazo: "Início 1 Out", status: "ATRASADO" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
