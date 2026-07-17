@@ -15,10 +15,11 @@ import AbaAnaliseIA from './project-modal/AbaAnaliseIA'
 import AbaRDO from './project-modal/AbaRDO'
 import AbaSuprimentos from './project-modal/AbaSuprimentos'
 import AbaQualidade from './project-modal/AbaQualidade'
+import AbaSST from './project-modal/AbaSST'
 import KanbanBoard from './KanbanBoard'
 import { gerarRelatorioPDF } from '../utils/pdfGenerator'
 
-const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Kanban', 'Diário', 'Suprimentos', 'Qualidade', 'Histórico', 'Anexos', 'Análise IA']
+const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Kanban', 'Diário', 'Suprimentos', 'Qualidade', 'SST (Segurança)', 'Histórico', 'Anexos', 'Análise IA']
 
 export default function ProjectModal({ projeto, atualizacoes = [], onClose, podeEditar = false }) {
   const p = projeto
@@ -155,15 +156,11 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
             <AbaRDO projetoId={p.id} podeEditar={podeEditar} />
           )}
 
-          {aba === 'Suprimentos' && (
-            <AbaSuprimentos projetoId={p.id} podeEditar={podeEditar} />
-          )}
+          {aba === 'Suprimentos' && <AbaSuprimentos projetoId={p.id} podeEditar={podeEditar} />}
+          {aba === 'Qualidade' && <AbaQualidade projetoId={p.id} podeEditar={podeEditar} />}
+          {aba === 'SST (Segurança)' && <AbaSST projetoId={p.id} podeEditar={podeEditar} />}
 
-          {aba === 'Qualidade' && (
-            <AbaQualidade projetoId={p.id} podeEditar={podeEditar} />
-          )}
-
-          {aba === 'Histórico' && <AbaHistorico hist={hist} />}
+          {aba === 'Histórico' && <AbaHistorico p={p} hist={hist} />}
 
           {aba === 'Anexos' && (
             <AbaAnexos
