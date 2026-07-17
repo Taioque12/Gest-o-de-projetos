@@ -219,7 +219,12 @@ a:hover{color:var(--brand)}
 .form-section-title{font-size:16px;font-weight:700;color:var(--ink);margin:24px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .form-section-title:first-child{margin-top:0}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media (max-width:600px){.form-grid{grid-template-columns:1fr} .modal-head{padding:20px} .modal-body{padding:20px}}
+@media (max-width:600px){
+  .form-grid{grid-template-columns:1fr} 
+  .modal-head{padding:20px} 
+  .modal-body{padding:20px}
+  .modal { max-width: 95vw; max-height: 95vh; overflow-y: auto; }
+}
 
 /* ═══ Toast ═══ */
 .toast{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;align-items:center;gap:10px;

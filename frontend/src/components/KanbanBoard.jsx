@@ -76,7 +76,7 @@ export default function KanbanBoard({ projetoId }) {
         </button>
       </form>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
         {colunas.map(col => (
           <div key={col} style={{ background: 'var(--surface-solid)', padding: 16, borderRadius: 12, border: '1px solid var(--line)', minHeight: 400 }}>
             <h3 style={{ fontSize: 14, marginBottom: 12, display: 'flex', justifyContent: 'space-between' }}>

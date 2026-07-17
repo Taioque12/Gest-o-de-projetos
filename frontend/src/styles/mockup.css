@@ -251,6 +251,11 @@
   .search-box,.search-box:focus-within{width:100%;flex:1}
   .top-date{display:none}
   .kpis{grid-template-columns:1fr 1fr}
+  
+  /* Modal responsivo */
+  .m-grid { grid-template-columns: 1fr; }
+  .scurve-head { flex-direction: column; gap: 8px; }
+  .scurve-legend { width: 100%; flex-wrap: wrap; }
 }
 
 /* ── Mapa de Competências ── */
