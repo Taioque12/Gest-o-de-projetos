@@ -207,6 +207,20 @@ a:hover{color:var(--brand)}
   box-shadow:var(--elev-3),var(--glass-inset);overflow:hidden;animation:pop .45s var(--ease-spring)}
 @keyframes pop{from{transform:translateY(28px) scale(.96);opacity:0}to{transform:none;opacity:1}}
 
+.modal-head{padding:24px 32px;border-bottom:1px solid var(--line);position:relative}
+.modal-head h2{font-size:22px;color:var(--ink);margin-bottom:6px;font-weight:700}
+.modal-head p{font-size:14px;color:var(--ink-2)}
+.close{position:absolute;top:24px;right:24px;background:oklch(1 0 0 / .05);border:none;color:var(--ink-2);
+  width:32px;height:32px;border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:var(--transition)}
+.close:hover{background:var(--vermelho-bg);color:var(--vermelho-text)}
+
+.modal-body{padding:32px}
+.form-section-title{font-size:16px;font-weight:700;color:var(--ink);margin:24px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.form-section-title:first-child{margin-top:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:600px){.form-grid{grid-template-columns:1fr} .modal-head{padding:20px} .modal-body{padding:20px}}
+
 /* ═══ Toast ═══ */
 .toast{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;align-items:center;gap:10px;
   background:var(--surface-solid);border:1px solid var(--verde);border-left-width:4px;border-radius:14px;
