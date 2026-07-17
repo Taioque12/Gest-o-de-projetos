@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
-import TopBar from '../components/Topbar'
+import TopBar from '../components/TopBar'
 
 export default function DashboardBI({ handleNovoProjeto, handleSignOut }) {
   const [projetos, setProjetos] = useState([])
