@@ -45,6 +45,19 @@ export function useProjetosMutations(userId, userEmail, fetchProjetos) {
         origem:           'manual',
       })
     }
+
+    // Fase 6 (Kanban): Se o projeto foi criado com frentes/equipes (ex: via IA), já insere elas como tarefas a fazer
+    if (projetoData.equipes && projetoData.equipes.length > 0) {
+      try {
+        const tarefasIniciais = projetoData.equipes.map(eq => ({
+          projeto_id: data.id,
+          titulo: `Executar: ${eq}`,
+          status: 'A Fazer'
+        }))
+        await supabase.from('tarefas').insert(tarefasIniciais)
+      } catch(e) { console.warn('Erro ao criar tarefas iniciais no Kanban', e) }
+    }
+
     await fetchProjetos()
 
     // AgentDB: gera embedding vetorial do projeto para busca semântica futura
@@ -58,6 +71,11 @@ export function useProjetosMutations(userId, userEmail, fetchProjetos) {
         }
       })
     } catch (e) { console.warn('AgentDB embed (criar):', e) }
+
+    // Risk Score: aciona avaliação do Gemini 1.5
+    try {
+      await supabase.functions.invoke('risk-score', { body: { projeto_id: data.id } })
+    } catch (e) { console.warn('Risk Score (criar):', e) }
 
     return data
   }
@@ -119,6 +137,11 @@ export function useProjetosMutations(userId, userEmail, fetchProjetos) {
         }
       })
     } catch (e) { console.warn('AgentDB embed (editar):', e) }
+
+    // Risk Score: aciona avaliação do Gemini 1.5
+    try {
+      await supabase.functions.invoke('risk-score', { body: { projeto_id: id } })
+    } catch (e) { console.warn('Risk Score (editar):', e) }
   }
 
   async function excluirProjeto(id) {
@@ -142,6 +165,11 @@ export function useProjetosMutations(userId, userEmail, fetchProjetos) {
           origem:           'manual',
         }, { onConflict: 'projeto_id,data_atualizacao' })
       if (e2) throw e2
+
+      // Recalcula o score de risco com os novos avanços
+      try {
+        await supabase.functions.invoke('risk-score', { body: { projeto_id: id } })
+      } catch (e) { console.warn('Risk Score (semanal):', e) }
     }))
     await fetchProjetos()
   }

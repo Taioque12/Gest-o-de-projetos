@@ -12,8 +12,9 @@ import AbaProgramacao from './project-modal/AbaProgramacao'
 import AbaHistorico from './project-modal/AbaHistorico'
 import AbaAnexos from './project-modal/AbaAnexos'
 import AbaAnaliseIA from './project-modal/AbaAnaliseIA'
+import KanbanBoard from './KanbanBoard'
 
-const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Histórico', 'Anexos', 'Análise IA']
+const TABS = ['Visão Geral', 'Comparativo', 'Histograma', 'Programação', 'Kanban', 'Histórico', 'Anexos', 'Análise IA']
 
 export default function ProjectModal({ projeto, atualizacoes = [], onClose, podeEditar = false }) {
   const p = projeto
@@ -99,9 +100,13 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
 
           {aba === 'Programação' && (
             <AbaProgramacao
-              p={p} funcionarios={funcionarios} alocacoes={alocacoes}
-              conflitos={conflitos} alocar={alocar} podeEditar={podeEditar}
+              alocacoes={alocacoes} conflitos={conflitos} funcionarios={funcionarios}
+              alocar={alocar} p={p} podeEditar={podeEditar}
             />
+          )}
+
+          {aba === 'Kanban' && (
+            <KanbanBoard projetoId={p.id} />
           )}
 
           {aba === 'Histórico' && <AbaHistorico hist={hist} />}
