@@ -46,6 +46,19 @@ export function useProjetosMutations(userId, userEmail, fetchProjetos) {
       })
     }
     await fetchProjetos()
+
+    // AgentDB: gera embedding vetorial do projeto para busca semântica futura
+    try {
+      const resumo = `${dados.nome} | ${dados.escopo} | Cliente: ${dados.cliente} | Equipes: ${(dados.equipes || []).join(', ')} | Ação: ${dados.acao_recomendada || 'N/A'}`
+      await supabase.functions.invoke('embed-project', {
+        body: {
+          projeto_id: data.id,
+          conteudo_texto: resumo,
+          metadata: { valor: dados.valor_os, prazo: dados.prazo_meses, acao_recomendada: dados.acao_recomendada }
+        }
+      })
+    } catch (e) { console.warn('AgentDB embed (criar):', e) }
+
     return data
   }
 
@@ -94,6 +107,18 @@ export function useProjetosMutations(userId, userEmail, fetchProjetos) {
         }, { onConflict: 'projeto_id,data_atualizacao' })
     }
     await fetchProjetos()
+
+    // AgentDB: atualiza embedding vetorial do projeto
+    try {
+      const resumo = `${dados.nome} | ${dados.escopo} | Cliente: ${dados.cliente} | Equipes: ${(dados.equipes || []).join(', ')} | Ação: ${dados.acao_recomendada || 'N/A'}`
+      await supabase.functions.invoke('embed-project', {
+        body: {
+          projeto_id: id,
+          conteudo_texto: resumo,
+          metadata: { valor: dados.valor_os, prazo: dados.prazo_meses, acao_recomendada: dados.acao_recomendada }
+        }
+      })
+    } catch (e) { console.warn('AgentDB embed (editar):', e) }
   }
 
   async function excluirProjeto(id) {
