@@ -9,12 +9,14 @@ import ProgramacaoGlobal from '../components/ProgramacaoGlobal'
 import TopBar from '../components/TopBar'
 import Toast from '../components/Toast'
 import ModalHabilidades from '../components/ModalHabilidades'
-
+import { useIAMatchmaking } from '../hooks/useIAMatchmaking'
+import ModalSugestaoIA from '../components/ModalSugestaoIA'
 // ── Página principal ─────────────────────────────────────────
 export default function Equipes({ user, perfil, onSignOut }) {
   const { funcionarios, loading, usandoMock, criarFuncionario, editarFuncionario, excluirFuncionario } = useFuncionarios()
   const { habilidades, criarHabilidade, excluirHabilidade } = useHabilidades()
   const { alocacoes, projetos, indisponibilidades, loading: loadingProg, alocar, copiarSemana, marcarIndisponivel, desmarcarIndisponivel } = useProgramacaoGlobal()
+  const { analisarProjeto, loading: loadingIA, sugestoes, limparSugestoes } = useIAMatchmaking(funcionarios, projetos)
 
   const [abaEquipe, setAbaEquipe]       = useState('equipe')
   const [form, setForm]                 = useState(null)
@@ -24,7 +26,7 @@ export default function Equipes({ user, perfil, onSignOut }) {
   const [toastErro, setToastErro]       = useState('')
   const [selecionados, setSelecionados] = useState([])
   const [modalHab, setModalHab]         = useState(false)
-
+  const [modalIA, setModalIA]           = useState(false)
   const podeEditar = perfil === 'admin' || perfil === 'equipe'
   const isAdmin    = perfil === 'admin'
 
@@ -108,6 +110,12 @@ export default function Equipes({ user, perfil, onSignOut }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => setModalIA(true)}
+                    style={{ padding: '6px 12px', borderRadius: 8, background: 'var(--brand)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    ✨ Sugerir Equipe IA
+                  </button>
                   <span style={{ fontSize: 11, color: 'var(--ink-3)', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 10px' }}>
                     {funcionarios.length} colaborador{funcionarios.length !== 1 ? 'es' : ''}
                   </span>
@@ -269,6 +277,19 @@ export default function Equipes({ user, perfil, onSignOut }) {
           onExcluir={excluirHabilidade}
           onFechar={() => setModalHab(false)}
           onErro={setToastErro}
+        />
+      )}
+
+      {modalIA && (
+        <ModalSugestaoIA
+          projetos={projetos}
+          loading={loadingIA}
+          sugestoes={sugestoes}
+          onAnalisar={analisarProjeto}
+          onFechar={() => {
+            setModalIA(false)
+            limparSugestoes()
+          }}
         />
       )}
 
