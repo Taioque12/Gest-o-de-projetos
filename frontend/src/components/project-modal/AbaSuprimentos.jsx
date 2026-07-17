@@ -6,6 +6,7 @@ export default function AbaSuprimentos({ projetoId, podeEditar }) {
   const [loading, setLoading] = useState(true)
   const [novoItem, setNovoItem] = useState({ item: '', quantidade: 1, unidade: 'un', valor_estimado: 0, status: 'Solicitado', data_necessidade: '' })
   const [enviando, setEnviando] = useState(false)
+  const [processandoOCR, setProcessandoOCR] = useState(false)
 
   useEffect(() => {
     fetchItens()
@@ -35,9 +36,59 @@ export default function AbaSuprimentos({ projetoId, podeEditar }) {
 
     if (!error && data) {
       setItens([data, ...itens])
-      setNovoItem({ ...novoItem, item: '', quantidade: 1, valor_estimado: 0, data_necessidade: '' })
+      setNovoItem({ item: '', quantidade: 1, unidade: 'un', valor_estimado: 0, status: 'Solicitado', data_necessidade: '' })
     }
     setEnviando(false)
+  }
+
+  async function handleOCR(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      alert("A imagem deve ter no máximo 5MB.")
+      return
+    }
+
+    setProcessandoOCR(true)
+    try {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = async () => {
+        const base64 = reader.result
+        
+        const { data, error } = await supabase.functions.invoke('ocr-ai', {
+          body: { imageBase64: base64, mimeType: file.type }
+        })
+
+        if (error) throw error
+        if (data && data.length > 0) {
+          // Preenchemos o form com o primeiro item para facilitar, ou podemos 
+          // salvar todos no banco em massa. Para manter simples a UI, vamos 
+          // inserir todos diretamente no banco de dados.
+          let inserted = []
+          for (let item of data) {
+            const { data: ret } = await supabase.from('suprimentos').insert({ 
+              projeto_id: projetoId,
+              item: item.item,
+              quantidade: item.quantidade || 1,
+              unidade: item.unidade || 'un',
+              valor_estimado: item.valor_estimado || 0,
+              status: 'Solicitado'
+            }).select().single()
+            if (ret) inserted.push(ret)
+          }
+          setItens(prev => [...inserted, ...prev])
+          alert(`✅ ${inserted.length} itens extraídos e adicionados com sucesso!`)
+        } else {
+          alert("Nenhum item encontrado na nota.")
+        }
+        setProcessandoOCR(false)
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Erro ao ler nota fiscal: " + err.message)
+      setProcessandoOCR(false)
+    }
   }
 
   async function updateStatus(id, novoStatus) {
@@ -82,7 +133,18 @@ export default function AbaSuprimentos({ projetoId, podeEditar }) {
 
       {podeEditar && (
         <form onSubmit={handleSalvar} style={{ background: 'var(--surface-solid)', padding: 20, borderRadius: 12, marginBottom: 24, border: '1px solid var(--line)' }}>
-          <h4 style={{ marginBottom: 16, fontSize: 14 }}>Nova Requisição</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h4 style={{ fontSize: 14, margin: 0 }}>Nova Requisição</h4>
+            
+            <label style={{ 
+              background: 'var(--brand)', color: '#fff', padding: '6px 12px', borderRadius: 8, 
+              cursor: processandoOCR ? 'wait' : 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: processandoOCR ? 0.7 : 1 
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><circle cx="10" cy="13" r="2"/><path d="m20 17-1.89-1.89c-.51-.51-1.37-.51-1.89 0L14 17"/></svg>
+              {processandoOCR ? 'Lendo Nota...' : 'Ler Nota Fiscal (IA)'}
+              <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleOCR} disabled={processandoOCR} />
+            </label>
+          </div>
           <div className="form-grid">
             <div className="field" style={{ gridColumn: 'span 2' }}>
               <label>Material / Equipamento</label>

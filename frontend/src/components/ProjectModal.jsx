@@ -51,13 +51,58 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
 
   return (
     <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal" style={{ maxWidth: 700 }} role="dialog" aria-modal="true" aria-labelledby="project-modal-titulo" tabIndex={-1} ref={el => el?.focus()}>
-        <div className={`modal-head ${c.k}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h2 id="project-modal-titulo">{p.nome}</h2>
-            <p>OS {p.os} · {p.cliente} · {p.escopo}</p>
+      <div className="modal" style={{ maxWidth: 1100, width: '95%', padding: 0, display: 'flex', height: '85vh', maxHeight: 900, overflow: 'hidden' }} role="dialog" aria-modal="true" aria-labelledby="project-modal-titulo" tabIndex={-1} ref={el => el?.focus()}>
+        
+        {/* SIDEBAR LATERAL DO PROJETO */}
+        <div style={{ width: 240, background: 'var(--surface-2)', borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div className={`modal-head ${c.k}`} style={{ padding: '24px 20px', borderBottom: 'none' }}>
+            <h2 id="project-modal-titulo" style={{ fontSize: 18, marginBottom: 4 }}>{p.nome}</h2>
+            <p style={{ fontSize: 12, opacity: 0.8 }}>OS {p.os}</p>
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {TABS.map(t => (
+              <button
+                key={t}
+                onClick={() => setAba(t)}
+                style={{ 
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 14px', fontSize: 13, fontWeight: aba === t ? 700 : 500, 
+                  cursor: 'pointer', background: aba === t ? 'var(--surface-solid)' : 'transparent', 
+                  border: '1px solid', borderColor: aba === t ? 'var(--line)' : 'transparent',
+                  color: aba === t ? 'var(--brand)' : 'var(--ink-2)', 
+                  borderRadius: 10, transition: '.15s', textAlign: 'left',
+                  boxShadow: aba === t ? 'var(--elev-1)' : 'none'
+                }}
+              >
+                {t}
+                {t === 'Histograma' && efetivo.length > 0 && (
+                  <span style={{ fontSize: 11, background: aba === t ? 'var(--brand)' : 'var(--ink-3)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontWeight: 700 }}>{efetivo.length}</span>
+                )}
+                {t === 'Programação' && alocacoes.length > 0 && (
+                  <span style={{ fontSize: 11, background: '#0f7a3d', color: '#fff', borderRadius: 999, padding: '2px 8px', fontWeight: 700 }}>{alocacoes.length}</span>
+                )}
+                {t === 'Anexos' && anexos.length > 0 && (
+                  <span style={{ fontSize: 11, background: aba === t ? 'var(--brand)' : 'var(--ink-3)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontWeight: 700 }}>{anexos.length}</span>
+                )}
+                {t === 'Histórico' && hist.length > 0 && (
+                  <span style={{ fontSize: 11, background: aba === t ? 'var(--brand)' : 'var(--ink-3)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontWeight: 700 }}>{hist.length}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ÁREA DE CONTEÚDO PRINCIPAL */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface)' }}>
+          
+          {/* HEADER DO CONTEÚDO */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--line)', background: 'var(--surface-solid)' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18 }}>{aba}</h3>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--ink-3)' }}>{p.cliente} · {p.escopo}</p>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <button 
               className="btn btn-ghost" 
               style={{ fontSize: 11, padding: '6px 12px' }}
@@ -70,36 +115,12 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
             >
               {gerandoPdf ? 'Gerando...' : '📄 Exportar PDF'}
             </button>
-            <button className="close" style={{ position: 'relative', top: 0, right: 0 }} onClick={onClose} aria-label="Fechar">×</button>
+            <button className="close" style={{ position: 'relative', top: 0, right: 0, marginLeft: 16 }} onClick={onClose} aria-label="Fechar">×</button>
           </div>
         </div>
 
-        {/* Abas */}
-        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--line)', background: 'var(--surface-2)', overflowX: 'auto' }}>
-          {TABS.map(t => (
-            <button
-              key={t}
-              onClick={() => setAba(t)}
-              style={{ padding: '10px 12px', fontSize: 12, fontWeight: aba === t ? 700 : 500, cursor: 'pointer', background: 'none', border: 'none', borderBottom: aba === t ? '2px solid var(--brand)' : '2px solid transparent', color: aba === t ? 'var(--brand)' : 'var(--ink-2)', transition: '.15s', whiteSpace: 'nowrap' }}
-            >
-              {t}
-              {t === 'Histograma' && efetivo.length > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 11, background: 'var(--ink-3)', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{efetivo.length}</span>
-              )}
-              {t === 'Programação' && alocacoes.length > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 11, background: '#0f7a3d', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{alocacoes.length}</span>
-              )}
-              {t === 'Histórico' && hist.length > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 11, background: 'var(--brand)', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{hist.length}</span>
-              )}
-              {t === 'Anexos' && anexos.length > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 11, background: 'var(--ink-3)', color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{anexos.length}</span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="modal-body" id="pdf-export-area" style={{ background: 'var(--surface-solid)' }}>
+        {/* CONTEÚDO ROLÁVEL */}
+        <div className="modal-body" id="pdf-export-area" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           {aba === 'Visão Geral' && (
             <AbaVisaoGeral
               p={p} c={c} desv={desv} curveOpts={curveOpts} baselineOpts={baselineOpts}
@@ -152,6 +173,7 @@ export default function ProjectModal({ projeto, atualizacoes = [], onClose, pode
           )}
 
           {aba === 'Análise IA' && <AbaAnaliseIA p={p} />}
+          </div>
         </div>
       </div>
     </div>
