@@ -25,20 +25,37 @@ CREATE INDEX IF NOT EXISTS idx_tarefas_projeto_id ON tarefas(projeto_id);
 ALTER TABLE tarefas ENABLE ROW LEVEL SECURITY;
 
 -- 5. Políticas RLS (Tarefas)
--- Administradores e Equipe podem fazer tudo. Outros (ex: fiscal/cliente) podem apenas ler.
+-- Administradores e Equipe podem fazer tudo. Clientes leem apenas tarefas
+-- de projetos explicitamente liberados em acessos_cliente.
 
-CREATE POLICY "Acesso leitura tarefas para todos autenticados" 
-ON tarefas FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Acesso leitura tarefas para todos autenticados" ON public.tarefas;
+DROP POLICY IF EXISTS "Acesso leitura tarefas por projeto" ON public.tarefas;
+DROP POLICY IF EXISTS "Admin e Equipe podem inserir tarefas" ON public.tarefas;
+DROP POLICY IF EXISTS "Admin e Equipe podem atualizar tarefas" ON public.tarefas;
+DROP POLICY IF EXISTS "Admin e Equipe podem deletar tarefas" ON public.tarefas;
+
+CREATE POLICY "Acesso leitura tarefas por projeto"
+ON public.tarefas FOR SELECT TO authenticated
+USING (
+    public.get_my_perfil() IN ('admin', 'equipe')
+    OR (
+        public.get_my_perfil() = 'cliente'
+        AND projeto_id IN (
+            SELECT projeto_id FROM public.acessos_cliente
+            WHERE usuario_id = auth.uid()
+        )
+    )
+);
 
 CREATE POLICY "Admin e Equipe podem inserir tarefas" 
-ON tarefas FOR INSERT 
-WITH CHECK (get_my_perfil() IN ('admin', 'equipe'));
+ON public.tarefas FOR INSERT TO authenticated
+WITH CHECK (public.get_my_perfil() IN ('admin', 'equipe'));
 
 CREATE POLICY "Admin e Equipe podem atualizar tarefas" 
-ON tarefas FOR UPDATE 
-USING (get_my_perfil() IN ('admin', 'equipe')) 
-WITH CHECK (get_my_perfil() IN ('admin', 'equipe'));
+ON public.tarefas FOR UPDATE TO authenticated
+USING (public.get_my_perfil() IN ('admin', 'equipe'))
+WITH CHECK (public.get_my_perfil() IN ('admin', 'equipe'));
 
 CREATE POLICY "Admin e Equipe podem deletar tarefas" 
-ON tarefas FOR DELETE 
-USING (get_my_perfil() IN ('admin', 'equipe'));
+ON public.tarefas FOR DELETE TO authenticated
+USING (public.get_my_perfil() IN ('admin', 'equipe'));

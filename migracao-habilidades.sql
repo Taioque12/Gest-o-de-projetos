@@ -52,7 +52,23 @@ ON CONFLICT (funcionario_id, habilidade_id) DO NOTHING;
 ALTER TABLE habilidades             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE avaliacoes_habilidades  ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "habilidades_leitura"  ON habilidades            FOR SELECT TO authenticated USING (true);
-CREATE POLICY "habilidades_escrita"  ON habilidades            FOR ALL    TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "avaliacoes_leitura"   ON avaliacoes_habilidades FOR SELECT TO authenticated USING (true);
-CREATE POLICY "avaliacoes_escrita"   ON avaliacoes_habilidades FOR ALL    TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "habilidades_leitura" ON public.habilidades;
+DROP POLICY IF EXISTS "habilidades_escrita" ON public.habilidades;
+DROP POLICY IF EXISTS "habilidades_staff" ON public.habilidades;
+DROP POLICY IF EXISTS "habilidades_write_staff" ON public.habilidades;
+DROP POLICY IF EXISTS "avaliacoes_leitura" ON public.avaliacoes_habilidades;
+DROP POLICY IF EXISTS "avaliacoes_escrita" ON public.avaliacoes_habilidades;
+DROP POLICY IF EXISTS "avaliacoes_staff" ON public.avaliacoes_habilidades;
+DROP POLICY IF EXISTS "avaliacoes_write_staff" ON public.avaliacoes_habilidades;
+
+-- Habilidades e avaliações são dados globais de RH, sem projeto_id.
+-- Apenas usuários internos ativos podem consultar ou alterar esses dados.
+CREATE POLICY "habilidades_staff" ON public.habilidades
+  FOR ALL TO authenticated
+  USING (public.get_my_perfil() IN ('admin', 'equipe'))
+  WITH CHECK (public.get_my_perfil() IN ('admin', 'equipe'));
+
+CREATE POLICY "avaliacoes_staff" ON public.avaliacoes_habilidades
+  FOR ALL TO authenticated
+  USING (public.get_my_perfil() IN ('admin', 'equipe'))
+  WITH CHECK (public.get_my_perfil() IN ('admin', 'equipe'));

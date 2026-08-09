@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -15,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x, 22.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -24,8 +27,30 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Install Dependencies
-      run: npm install
+      run: npm ci
     - name: Run Tests
       run: npm run test -- --run
     - name: Build
       run: npm run build
+
+  deno-checks:
+    name: Deno tests and checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+        cache: true
+    - name: Run Deno tests
+      run: >-
+        deno test
+        --allow-read=supabase/functions/scrum-agent/index.ts
+        supabase/functions/scrum-agent/logic.test.ts
+    - name: Check Edge Functions
+      run: >-
+        deno check
+        supabase/functions/chat-projeto/index.ts
+        supabase/functions/scrum-agent/index.ts

@@ -29,8 +29,10 @@ begin
   values (
     new.id, 
     new.email, 
-    coalesce(new.raw_user_meta_data->>'nome', 'Usuário'), 
-    coalesce(new.raw_user_meta_data->>'perfil', 'cliente')
+    coalesce(new.raw_user_meta_data->>'nome', 'Usuário'),
+    -- Nunca confiar no perfil enviado pelo cliente durante o signup.
+    -- Promoções para admin/equipe devem ocorrer somente por fluxo privilegiado.
+    'cliente'
   );
   return new;
 end;
@@ -40,6 +42,20 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Fonte de verdade do perfil usada pelas policies. O perfil não é injetado
+-- no JWT; ele é resolvido pelo id autenticado e somente para usuários ativos.
+create or replace function public.get_my_perfil()
+returns text
+language sql
+stable
+security definer set search_path = public
+as $$
+  select perfil
+  from public.usuarios
+  where id = auth.uid() and ativo = true
+  limit 1;
+$$;
 
 -- ========== TABELA: Projetos (OS) ==========
 create table if not exists projetos (
@@ -55,6 +71,7 @@ create table if not exists projetos (
   valor_os numeric(15,2),
   equipes text[],  -- array de nomes de equipe
   acao_recomendada text,
+  scrum_analisado_em timestamptz,
   criado_em timestamp default now(),
   atualizado_em timestamp default now()
 );
@@ -119,6 +136,7 @@ create table if not exists uploads_xml (
 -- ========== ÍNDICES ==========
 create index idx_projetos_os on projetos(os);
 create index idx_projetos_cliente on projetos(cliente);
+create index idx_projetos_scrum_fila on projetos(scrum_analisado_em asc nulls first, id);
 create index idx_atualizacoes_projeto on atualizacoes_semana(projeto_id);
 create index idx_atualizacoes_data on atualizacoes_semana(data_atualizacao);
 create index idx_frentes_projeto on frentes_servico(projeto_id);
@@ -134,31 +152,60 @@ alter table acessos_cliente enable row level security;
 
 -- Policy: Admin vê tudo
 create policy "admin_all_projetos" on projetos
-  for select using (
-    auth.jwt()->>'email' in (select email from usuarios where perfil = 'admin' and ativo = true)
-  );
+  for select to authenticated using (public.get_my_perfil() = 'admin');
 
 -- Policy: Equipe vê todos os projetos
 create policy "equipe_all_projetos" on projetos
-  for select using (
-    auth.jwt()->>'email' in (select email from usuarios where perfil = 'equipe' and ativo = true)
-  );
+  for select to authenticated using (public.get_my_perfil() = 'equipe');
 
 -- Policy: Cliente vê apenas os projetos aos quais tem acesso
 create policy "cliente_own_projetos" on projetos
-  for select using (
+  for select to authenticated using (
+    public.get_my_perfil() = 'cliente'
+    and
     id in (
       select projeto_id from acessos_cliente
-      where usuario_id = (select id from usuarios where email = auth.jwt()->>'email')
+      where usuario_id = auth.uid()
     )
   );
 
--- Políticas similares para atualizações_semana e frentes_servico
+-- Atualizações: staff acessa tudo; cliente lê somente projetos liberados.
+-- Clientes não recebem policy de escrita, portanto INSERT/UPDATE/DELETE são
+-- negados por padrão pelo RLS.
 create policy "all_atualizacoes" on atualizacoes_semana
-  for select using (true);
+  for select to authenticated using (
+    public.get_my_perfil() in ('admin', 'equipe')
+    or (
+      public.get_my_perfil() = 'cliente'
+      and projeto_id in (
+        select projeto_id from public.acessos_cliente
+        where usuario_id = auth.uid()
+      )
+    )
+  );
 
+create policy "staff_write_atualizacoes" on atualizacoes_semana
+  for all to authenticated
+  using (public.get_my_perfil() in ('admin', 'equipe'))
+  with check (public.get_my_perfil() in ('admin', 'equipe'));
+
+-- Frentes: aplica o mesmo vínculo usuário -> projeto de acessos_cliente.
 create policy "all_frentes" on frentes_servico
-  for select using (true);
+  for select to authenticated using (
+    public.get_my_perfil() in ('admin', 'equipe')
+    or (
+      public.get_my_perfil() = 'cliente'
+      and projeto_id in (
+        select projeto_id from public.acessos_cliente
+        where usuario_id = auth.uid()
+      )
+    )
+  );
+
+create policy "staff_write_frentes" on frentes_servico
+  for all to authenticated
+  using (public.get_my_perfil() in ('admin', 'equipe'))
+  with check (public.get_my_perfil() in ('admin', 'equipe'));
 
 -- ========== DADOS INICIAIS (Ficticios) ==========
 insert into usuarios (email, nome, perfil) values

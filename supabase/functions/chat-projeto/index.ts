@@ -72,11 +72,14 @@ serve(async (req) => {
             const { data: matches } = await supabaseClient.rpc('match_projetos', {
               query_embedding: queryEmbedding,
               match_threshold: 0.6,
-              match_count: 3
+              match_count: 3,
+              filter_projeto_id: projeto_id
             });
             
             if (matches && matches.length > 0) {
-              ragContext = "\\n\\nCONHECIMENTO DA BASE (AgentDB):\\n" + matches.map(m => `- ${m.conteudo_texto}`).join('\\n');
+              ragContext = "\\n\\nCONHECIMENTO DA BASE (AgentDB):\\n" + matches
+                .map((match: { conteudo_texto: string }) => `- ${match.conteudo_texto}`)
+                .join('\\n');
             }
           }
         }
@@ -95,9 +98,6 @@ Diferença: ${proj.real - proj.prev}% (Positivo é adiantado, Negativo é atrasa
 
 Seja muito objetivo, profissional e direto. Use formatação markdown para destacar pontos importantes.
 Se perguntarem por cronograma, você pode mencionar que possui os dados da linha de base (se aplicável).${ragContext}`;
-
-    const geminiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiKey) throw new Error("Chave do Gemini não configurada");
 
     // Formata o array de mensagens para o Gemini REST API
     const contents = [];
@@ -131,7 +131,8 @@ Se perguntarem por cronograma, você pode mencionar que possui os dados da linha
     });
   } catch (error) {
     console.error("Erro na function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : "Erro interno inesperado.";
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

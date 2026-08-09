@@ -1,10 +1,18 @@
-DROP POLICY IF EXISTS "Usuários autenticados podem ler embeddings" ON projetos_embeddings;
+DROP POLICY IF EXISTS "Usuários autenticados podem ler embeddings" ON public.projetos_embeddings;
+DROP POLICY IF EXISTS "embeddings_select_por_projeto" ON public.projetos_embeddings;
 
-create policy "Usuários autenticados podem ler embeddings"
-on projetos_embeddings for select
+create policy "embeddings_select_por_projeto"
+on public.projetos_embeddings for select
 to authenticated
 using (
-    auth.jwt() ->> 'perfil' = 'admin' OR 
-    auth.jwt() ->> 'perfil' = 'equipe' OR
-    (auth.jwt() ->> 'perfil' = 'cliente' AND projeto_id IN (SELECT projeto_id FROM acessos_cliente WHERE usuario_id = auth.uid()))
+    public.get_my_perfil() in ('admin', 'equipe') or
+    (
+      public.get_my_perfil() = 'cliente' and
+      exists (
+        select 1
+        from public.acessos_cliente ac
+        where ac.usuario_id = auth.uid()
+          and ac.projeto_id = projetos_embeddings.projeto_id
+      )
+    )
 );

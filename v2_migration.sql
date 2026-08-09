@@ -36,8 +36,26 @@ CREATE TABLE IF NOT EXISTS public.suprimentos (
 );
 
 ALTER TABLE public.suprimentos ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Suprimentos select todos" ON public.suprimentos FOR SELECT USING (true);
-CREATE POLICY "Suprimentos all admin/equipe" ON public.suprimentos FOR ALL USING (get_my_perfil() IN ('admin', 'equipe'));
+DROP POLICY IF EXISTS "Suprimentos select todos" ON public.suprimentos;
+DROP POLICY IF EXISTS "Suprimentos all admin/equipe" ON public.suprimentos;
+DROP POLICY IF EXISTS "Suprimentos select por projeto" ON public.suprimentos;
+DROP POLICY IF EXISTS "Suprimentos write staff" ON public.suprimentos;
+CREATE POLICY "Suprimentos select por projeto" ON public.suprimentos
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_perfil() IN ('admin', 'equipe')
+    OR (
+      public.get_my_perfil() = 'cliente'
+      AND projeto_id IN (
+        SELECT projeto_id FROM public.acessos_cliente
+        WHERE usuario_id = auth.uid()
+      )
+    )
+  );
+CREATE POLICY "Suprimentos write staff" ON public.suprimentos
+  FOR ALL TO authenticated
+  USING (public.get_my_perfil() IN ('admin', 'equipe'))
+  WITH CHECK (public.get_my_perfil() IN ('admin', 'equipe'));
 
 -- 4. Módulo de Qualidade (FVS)
 CREATE TABLE IF NOT EXISTS public.fvs (
@@ -52,5 +70,23 @@ CREATE TABLE IF NOT EXISTS public.fvs (
 );
 
 ALTER TABLE public.fvs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "FVS select todos" ON public.fvs FOR SELECT USING (true);
-CREATE POLICY "FVS all admin/equipe" ON public.fvs FOR ALL USING (get_my_perfil() IN ('admin', 'equipe'));
+DROP POLICY IF EXISTS "FVS select todos" ON public.fvs;
+DROP POLICY IF EXISTS "FVS all admin/equipe" ON public.fvs;
+DROP POLICY IF EXISTS "FVS select por projeto" ON public.fvs;
+DROP POLICY IF EXISTS "FVS write staff" ON public.fvs;
+CREATE POLICY "FVS select por projeto" ON public.fvs
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_perfil() IN ('admin', 'equipe')
+    OR (
+      public.get_my_perfil() = 'cliente'
+      AND projeto_id IN (
+        SELECT projeto_id FROM public.acessos_cliente
+        WHERE usuario_id = auth.uid()
+      )
+    )
+  );
+CREATE POLICY "FVS write staff" ON public.fvs
+  FOR ALL TO authenticated
+  USING (public.get_my_perfil() IN ('admin', 'equipe'))
+  WITH CHECK (public.get_my_perfil() IN ('admin', 'equipe'));
